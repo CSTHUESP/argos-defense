@@ -49,7 +49,7 @@ def ci_errors(sha: str, runs: list[dict]) -> list[str]:
     return [] if ok else [f"no successful completed CI (ci.yml) run for {sha}"]
 
 
-def git_env() -> dict:
+def git_env(base_url: str = "https://github.com/") -> dict:
     """Environment for git remote reads (R09, v0.3.1).
 
     Actions checkouts run with persist-credentials: false, and GH_TOKEN alone only authenticates `gh`;
@@ -57,7 +57,12 @@ def git_env() -> dict:
     fails for a private one. When GH_TOKEN is set, an Authorization header for https://github.com/ is
     passed through git's GIT_CONFIG_COUNT/KEY/VALUE environment variables: it never appears in argv, in a
     remote URL, in .git/config or in logs (Actions masks the token value), and it is scoped to this
-    process tree. Interactive prompts are disabled so a missing credential fails fast."""
+    process tree. Interactive prompts are disabled so a missing credential fails fast.
+
+    The entry list is first RESET with an empty extraheader value (git: "an empty value resets the extra
+    headers to the empty list"). Without it, a checkout that persisted its own credential (create-tag.yml
+    needs one to push the tag) plus this header sends two Authorization headers and GitHub answers HTTP 400
+    "Duplicate header" (observed in run 44793871532)."""
     env = dict(os.environ)
     env["GIT_TERMINAL_PROMPT"] = "0"
     tok = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
@@ -65,9 +70,10 @@ def git_env() -> dict:
         import base64
         basic = base64.b64encode(f"x-access-token:{tok}".encode()).decode()
         n = int(env.get("GIT_CONFIG_COUNT", "0") or 0)  # keep any entries the runner already configured
-        env[f"GIT_CONFIG_KEY_{n}"] = "http.https://github.com/.extraheader"
-        env[f"GIT_CONFIG_VALUE_{n}"] = f"AUTHORIZATION: basic {basic}"
-        env["GIT_CONFIG_COUNT"] = str(n + 1)
+        key = f"http.{base_url}.extraheader"
+        env[f"GIT_CONFIG_KEY_{n}"], env[f"GIT_CONFIG_VALUE_{n}"] = key, ""  # reset persisted headers
+        env[f"GIT_CONFIG_KEY_{n + 1}"], env[f"GIT_CONFIG_VALUE_{n + 1}"] = key, f"AUTHORIZATION: basic {basic}"
+        env["GIT_CONFIG_COUNT"] = str(n + 2)
     return env
 
 

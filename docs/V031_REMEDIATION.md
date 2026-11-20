@@ -74,3 +74,5 @@ The evaluator and data are unchanged. The eval-v2.2 dev results are identical be
 
 ## Note on R09 (2026-11-20)
 The owner chose a **public** repository. The private-repository Git-read path of R09 therefore remains statically tested only; it is kept for forks or future private use.
+
+**Defect found by the first real run (create-tag run [44793871532](https://github.com/CSTHUESP/argos-defense/actions/runs/44793871532)):** `create-tag.yml` checks out with persisted credentials (it must push the tag), so git sent the checkout's `Authorization` header **and** the R09 header. GitHub rejected the fetch with HTTP 400 "Duplicate header: Authorization", and the preflight failed closed before any tag was created. Fix: `git_env()` first resets the extraheader list with an empty value, then adds its own header. `test_r09_git_sends_exactly_one_authorization_header_even_with_persisted_checkout_credential` runs real git against a local HTTP endpoint with a persisted header in the repository config and asserts exactly one `Authorization` header. The same setup without the reset sends two headers (`['basic OLD', 'basic NEW']`).

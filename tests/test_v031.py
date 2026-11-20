@@ -575,10 +575,11 @@ def test_r09_preflight_git_reads_authenticate_without_token_in_argv(monkeypatch)
     monkeypatch.setenv("GIT_CONFIG_KEY_0", "http.sslCAInfo")
     monkeypatch.setenv("GIT_CONFIG_VALUE_0", "/etc/ssl/runner.pem")
     env = P.git_env()
-    assert env["GIT_CONFIG_KEY_0"] == "http.sslCAInfo" and env["GIT_CONFIG_COUNT"] == "2"
+    assert env["GIT_CONFIG_KEY_0"] == "http.sslCAInfo" and env["GIT_CONFIG_COUNT"] == "3"
     assert env["GIT_TERMINAL_PROMPT"] == "0"
-    keys = {env[f"GIT_CONFIG_KEY_{i}"]: env[f"GIT_CONFIG_VALUE_{i}"] for i in range(int(env["GIT_CONFIG_COUNT"]))}
-    hdr = keys["http.https://github.com/.extraheader"]
+    entries = [(env[f"GIT_CONFIG_KEY_{i}"], env[f"GIT_CONFIG_VALUE_{i}"]) for i in range(int(env["GIT_CONFIG_COUNT"]))]
+    assert entries[1] == ("http.https://github.com/.extraheader", "")  # reset before adding the header
+    hdr = entries[2][1]
     import base64
     assert base64.b64decode(hdr.split()[-1]).decode() == "x-access-token:SYNTH_TOKEN_VALUE"
     seen = {}
@@ -596,6 +597,47 @@ def test_r09_preflight_git_reads_authenticate_without_token_in_argv(monkeypatch)
     monkeypatch.delenv("GITHUB_TOKEN", raising=False)
     e2 = P.git_env()
     assert not [k for k, v in e2.items() if k.startswith("GIT_CONFIG_VALUE_") and "AUTHORIZATION" in v]
+
+
+def test_r09_git_sends_exactly_one_authorization_header_even_with_persisted_checkout_credential(tmp_path, monkeypatch):
+    """Real git against a local HTTP endpoint: a repository whose config already holds a persisted extraheader
+    (as actions/checkout writes it) must send ONLY the preflight's Authorization header (run 44793871532 failed
+    with 'Duplicate header: Authorization')."""
+    import http.server
+    import shutil
+    import subprocess
+    import sys
+    import threading
+    if not shutil.which("git"):
+        pytest.skip("git not installed")
+    sys.path.insert(0, str(ROOT / "packaging"))
+    import release_preflight as P
+    seen = []
+
+    class H(http.server.BaseHTTPRequestHandler):
+        def do_GET(self):
+            seen.append(self.headers.get_all("Authorization") or [])
+            self.send_response(404)
+            self.end_headers()
+
+        def log_message(self, *a):
+            pass
+    srv = http.server.HTTPServer(("127.0.0.1", 0), H)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    base = f"http://127.0.0.1:{srv.server_address[1]}/"
+    try:
+        repo = tmp_path / "r"
+        subprocess.run(["git", "init", "-q", str(repo)], check=True)
+        subprocess.run(["git", "-C", str(repo), "config", f"http.{base}.extraheader", "AUTHORIZATION: basic UEVSU0lTVEVE"], check=True)
+        for k in [k for k in list(__import__("os").environ) if k.startswith("GIT_CONFIG_")]:
+            monkeypatch.delenv(k)
+        monkeypatch.setenv("GH_TOKEN", "SYNTH_TOKEN_VALUE")
+        subprocess.run(["git", "-C", str(repo), "ls-remote", base + "x.git"], env=P.git_env(base), capture_output=True, timeout=30)
+    finally:
+        srv.shutdown()
+    assert seen and all(len(h) == 1 for h in seen), seen
+    import base64
+    assert base64.b64decode(seen[0][0].split()[-1]).decode() == "x-access-token:SYNTH_TOKEN_VALUE"
 
 
 def test_r09_release_jobs_running_preflight_provide_token():

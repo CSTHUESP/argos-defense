@@ -22,7 +22,7 @@ Corrective pass for review findings R01–R09 (docs/V031_REMEDIATION.md). Experi
 - **FU5** Evaluation protocol eval-v2.2 scores LLM attribution against exact source records; eval-v2.1 metrics are superseded.
 - **Recovery A** Import finalization (counts, final status, revision activation/deactivation) is one transaction; a completed status is certified only with `finalized=1`; an interrupted finalization is re-run, never reported as done.
 - **Recovery B** Watcher recovery re-delivers the exact byte range of an earlier delivery at the checkpoint offset (hash-verified) before reading appended data, so growth or a changed chunk budget cannot duplicate committed records.
-- **R09** The release preflight authenticates Git remote reads with GH_TOKEN through environment-scoped Git configuration (needed for private repositories); the token never appears in argv or URLs.
+- **R09** The release preflight authenticates Git remote reads with GH_TOKEN through environment-scoped Git configuration (needed for private repositories); the token never appears in argv or URLs. It resets any persisted checkout header first, so exactly one Authorization header is sent (the first real run failed with "Duplicate header").
 
 ### Community
 - Public, open development: contributor guide aligned with eval-v2.2, roadmap, issue forms (bug, feature/integration, detection report), pull-request template, and a concrete private vulnerability-reporting route in SECURITY.md.
