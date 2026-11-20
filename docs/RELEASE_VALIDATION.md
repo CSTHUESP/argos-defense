@@ -1,22 +1,41 @@
-# Release validation — v0.2.0
+# Release validation — v0.3.0
 
-**Experimental detection; real-world accuracy not measured.** This document records what was actually checked for the v0.2.0 software release. Results for the tagged release run itself are published with the release (`release-manifest.json`, `smoke-<target>.json`, `smoke-<target>.log`) and summarised in the release notes after publication.
+**Experimental detection; real-world accuracy not measured.** This document describes the gates a release must pass and the results observed while preparing 0.3.0. Evidence for the final release commit itself (CI run, native runs, uploaded-byte verification) is produced by the workflows and published with the release (`release-manifest.json`, `smoke-<target>.json/.log`, the Actions logs); it cannot be committed here because this file is part of that commit.
 
-## Source tests
-| Where | Result |
-|---|---|
-| Build sandbox (Linux, Python 3.13.18) | `python -m pytest` → **110 passed** |
-| CI run [44715570390](https://github.com/CSTHUESP/argos-defense/actions/runs/44715570390) (commit a55f50b) | 109 passed on each of ubuntu-22.04 (py3.11/3.12/3.13), windows-2022 (py3.12), macos-15 (py3.12), macos-15-intel (py3.12); wheel + sdist installed and run outside the checkout |
-| CI runs on later commits | see the Actions tab; the release workflow re-runs the full suite on every native runner before packaging |
+## Mandatory gates
+1. Source tests on Linux (Python 3.11/3.12/3.13), Windows, macOS arm64 and macOS x86_64 (`ci.yml`), plus rule validation, `doctor`, `scripts/validate.py` and wheel/sdist installation outside the checkout.
+2. Shared preflight (`packaging/release_preflight.py`): tag → one full SHA, semantic version, version agreement, release notes, `main` ancestry, successful CI for that SHA.
+3. Native build and smoke test per target on its own runner (docs/PACKAGING.md), source tests repeated on each native runner.
+4. Release contract (`packaging/release_contract.py`, 27 assets) — see the negative tests in `tests/test_release_contract.py`.
+5. Draft created with `--verify-tag`; downloaded bytes verified against expectations retained before upload; attestations verified when generated.
+6. Before publication: tag and draft bytes verified again; after publication: published assets downloaded and verified again.
 
-Suite composition: ingestion and vendor-format edge cases (23), rules with positive/negative cases per family + exports (33), acceptance scenarios 1–15 (15), security/LLM-layer (14), simulated Ollama endpoint (5), adapter-level provenance (6), launcher/data-dir/migration (9), held-out auth evaluation (1), web end-to-end through a real server (4), 12k-event batch (1).
+A failure in any gate stops the workflow; no `continue-on-error`, no prerelease shortcut.
 
-## Synthetic scenario and rule evaluation
-- `scripts/validate.py`: **15/15** demo scenarios (ground truth in `fixtures/ground_truth/`, never imported).
-- `scripts/auth_eval.py` (unit: identity sequence): held-out benign sequences alerted **81/180 (v1) → 41/180 (v0.2.0)**, malicious **120/120 → 120/120**; residual cases and the non-blind M4 figure are documented in `AUTH_RULE_EVALUATION.md`.
-- These are synthetic results only. They validate the prototype's scenarios, not real-world accuracy.
+## Results observed while preparing 0.3.0
+| Check | Where | Result |
+|---|---|---|
+| `python -m pytest` | build sandbox (Linux x86_64, Python 3.13.18) | 187 passed, 1 skipped (Windows-only ACL test) |
+| `scripts/validate.py` | sandbox | 15/15 synthetic demo scenarios |
+| `scripts/audit_repro.py` | sandbox | F01–F13: all reproduced on 2919529, none reproduced after the changes (`docs/audit_repro_after.json`) |
+| Native smoke harness against a non-frozen stand-in package | sandbox | 47/48 (the only failure is the expected `frozen=True` check); used to debug the new launcher/update/backup checks before CI |
+| `scripts/eval_v2.py` reserved set | sandbox | see docs/EVALUATION_PROTOCOL.md |
+| Benchmarks | sandbox | see docs/PERFORMANCE.md |
+| Dependency audit | `deps.yml` runs 44742521205, 44743018079 | docs/DEPENDENCIES.md |
 
-## Native packages (dry run of the release workflow on commit 93fb079)
+CI and release run URLs for the final commit are listed in the release's handover and in `release-manifest.json` (`workflow_run`).
+
+## Repository protection
+Branch protection and tag rulesets were not configured from this session: the session's GitHub access cannot change repository settings (the repository-description update was also refused). The workflow checks above therefore enforce release policy only for releases made through these workflows; they are not equivalent to enforced repository protection. Recommended owner settings: protect `main` (require the CI checks, no force-push) and add a tag ruleset for `v*` (no update/delete) — only where they do not lock out the sole maintainer.
+
+## What these results do NOT establish
+- Packages are tested only on GitHub-hosted runner images (Windows Server 2022, Ubuntu 22.04, macOS 15 arm64/x86_64). Windows 10/11 desktop, other distributions and macOS versions, and downloads with quarantine attributes are not tested (procedure in docs/PACKAGING.md).
+- No genuine vendor exports; adapter tests use synthetic, schema-shaped data.
+- Ollama integration exercised only against a simulated endpoint; Sigma/SPL not executed in a backend.
+- No Authenticode or Developer ID signing, no notarization.
+
+## History
+### v0.2.0 native dry run (historical, commit 93fb079)
 Run [44719465528](https://github.com/CSTHUESP/argos-defense/actions/runs/44719465528) (`release.yml`, `dry_run=true`): built, extracted and smoke-tested each package on its own runner, then ran the release gate (all 4 targets present, same commit, smoke-tested on the exact archive bytes) → **passed** (23 files in SHA256SUMS).
 
 | Target | Runner (image version) | Native smoke test | Notes |

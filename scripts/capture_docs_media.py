@@ -49,7 +49,7 @@ def main():
             pg.click("a:has-text('Failures, then success, then sensitive action')")
             pg.screenshot(path=str(OUT / "04-alert-detail.png"), full_page=True)
             pg.goto(base + "/alerts?llm=directly_observed")
-            pg.click("a:has-text('Model tool-call linked to an endpoint process')")
+            pg.click("a:has-text('Model tool request linked to an endpoint process')")
             pg.screenshot(path=str(OUT / "05-alert-llm-linkage.png"), full_page=True)
             pg.goto(base + "/entities?type=account")
             pg.screenshot(path=str(OUT / "07-entities.png"), full_page=True)

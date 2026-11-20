@@ -3,8 +3,45 @@
 All notable changes. Versions follow semantic versioning; 0.x releases are experimental.
 **Detection is experimental; real-world accuracy is not measured.**
 
-## [0.2.0] - 2026-11-20
-First packaged GitHub release.
+## [0.3.0] - 2026-11-20
+Correctness, data-safety and release-integrity pass (audit findings F01–F13, see docs/AUDIT_REMEDIATION.md).
+0.2.0 was never published; this is the first published release.
+
+### Fixed
+- **F01** A generic tool execution plus the endpoint process no longer yields "directly observed" LLM involvement (ARG-LLM-003 v2 needs a model tool request; new ARG-AUTO-003 = automation only, LLM unknown).
+- **F02** Model-to-execution chains require an explicit call id inside a namespaced session (`source_type|tenant|session_id`), the same tool name and case-sensitive identifiers (ARG-LLM-002 v2); unlinked same-session pairs are only "possible" (ARG-LLM-005).
+- **F03** Action outcome comes from the terminal sequence step; failed or unknown credential changes are reported as attempts / outcome unknown (ARG-SP-001 v2, ARG-AUTH-002 v3).
+- **F04** Observation span is no longer treated as collection coverage: per-input analyst-declared coverage (start/end/scope), entity-scoped baseline windows, explicit absence statuses, observation gaps.
+- **F05** Key-aware recursive redaction (JSON strings, headers, URL credentials/query, CLI arguments, tokens, PEM keys) for UI, all API responses, exports, notes, status rationales, rejected excerpts and LLM input; explicit authenticated raw view.
+- **F06** Migration backups use SQLite's online backup API with integrity and row-count verification; migration is transactional.
+- **F07** Owner-private directories/files (POSIX modes, Windows ACLs); `doctor` reports unsafe locations.
+- **F08** Versioned format-aware source locators (JSONL byte range, JSON-array index/pointer, CSV line span, XML element ordinal) and integrity-checked original-record retrieval.
+- **F09** Immutable per-run alert/assessment/rule/configuration snapshots committed atomically; failed or cancelled runs never replace the last success; per-run export.
+- **F10** Import revisions keyed by content + parser version + effective-options hash; explicit reprocess and activation.
+- **F11** Shared release preflight for every release entry point; all builds pinned to the resolved commit; tag re-checked before draft and publication.
+- **F12** Exact 27-asset release contract with per-platform required smoke-check identities, SBOM/wheel/sdist binding and independent uploaded-byte verification against pre-upload expectations.
+- **F13** Bundle immutability check hashes file contents, modes and symlink targets.
+- Sigma export of regex predicates now uses `|re|i` (native matching is case-insensitive).
+- Windows: `icacls` output decoded from the OEM code page.
+
+### Added
+- Background analysis jobs with progress, cancellation, per-case serialization and restart recovery.
+- Rule eligibility and data-quality diagnostics per rule and per source.
+- Run comparison (UI, API, `compare-runs`) attributing changes to data, rules, configuration or engine; analyst status rationale history.
+- `backup`, `verify-backup`, `restore` (verified zip of database snapshot, originals and configuration).
+- Opt-in read-only directory watcher (`watch`) with checkpoints, partial-write, rotation, duplicate and backpressure handling and freshness reporting.
+- Analysis size limit (default 300,000 events per case) based on measured memory use.
+- Evaluation protocol v2 with frozen development and reserved synthetic sets and separate threat/origin labels (`scripts/eval_v2.py`, docs/EVALUATION_PROTOCOL.md).
+- Benchmarks at 12k/100k/1M events with pre-declared budgets (docs/PERFORMANCE.md).
+- Hashed universal dependency locks and a vulnerability-review workflow (docs/DEPENDENCIES.md); Sigma selection-semantics tests.
+- Native smoke test now covers the distributed launchers, browser opening via `BROWSER`, update from a v0.2.0 database, backup/restore.
+
+### Changed
+- Database schema v3 (migrated automatically from v1/v2 with a verified backup). Legacy runs are kept and labelled "no snapshot".
+- ARG-AUTH-002 v3 treats mailbox-rule / mail-forwarding changes as sensitive post-sign-in actions.
+
+## [0.2.0] - 2026-11-20 (never published)
+Prepared as the first packaged release; superseded by 0.3.0 before publication.
 
 ### Added
 - Native packages (PyInstaller onedir) for Windows x86_64, Linux x86_64, macOS arm64 and macOS x86_64, each smoke-tested on its own CI runner from the extracted archive (CLI workflow, real browser form submission, export, restart persistence).

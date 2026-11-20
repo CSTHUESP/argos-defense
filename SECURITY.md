@@ -15,3 +15,10 @@ Please report privately to the repository owner (GitHub private vulnerability re
 
 ## Out of scope
 ARGOS performs no blocking, isolation, scanning or other response. It does not identify people, groups, nationalities or exact models. Detection accuracy is not measured on real data.
+
+
+## Local data protection (0.3.0)
+- Data directories ARGOS creates are owner-only (POSIX 0700/0600, originals 0400; Windows ACL limited to the user, SYSTEM and Administrators). `argos-defense doctor` reports locations other local accounts can read. This protects against other unprivileged local accounts only; administrators/root and malware running as you can read the data.
+- Redaction applies to every UI page, API response and export by default. The unredacted view of a single record (`?raw=1`) requires the same authentication and is labelled; do not share screenshots of it.
+- Backups (`argos-defense backup`) contain full investigation data including original evidence; store and transfer them like the data directory itself.
+- Report suspected vulnerabilities privately via GitHub security advisories for this repository rather than public issues.

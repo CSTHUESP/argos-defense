@@ -14,29 +14,29 @@ It is batch analysis on your own machine: not a real-time sensor, EDR agent or S
 
 ## Download
 
-**v0.2.0** — [Release page](https://github.com/CSTHUESP/argos-defense/releases/tag/v0.2.0). The repository is private: downloads require a GitHub account with access to it.
+**v0.3.0** — [Release page](https://github.com/CSTHUESP/argos-defense/releases/tag/v0.3.0). Assets are published only after every package passed the release contract and the uploaded bytes were downloaded again and verified ([docs/RELEASE_VALIDATION.md](docs/RELEASE_VALIDATION.md)).
 
 | Your system | Download | Built and smoke-tested on |
 |---|---|---|
-| Windows 10/11 or Server, 64-bit Intel/AMD | [ARGOS-Defense-0.2.0-windows-x86_64.zip](https://github.com/CSTHUESP/argos-defense/releases/download/v0.2.0/ARGOS-Defense-0.2.0-windows-x86_64.zip) | GitHub runner `windows-2022` |
-| Linux, 64-bit Intel/AMD (glibc ≥ 2.35) | [ARGOS-Defense-0.2.0-linux-x86_64.tar.gz](https://github.com/CSTHUESP/argos-defense/releases/download/v0.2.0/ARGOS-Defense-0.2.0-linux-x86_64.tar.gz) | GitHub runner `ubuntu-22.04` |
-| Mac with Apple Silicon (M1/M2/M3/M4) | [ARGOS-Defense-0.2.0-macos-arm64.zip](https://github.com/CSTHUESP/argos-defense/releases/download/v0.2.0/ARGOS-Defense-0.2.0-macos-arm64.zip) | GitHub runner `macos-15` (arm64) |
-| Mac with Intel processor | [ARGOS-Defense-0.2.0-macos-x86_64.zip](https://github.com/CSTHUESP/argos-defense/releases/download/v0.2.0/ARGOS-Defense-0.2.0-macos-x86_64.zip) | GitHub runner `macos-15-intel` |
-| Any OS with Python 3.11+ | [wheel](https://github.com/CSTHUESP/argos-defense/releases/download/v0.2.0/argos_defense-0.2.0-py3-none-any.whl) · [sdist](https://github.com/CSTHUESP/argos-defense/releases/download/v0.2.0/argos_defense-0.2.0.tar.gz) | CI on Ubuntu, Windows, macOS |
+| Windows 10/11 or Server, 64-bit Intel/AMD | [ARGOS-Defense-0.3.0-windows-x86_64.zip](https://github.com/CSTHUESP/argos-defense/releases/download/v0.3.0/ARGOS-Defense-0.3.0-windows-x86_64.zip) | GitHub runner `windows-2022` (Windows Server 2022) |
+| Linux, 64-bit Intel/AMD (glibc ≥ 2.35) | [ARGOS-Defense-0.3.0-linux-x86_64.tar.gz](https://github.com/CSTHUESP/argos-defense/releases/download/v0.3.0/ARGOS-Defense-0.3.0-linux-x86_64.tar.gz) | GitHub runner `ubuntu-22.04` |
+| Mac with Apple Silicon (M1–M4) | [ARGOS-Defense-0.3.0-macos-arm64.zip](https://github.com/CSTHUESP/argos-defense/releases/download/v0.3.0/ARGOS-Defense-0.3.0-macos-arm64.zip) | GitHub runner `macos-15` (arm64) |
+| Mac with Intel processor | [ARGOS-Defense-0.3.0-macos-x86_64.zip](https://github.com/CSTHUESP/argos-defense/releases/download/v0.3.0/ARGOS-Defense-0.3.0-macos-x86_64.zip) | GitHub runner `macos-15-intel` |
+| Any OS with Python 3.11+ | [wheel](https://github.com/CSTHUESP/argos-defense/releases/download/v0.3.0/argos_defense-0.3.0-py3-none-any.whl) · [sdist](https://github.com/CSTHUESP/argos-defense/releases/download/v0.3.0/argos_defense-0.3.0.tar.gz) | CI on Ubuntu, Windows, macOS |
 
-Also published: `SHA256SUMS`, `release-manifest.json` (commit, build environment, smoke results, signing status), per-platform CycloneDX SBOMs, and the native smoke-test results/logs. Verify a download with `sha256sum -c SHA256SUMS --ignore-missing` (Linux), `shasum -a 256 <file>` (macOS) or `Get-FileHash <file> -Algorithm SHA256` (PowerShell).
+Also published: `SHA256SUMS`, `release-manifest.json` (commit, build environment, smoke-check results, signing status), per-platform CycloneDX SBOMs, build-info files and the native smoke-test results/logs. Verify a download with `sha256sum -c SHA256SUMS --ignore-missing` (Linux), `shasum -a 256 <file>` (macOS) or `Get-FileHash <file> -Algorithm SHA256` (PowerShell). When `release-manifest.json` lists GitHub artifact attestations, `gh attestation verify <file> --repo CSTHUESP/argos-defense` checks the build provenance.
 
 The packages contain everything they need. No Python installation is required, and the core works offline.
 
-**Tested baselines:** the native packages were tested only on the GitHub-hosted runner images named above. They were not tested on Windows 10/11 desktop editions, other Linux distributions, or other macOS versions; those are expected to work if they meet the requirements, but that is not verified.
+**Tested baselines:** native packages are tested only on the GitHub-hosted runner images named above, including launch through the distributed launcher scripts. They were **not** tested on Windows 10/11 desktop editions, other Linux distributions or macOS versions, or after a normal browser download with quarantine attributes (SmartScreen/Gatekeeper behaviour is not verified). A manual acceptance procedure is in [docs/PACKAGING.md](docs/PACKAGING.md).
 
 ## Start
 
 | | Steps |
 |---|---|
-| **Windows** | Extract the ZIP → double-click **`Start ARGOS Defense.cmd`**. SmartScreen may warn because the executable is not code-signed. Check the file hash against `SHA256SUMS`, then choose *More info → Run anyway* if you decide to trust it. |
+| **Windows** | Extract the ZIP → double-click **`Start ARGOS Defense.cmd`**. SmartScreen may warn because the executable is not code-signed. Verify the file hash against `SHA256SUMS` first; whether to run unsigned software is your (or your organization’s) decision. Do not disable SmartScreen or antivirus. |
 | **macOS** | Double-click the ZIP to extract it → double-click **`Start ARGOS Defense.command`**. The build is not notarized, so Gatekeeper may block the first launch. Open *System Settings → Privacy & Security* and click *Open Anyway* (Apple's documented procedure), then launch again. |
-| **Linux** | `tar xzf ARGOS-Defense-0.2.0-linux-x86_64.tar.gz && ./ARGOS-Defense-0.2.0-linux-x86_64/start-argos-defense.sh` |
+| **Linux** | `tar xzf ARGOS-Defense-0.3.0-linux-x86_64.tar.gz && ./ARGOS-Defense-0.3.0-linux-x86_64/start-argos-defense.sh` |
 
 The launcher starts the local server on `http://127.0.0.1:8789` (loopback only) and opens your browser already logged in. Stop it with **Ctrl+C**, or by closing the terminal window.
 
@@ -54,10 +54,15 @@ argos-defense/argos-defense demo          # Windows: argos-defense\argos-defense
 Then start the UI. The **demo-synthetic** case (purple *DEMO/SYNTHETIC* banner) contains generated proxy, identity, Sysmon, Zeek, EDR and agent-audit data with RFC 5737 addresses. It covers an authorized scanner, a password spray, a slow account takeover, a web shell, a service-principal credential addition, an archive-and-upload, and a developer workstation running an LLM agent.
 
 ## Investigate your own data
-1. **Import:** *Import* page → choose the case, adapter, mapping profile (for Splunk) and file. The result lists accepted and rejected records with the actual reasons. CLI: `argos-defense ingest FILE --format FORMAT --case CASE`.
-2. **Analyze:** case page → *Analyze / re-analyze* (CLI: `argos-defense analyze --case CASE`). Re-analysis is idempotent and keeps notes and history.
-3. **Investigate:** *Alert queue* with filters for severity, confidence, activity, automation, LLM and framework → alert page showing the six dimensions, matched predicates, timeline, evidence references (each opens the normalized record and the original line), alternative hypotheses, missing visibility, and data that would resolve the uncertainty. Add notes and set status. *Entities* shows accounts, devices, processes, sessions and IPs, keeping observed relationships separate from inferred ones.
-4. **Export:** *Export JSON / Export HTML / Alerts CSV* (CLI: `argos-defense report --case CASE --format html`). Exports include the timeline, evidence references, versions and configuration. Secrets are redacted and spreadsheet formulas neutralized.
+1. **Import:** *Import* page → case, adapter, mapping profile (Splunk) and file. The result lists accepted, rejected and skipped records with the actual reasons. Optionally **declare collection coverage** (start, end, scope `all` / `tenant:<id>` / `host:<name>` / `app_id:<id>`, and how you know the export is complete). ARGOS does not verify that declaration and labels it *analyst-declared*; without it, absence of follow-up activity is reported only as *not observed in the supplied records*. CLI: `argos-defense ingest FILE --format FORMAT --case CASE [--coverage-start … --coverage-end … --coverage-scope …]`.
+2. **Correct an import:** if a file was imported with the wrong time zone or mapping, *Reprocess* it from the case page (CLI `ingest … --reprocess`). This creates a new **revision** from the retained original bytes; exactly one revision is active, older ones stay available (`argos-defense inputs --case CASE`, `activate <input_id>`), and a failed reprocess keeps the previous usable revision.
+3. **Analyze:** case page → *Analyze / re-analyze*. Analysis runs as a background job with progress and *Cancel*; a cancelled or failed run never replaces the last successful one. Each run stores an immutable snapshot of its alerts, assessment, rules and configuration. CLI: `argos-defense analyze --case CASE`.
+4. **Check what could run:** the case page lists per-rule eligibility (matched, evaluable/no match, no candidate records, missing required telemetry, insufficient history, vantage absent, disabled, processing error), per-source missing fields, rejects, declared coverage and observation gaps. A rule that could not run is not evidence of absence.
+5. **Investigate:** *Alert queue* (filters for severity, confidence, activity, automation, LLM, framework) → alert page with the six dimensions, matched predicates, terminal action outcome, timeline, evidence references (each opens the normalized record and the **exact original record**, located by a format-aware locator and integrity-checked), alternatives, missing visibility and resolving data. Set a status with a **rationale** (history kept); add notes. Status is review feedback only: it does not retrain rules or suppress future activity.
+6. **Compare runs:** *Compare runs* on the case page (CLI `argos-defense runs --case CASE`, `compare-runs RUN_A RUN_B`) shows added, removed and changed alerts and whether data, rules, configuration or engine differed between the runs.
+7. **Export:** *Export JSON / HTML / Alerts CSV* for the latest or any earlier run (`argos-defense report --case CASE --format html [--run RUN]`). Exports come from the run's snapshot and state their basis.
+
+**Secrets and raw evidence:** UI pages, API responses, exports, notes, status rationales, rejected-record excerpts and optional-LLM input are redacted (key-aware and pattern-based; not every secret format can be recognized). Original files are kept byte-for-byte in owner-private storage. An authenticated analyst can open one record's unredacted view explicitly (*Show raw* on the event page, `?raw=1`); that page is clearly labelled.
 
 ![Alert detail (synthetic demo)](docs/screenshots/04-alert-detail.png)
 
@@ -66,9 +71,9 @@ Then start the UI. The **demo-synthetic** case (purple *DEMO/SYNTHETIC* banner) 
 |---|---|---|
 | A · Threat activity | severity + informational / suspicious / likely malicious | observed actions; independent of whether a human or an LLM acted (slow attacks still alert) |
 | B · Automation | unknown · consistent with automation · observed automation · observed manual component · mixed | timing alone gives only "consistent"; agent audit records or the authorized-automation registry give "observed"; human-approval records give a manual component |
-| C · LLM involvement | unknown · possible · directly observed | a connection to an AI provider gives "possible" only; "directly observed" needs model-audit records linked to an execution (same session or ProcessGuid). Missing AI evidence never means "human". Victim-side traffic cannot see an attacker's model calls |
+| C · LLM involvement | unknown · possible · directly observed | a connection to an AI provider gives "possible" only; "directly observed" needs a model tool request linked to the executed call by an explicit call id within a namespaced session, or to the endpoint process by ProcessGuid; a tool execution without a model record is automation only. Missing AI evidence never means "human". Victim-side traffic cannot see an attacker's model calls |
 | D · Framework | unknown · consistent with · corroborated presence | experimental fingerprints; presence needs two independent artifacts on one host; execution and responsibility for an incident are never inferred |
-| E · Purpose | observed action + hypothesis + stage (indicator / attempt / observed success) | a hypothesis, not a fact; volume or a successful sign-in is not proof of data theft |
+| E · Purpose | observed action + terminal action outcome (success / failure / unknown) + hypothesis + stage (indicator / attempt / observed success / outcome unknown) | a hypothesis, not a fact; volume or a successful sign-in is not proof of data theft |
 | F · Entities | accounts, service principals, devices, processes, sessions, tenants, IPs, domains | strong vs weak keys; a shared IP never merges accounts; who owns an account is not who controls it |
 
 Confidence (insufficient / low / medium / high) is separate from severity and capped by documented rules. Experimental rules are capped at low, and imported files with unverified provenance at medium. Heuristic evidence scores count each distinct evidence family once and are **not probabilities**. ARGOS never names a person, nationality, threat group or exact model.
@@ -81,30 +86,33 @@ Confidence (insufficient / low / medium / high) is separate from severity and ca
 ## Supported inputs
 | Adapter | Format | What it has been tested against |
 |---|---|---|
-| `native_jsonl` | ARGOS JSONL schema: HTTP, DNS, connections, processes, files, authentication, cloud operations, model interactions, tool executions, human approvals | synthetic fixtures |
+| `native_jsonl` | ARGOS JSONL or JSON-array schema: HTTP, DNS, connections, processes, files, authentication, cloud operations, model interactions (`tool_call_id`, `model_tool_name`), tool executions (`tool_call_id`, `tool_name`), human approvals | synthetic fixtures |
 | `splunk_json` | Splunk JSON/JSONL exports, including `result` wrappers and metadata lines; profiles `proxy`, `auth`, `native` or a custom mapping | schema-shaped fixtures built from documented field names |
-| `splunk_csv` | Splunk CSV with an **explicit** mapping (BOM, quoted newlines) | schema-shaped fixtures |
+| `splunk_csv` | Splunk CSV with an **explicit** mapping (BOM, quoted multi-line fields) | schema-shaped fixtures |
 | `sysmon_xml` | Sysmon events 1/3/11/22 exported to XML, with or without a root element or namespace | schema-shaped fixtures |
 | `zeek_jsonl` | Zeek JSON conn/http/dns logs (epoch or ISO `ts`, `uid` kept); TSV is rejected | schema-shaped fixtures |
 
-No genuine vendor or organizational exports have been tested. EVTX, PCAP and live connectors are not supported. Field reference and byte-direction rules: [docs/DETECTION_MODEL.md](docs/DETECTION_MODEL.md).
+**Continuous file ingestion (opt-in):** `argos-defense watch --case CASE --dir DIR --format native_jsonl [--pattern '*.jsonl']` tails line-oriented files in one explicitly named directory, read-only, with persisted checkpoints, partial-line handling, rotation detection, duplicate suppression and backpressure; `watch --status` shows freshness. It reuses the normal import pipeline. It is not an EDR sensor, vendor connector or proof of continuous coverage, and it never starts by itself.
+
+No genuine vendor or organizational exports have been tested. Binary EVTX, PCAP and live connectors are not supported (EVTX status: capability table). Field reference and byte-direction rules: [docs/DETECTION_MODEL.md](docs/DETECTION_MODEL.md).
 
 ## Data, privacy, updates, backups, uninstall
-- **Data location:** Windows `%LOCALAPPDATA%\ARGOS Defense`, macOS `~/Library/Application Support/ARGOS Defense`, Linux `~/.local/share/argos-defense` (or `$XDG_DATA_HOME`), or `--data-dir` / `ARGOS_HOME`. Inside: `argos.sqlite3`, `cases/` (read-only copies of imported files), `config/` (editable registry and rule overrides), `reports/`, `logs/`, `.session_token`. Nothing is written inside the application folder.
+- **Data location:** Windows `%LOCALAPPDATA%\ARGOS Defense`, macOS `~/Library/Application Support/ARGOS Defense`, Linux `~/.local/share/argos-defense` (or `$XDG_DATA_HOME`), or `--data-dir` / `ARGOS_HOME`. Inside: `argos.sqlite3`, `cases/` (read-only copies of imported files), `config/` (registry and rule overrides), `reports/`, `backups/`, `logs/`, `.session_token`. Nothing is written inside the application folder (checked by content hash in the native smoke test).
+- **Permissions:** directories ARGOS creates are owner-only (POSIX `0700`, files `0600`, originals `0400`; Windows: inheritance removed, access for you, SYSTEM and Administrators). `argos-defense doctor` reports existing locations that other local accounts can read and prints the fix; it does not change folders you created.
 - **Privacy/offline:** no telemetry, no external calls. The optional LLM explainer is disabled by default and refuses remote endpoints unless explicitly allowed.
-- **Update:** extract the new version next to the old one and start it; your data directory is reused. Databases from 0.1.0 are migrated automatically, and a `.v1-backup.sqlite3` copy is kept.
-- **Backup:** stop ARGOS and copy the data directory.
+- **Update:** extract the new version next to the old one and start it; the data directory is reused. Older databases are migrated in one transaction after a verified backup (`argos.v<N>-backup.sqlite3`, made with SQLite's backup API). Runs from before 0.3.0 are kept and labelled *legacy (no snapshot)*.
+- **Backup / restore:** `argos-defense backup [--output FILE.zip]` writes a verified zip (consistent database snapshot, retained originals, configuration, per-file SHA-256 manifest), also while ARGOS is running. `argos-defense verify-backup FILE.zip` checks it. `argos-defense --data-dir NEW_EMPTY_DIR restore FILE.zip` restores into an empty directory only, verifying hashes, integrity and row counts. Backups contain investigation data; store them accordingly.
 - **Uninstall:** delete the extracted folder; delete the data directory to remove all data.
 
 ## Install from source (contributors)
 ```bash
 git clone https://github.com/CSTHUESP/argos-defense && cd argos-defense
 python3 -m venv .venv && source .venv/bin/activate        # Windows: .venv\Scripts\Activate.ps1
-pip install -r requirements.lock -r requirements-dev.lock && pip install --no-deps -e .
+pip install --require-hashes -r requirements-ci.lock && pip install --no-deps --no-build-isolation -e .
 argos-defense doctor && argos-defense demo && argos-defense start
 python -m pytest                       # full suite
 python scripts/validate.py             # synthetic demo scenarios
-python scripts/auth_eval.py            # labeled auth-rule evaluation
+python scripts/eval_v2.py run --set dev # synthetic development evaluation (docs/EVALUATION_PROTOCOL.md)
 ```
 Native packaging: [docs/PACKAGING.md](docs/PACKAGING.md). Rule export to Sigma/SPL: `argos-defense export-rules --output DIR` ([docs/RULE_EXPORTS.md](docs/RULE_EXPORTS.md)).
 
@@ -119,28 +127,40 @@ files ─► adapters (native/Splunk/Sysmon/Zeek) ─► normalization + provena
 ## Signing and integrity
 | | Status |
 |---|---|
-| Windows Authenticode | **not signed** (no certificate configured) |
+| Windows Authenticode | **not signed** (no certificate available) |
 | Apple Developer ID / notarization | **not signed / not notarized** (ad-hoc signature only) |
-| GitHub artifact attestations | **not generated** (unavailable for private repositories outside GitHub Enterprise Cloud) |
+| GitHub artifact attestations (build provenance) | generated by the release workflow when the repository is public; `release-manifest.json` records the actual status of each release |
 | Checksums | `SHA256SUMS` + `release-manifest.json`: integrity only, not proof of who published the files |
 
-## Capability status (v0.2.0)
-| Capability | Status |
-|---|---|
-| Import/normalize native, Splunk JSON/CSV, Sysmon XML, Zeek JSON | IMPLEMENTED_AND_TESTED (synthetic / schema-shaped data) |
-| 27 rules, six-dimension assessment, registry, IOC validity, baselines | IMPLEMENTED_AND_TESTED (synthetic) |
-| Web UI, auth/CSRF, notes/status, exports | IMPLEMENTED_AND_TESTED |
-| Native packages Windows x64 / Linux x64 / macOS arm64 / macOS x64 | IMPLEMENTED_AND_TESTED on the CI runner images listed above |
-| Sigma / SPL export (faithful subset) | IMPLEMENTED_AND_TESTED for syntax/structure; NOT executed in Splunk or a Sigma backend |
-| Optional Ollama explainer | IMPLEMENTED_NOT_VERIFIED with a real model (tested against a simulated endpoint) |
-| Genuine vendor exports, Windows/macOS desktop editions | NOT VERIFIED |
-| EVTX, PCAP, live EDR/SIEM connectors, automatic containment, universal human-vs-LLM classifier | NOT_IMPLEMENTED (out of scope) |
-| Real-world detection accuracy | NOT MEASURED |
+## Capability status (v0.3.0)
+Implementation and verification are separate. Verification basis: **S** synthetic data, **R** native GitHub runner, **D** desktop machine, **B** real backend, **G** genuine export.
 
-Validation details: [docs/RELEASE_VALIDATION.md](docs/RELEASE_VALIDATION.md), [docs/VALIDATION.md](docs/VALIDATION.md), [docs/AUTH_RULE_EVALUATION.md](docs/AUTH_RULE_EVALUATION.md). Threat model: [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md).
+| Capability | Status | Basis |
+|---|---|---|
+| Import/normalize native, Splunk JSON/CSV, Sysmon XML, Zeek JSON; format-aware evidence locators | IMPLEMENTED_AND_VERIFIED | S |
+| Import revisions / reprocessing with corrected options | IMPLEMENTED_AND_VERIFIED | S |
+| 29 rules, six-dimension assessment, terminal action outcomes, declared coverage, entity-scoped baselines | IMPLEMENTED_AND_VERIFIED | S |
+| Rule eligibility / data-quality diagnostics | IMPLEMENTED_AND_VERIFIED | S |
+| Immutable run snapshots, per-run export, run comparison, status rationale history | IMPLEMENTED_AND_VERIFIED | S |
+| Background analysis jobs (progress, cancel, per-case serialization, restart recovery) | IMPLEMENTED_AND_VERIFIED | S, R |
+| Redaction (UI/API/exports/notes/rejects/LLM input) + explicit raw view | IMPLEMENTED_AND_VERIFIED for the tested formats; pattern limits remain | S |
+| Owner-private storage, doctor permission checks | IMPLEMENTED_AND_VERIFIED (POSIX; Windows ACL in Windows CI) | R |
+| Backup / verify / restore; migration with verified backup | IMPLEMENTED_AND_VERIFIED | S, R |
+| Opt-in read-only directory watcher | IMPLEMENTED_AND_VERIFIED (dedicated synthetic directory) | S |
+| Native packages Windows x64 / Linux x64 / macOS arm64 / macOS x64 incl. launcher scripts, browser opening, update, backup/restore | IMPLEMENTED_AND_VERIFIED on runner images | R |
+| Desktop acceptance (Windows 11, macOS Gatekeeper with quarantine, other distributions) | IMPLEMENTED_NOT_EXTERNALLY_VERIFIED (procedure provided; no desktop available) | — |
+| Sigma export (faithful subset) | IMPLEMENTED_AND_VERIFIED for structure and selection semantics against a reference matcher; not executed in a Sigma backend | S |
+| SPL export | IMPLEMENTED_NOT_EXTERNALLY_VERIFIED (structure only; no Splunk instance) | — |
+| Optional Ollama explainer | IMPLEMENTED_NOT_EXTERNALLY_VERIFIED (simulated provider only) | S |
+| Binary EVTX import | BLOCKED_EXTERNAL_DEPENDENCY (parser could not be installed or executed in the build session; no genuine Sysmon EVTX sample) | — |
+| Analysis above 300,000 events per case | NOT_IMPLEMENTED_WITH_REASON (in-memory analysis; 1,000,000 events exceeded 7 GiB; larger cases are refused with a clear error) | S |
+| PCAP, live EDR/SIEM connectors, automatic containment, universal human-vs-LLM classifier | NOT_IMPLEMENTED_WITH_REASON (out of scope) | — |
+| Real-world detection accuracy | NOT MEASURED (no genuine labelled data) | — |
+
+Validation details: [docs/RELEASE_VALIDATION.md](docs/RELEASE_VALIDATION.md), [docs/EVALUATION_PROTOCOL.md](docs/EVALUATION_PROTOCOL.md), [docs/AUDIT_REMEDIATION.md](docs/AUDIT_REMEDIATION.md), [docs/PERFORMANCE.md](docs/PERFORMANCE.md), [docs/DEPENDENCIES.md](docs/DEPENDENCIES.md). Threat model: [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md).
 
 ## Known limitations
-Synthetic validation only. The authentication rules still alert at low confidence on repeated typos from a user's own device, and they miss an attacker who both rotates source addresses and interleaves with the real user's sign-ins. Analysis is in-memory per case (tested with 12,000 events). Secret redaction is pattern-based. There is a single local user, and a loopback UI without TLS.
+Synthetic validation only, and the rule author also generated the evaluation data. On the reserved synthetic set the rules raised a low-or-higher alert for 68 of 200 benign units: repeated typos from a known device, legitimate credential rotation, some stale-credential and multi-device users, and developer AI agents (correctly reported as observed LLM tool use, at low severity). They missed all 20 attacks that rotate source addresses while interleaving with the real user's sign-ins. Analysis is in memory (supported up to 300,000 events per case). Redaction is key- and pattern-based. Declared coverage is the analyst's statement. Single local user; loopback UI without TLS.
 
 ## License
 ARGOS Defense: Apache-2.0 ([LICENSE](LICENSE); basis in [docs/LICENSING.md](docs/LICENSING.md)). Third-party components keep their own licenses ([THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)). ARTEX (AGPL-3.0) is not distributed.

@@ -47,3 +47,7 @@ pytest 75 passed · validate.py 15/15 scenarios · 12k events: ingest ~3.1 s, an
   pytest 148 passed. tests/conftest.py now uses a private config copy (a test previously wrote into packaged defaults — reverted).
 - Next: F11/F12/F13 (release preflight, asset contract + negative tests, content-hash fingerprint), packaging launcher tests,
   evaluation protocol v2, benchmarks, Sigma/SPL review, dependency locks/audit, docs, CI, release.
+- 14:20 F11–F13 done (preflight, release contract, verify_release, content fingerprint); eval v2 frozen; reserved set inspected once (13:04Z, c5304de);
+  benchmarks 12k/100k ok, 1M analysis OOM-killed → 300k limit; hashed locks from deps runs; Sigma `|re|i` fix; docs updated for 0.3.0.
+  EVTX: BLOCKED (PyPI unreachable locally; executing a git-cloned parser was not permitted in the session; no genuine Sysmon EVTX sample).
+- Next: CI green on final main SHA → release.yml dry run (explicit sha) → create-tag.yml dispatch (tag push from session returns 403) with publish=true → verify.

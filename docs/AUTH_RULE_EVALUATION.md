@@ -1,4 +1,6 @@
-# Evaluation of the failures-then-success authentication rules (v0.2.0)
+# Evaluation of the failures-then-success authentication rules (v0.2.0, historical)
+
+> Superseded for v0.3.0 by the frozen development/reserved protocol in [EVALUATION_PROTOCOL.md](EVALUATION_PROTOCOL.md). The figures below are kept unchanged as the v0.2.0 record.
 
 **Scope:** synthetic, labeled identity sequences only. Real-world false-positive and detection rates are **NOT MEASURED**.
 Reproduce: `python scripts/auth_eval.py --write-fixtures --json reports/auth_eval_results.json` and `pytest tests/test_auth_eval.py`.

@@ -2,8 +2,10 @@
 
 `argos-defense export-rules --output DIR [--target sigma|spl|all]` writes `DIR/sigma/*.yml`, `DIR/spl/*.spl` and `DIR/export-report.json`.
 
-- **Verified:** YAML/structure checks for Sigma (required keys, selection + condition) and structural checks for SPL (balanced quotes, parentheses, backticks). Unit tests in `tests/test_rules.py`.
-- **Not verified:** execution in Splunk or in any Sigma backend/converter. Treat exports as starting points to review.
+- **Verified:** YAML/structure checks for Sigma (required keys, selection + condition) and structural checks for SPL (balanced quotes, parentheses, backticks) — `tests/test_rules.py`. **Sigma selection semantics** (v0.3.0): `tests/test_sigma_semantics.py` evaluates every exported Sigma rule with a reference matcher for the emitted subset (AND across keys, OR within lists, case-insensitive strings, `endswith`/`startswith`/`contains`/`re|i`/`exists`/`cidr`) and compares it event by event with the native predicate on a corpus of positive and negative process/file records. This found and fixed one divergence: native regexes are case-insensitive, so regex predicates are now exported as `|re|i`.
+- **Known semantic difference:** native basename predicates (`process_name in [cmd.exe]`) also match a bare file name without directory; the Sigma form `Image|endswith: ['\\cmd.exe', '/cmd.exe']` does not. Sysmon `Image`/`ParentImage` values are full paths, so this matters only for non-standard sources.
+- **Not verified:** execution in Splunk or in any Sigma backend/converter (no backend available; none was created for this test). SPL semantics are not executed. Treat exports as starting points to review.
+- **Rejected, not approximated:** sequences (including all model/tool linkage rules), baselines, IOC lookups and median-interval thresholds are never exported.
 
 ## What is exported
 | ARGOS construct | Sigma | SPL |

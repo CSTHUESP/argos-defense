@@ -15,22 +15,22 @@ ARGOS importa ficheros de telemetría que tú aportas (proxy, identidad, endpoin
 
 Responde *desconocido* cuando los datos no permiten decidir. No identifica personas, grupos, nacionalidades ni modelos concretos. No bloquea, aísla ni escanea nada, y no envía datos fuera del equipo.
 
-## Descarga (v0.2.0)
-Página de la versión: https://github.com/CSTHUESP/argos-defense/releases/tag/v0.2.0 (repositorio privado: requiere una cuenta con acceso).
+## Descarga (v0.3.0)
+Página de la versión: https://github.com/CSTHUESP/argos-defense/releases/tag/v0.3.0. Los ficheros solo se publican cuando todos los paquetes superan el contrato de publicación y los bytes subidos se han vuelto a descargar y verificar.
 
 | Sistema | Fichero | Probado en |
 |---|---|---|
-| Windows 64 bits (Intel/AMD) | `ARGOS-Defense-0.2.0-windows-x86_64.zip` | runner `windows-2022` |
-| Linux 64 bits (glibc ≥ 2.35) | `ARGOS-Defense-0.2.0-linux-x86_64.tar.gz` | runner `ubuntu-22.04` |
-| Mac Apple Silicon | `ARGOS-Defense-0.2.0-macos-arm64.zip` | runner `macos-15` |
-| Mac Intel | `ARGOS-Defense-0.2.0-macos-x86_64.zip` | runner `macos-15-intel` |
+| Windows 64 bits (Intel/AMD) | [ARGOS-Defense-0.3.0-windows-x86_64.zip](https://github.com/CSTHUESP/argos-defense/releases/download/v0.3.0/ARGOS-Defense-0.3.0-windows-x86_64.zip) | runner `windows-2022` |
+| Linux 64 bits (glibc ≥ 2.35) | [ARGOS-Defense-0.3.0-linux-x86_64.tar.gz](https://github.com/CSTHUESP/argos-defense/releases/download/v0.3.0/ARGOS-Defense-0.3.0-linux-x86_64.tar.gz) | runner `ubuntu-22.04` |
+| Mac Apple Silicon | [ARGOS-Defense-0.3.0-macos-arm64.zip](https://github.com/CSTHUESP/argos-defense/releases/download/v0.3.0/ARGOS-Defense-0.3.0-macos-arm64.zip) | runner `macos-15` |
+| Mac Intel | [ARGOS-Defense-0.3.0-macos-x86_64.zip](https://github.com/CSTHUESP/argos-defense/releases/download/v0.3.0/ARGOS-Defense-0.3.0-macos-x86_64.zip) | runner `macos-15-intel` |
 
-Los paquetes no necesitan Python instalado y funcionan sin conexión. Comprueba el hash con `SHA256SUMS`. Solo se han probado en esas imágenes de GitHub, no en Windows 10/11 de escritorio ni en otras versiones de macOS.
+Los paquetes no necesitan Python instalado y funcionan sin conexión. Comprueba el hash con `SHA256SUMS`. Solo se han probado en esas imágenes de GitHub (incluido el arranque mediante los lanzadores), no en Windows 10/11 de escritorio, otras distribuciones o versiones de macOS, ni tras una descarga normal con atributos de cuarentena.
 
 ## Arranque
-- **Windows:** descomprime y haz doble clic en `Start ARGOS Defense.cmd`. SmartScreen puede avisar porque no está firmado; comprueba antes el hash.
-- **macOS:** descomprime y haz doble clic en `Start ARGOS Defense.command`. No está notarizado: si Gatekeeper lo bloquea, ve a *Ajustes del Sistema → Privacidad y seguridad → Abrir igualmente*.
-- **Linux:** `tar xzf ARGOS-Defense-0.2.0-linux-x86_64.tar.gz && ./ARGOS-Defense-0.2.0-linux-x86_64/start-argos-defense.sh`
+- **Windows:** descomprime y haz doble clic en `Start ARGOS Defense.cmd`. SmartScreen puede avisar porque no está firmado; comprueba antes el hash. Decidir si ejecutas software sin firmar es cosa tuya o de tu organización; no desactives SmartScreen ni el antivirus.
+- **macOS:** descomprime y haz doble clic en `Start ARGOS Defense.command`. No está notarizado: si Gatekeeper lo bloquea, ve a *Ajustes del Sistema → Privacidad y seguridad → Abrir igualmente* (procedimiento documentado por Apple).
+- **Linux:** `tar xzf ARGOS-Defense-0.3.0-linux-x86_64.tar.gz && ./ARGOS-Defense-0.3.0-linux-x86_64/start-argos-defense.sh`
 
 Se abre el navegador en `http://127.0.0.1:8789` (solo local) con la sesión iniciada. El token está en `<carpeta de datos>/.session_token` y no se imprime por defecto. Para parar, pulsa Ctrl+C o cierra la ventana.
 
@@ -38,16 +38,27 @@ Se abre el navegador en `http://127.0.0.1:8789` (solo local) con la sesión inic
 `argos-defense/argos-defense demo` crea el caso **demo-synthetic**, marcado como DEMO/SYNTHETIC.
 
 ## Flujo de trabajo
-1. **Importar:** página *Import* o `ingest`.
-2. **Analizar:** botón *Analyze* o `analyze`.
-3. **Investigar:** cola de alertas, detalle, evidencias, entidades y notas.
-4. **Exportar:** JSON, HTML o CSV.
+1. **Importar:** página *Import* o `ingest`. Puedes **declarar la cobertura de recogida** (inicio, fin, ámbito `all` / `tenant:<id>` / `host:<nombre>` / `app_id:<id>`). ARGOS no la verifica y la marca como *declarada por el analista*; sin ella, la ausencia de actividad posterior solo se informa como *no observada en los registros aportados*.
+2. **Corregir una importación:** *Reprocess* (o `ingest … --reprocess`) crea una nueva **revisión** con otras opciones (zona horaria, mapeo) a partir del original conservado. Solo una revisión está activa; las anteriores se conservan y un reproceso fallido mantiene la revisión utilizable.
+3. **Analizar:** botón *Analyze* (trabajo en segundo plano con progreso y cancelación) o `analyze`. Cada ejecución guarda una instantánea inmutable de alertas, valoración, reglas y configuración; una ejecución fallida o cancelada no sustituye a la última correcta.
+4. **Diagnóstico:** el caso muestra qué reglas pudieron evaluarse y por qué no otras (telemetría ausente, historial insuficiente, etc.), campos que faltan, rechazos, cobertura declarada y huecos.
+5. **Investigar:** cola de alertas, detalle con las seis dimensiones y el resultado final de la acción, evidencias (con el registro original exacto, verificado por hash), entidades, notas y estado con justificación.
+6. **Comparar ejecuciones:** `runs`, `compare-runs` o *Compare runs* en el caso.
+7. **Exportar:** JSON, HTML o CSV de la última ejecución o de una anterior (`report --run`).
 
-## Datos y privacidad
-Los datos se guardan en `%LOCALAPPDATA%\ARGOS Defense` (Windows), `~/Library/Application Support/ARGOS Defense` (macOS) o `~/.local/share/argos-defense` (Linux), o en la carpeta que indiques con `--data-dir`.
+Los secretos se ocultan en la interfaz, la API, las exportaciones, las notas y los extractos de registros rechazados (detección por claves y patrones: no reconoce todos los formatos). Los originales se conservan intactos; un analista autenticado puede ver un registro sin ocultar de forma explícita (*Show raw*).
 
-- **Copia de seguridad:** copia esa carpeta.
+**Ingesta continua de ficheros (opcional):** `argos-defense watch --case CASO --dir CARPETA --format native_jsonl` lee en solo lectura una carpeta indicada explícitamente, con puntos de control, líneas parciales, rotación y duplicados. No es un sensor EDR ni prueba de cobertura continua.
+
+## Datos, privacidad, copias y actualización
+Los datos se guardan en `%LOCALAPPDATA%\ARGOS Defense` (Windows), `~/Library/Application Support/ARGOS Defense` (macOS) o `~/.local/share/argos-defense` (Linux), o en la carpeta que indiques con `--data-dir`. Las carpetas que crea ARGOS solo son accesibles para tu usuario; `doctor` avisa si una ubicación existente es accesible para otras cuentas. Nada sale del equipo.
+
+- **Copia de seguridad:** `argos-defense backup` (zip verificado con instantánea consistente de la base de datos, originales y configuración); `verify-backup`; `--data-dir CARPETA_VACÍA restore FICHERO.zip`.
+- **Actualización:** descomprime la nueva versión y arráncala; la base de datos se migra tras una copia verificada. Las ejecuciones anteriores a 0.3.0 se conservan como *legacy (sin instantánea)*.
 - **Desinstalar:** borra la carpeta del programa y, si quieres, la de datos.
+
+## Limitaciones
+Validación solo con datos sintéticos generados por el mismo autor de las reglas. En el conjunto reservado, 68 de 200 unidades benignas generaron alguna alerta de severidad baja o superior, y no se detectó ninguno de los 20 ataques que rotan direcciones intercalándose con los accesos del usuario legítimo. El análisis es en memoria (hasta 300.000 eventos por caso). Sin importación EVTX binaria (dependencia externa no disponible). Detalles en [docs/EVALUATION_PROTOCOL.md](docs/EVALUATION_PROTOCOL.md).
 
 ## Relación con ARTEX
 - Se inspira en su arquitectura (orquestación, grafo de evidencias, registro de llamadas al LLM, aprobación humana), pero **no reutiliza su código**. ARTEX es AGPL-3.0 y no se distribuye.
@@ -57,7 +68,7 @@ Los datos se guardan en `%LOCALAPPDATA%\ARGOS Defense` (Windows), `~/Library/App
 ## Firma
 - Windows: sin firma Authenticode.
 - macOS: solo firma ad-hoc; sin Developer ID y sin notarización.
-- Sin atestaciones de GitHub (no disponibles para repositorios privados fuera de GitHub Enterprise Cloud).
+- Atestaciones de procedencia de GitHub: se generan cuando el repositorio es público; `release-manifest.json` indica el estado real de cada versión.
 
 Los checksums garantizan integridad, no la identidad de quien publica.
 
