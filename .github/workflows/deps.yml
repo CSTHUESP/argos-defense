@@ -26,15 +26,15 @@ jobs:
           python-version: "3.12"
       - name: Install resolver and auditor (versions recorded below)
         run: |
-          python -m pip install --upgrade uv pip-audit
+          python -m pip install uv==0.13.9 pip-audit==2.10.1
           echo "TOOLS: uv $(uv --version) | $(pip-audit --version) | date $(date -u +%FT%TZ)"
       - name: Resolve universal hashed locks
         run: |
           mkdir -p out
           for f in requirements.lock requirements-dev.lock requirements-build.in; do
             base=$(basename "$f" .in); base=${base%.lock}
-            uv pip compile --universal --generate-hashes --python-version 3.11 --no-header --emit-index-url=false \
-              "$f" -o "out/${base}.hashed.txt" 2>&1 | tail -3 || true
+            uv pip compile --universal --generate-hashes --python-version 3.11 --no-header \
+              "$f" -o "out/${base}.hashed.txt"
             test -s "out/${base}.hashed.txt"
             echo "===== BEGIN out/${base}.hashed.txt ====="; cat "out/${base}.hashed.txt"; echo "===== END out/${base}.hashed.txt ====="
           done

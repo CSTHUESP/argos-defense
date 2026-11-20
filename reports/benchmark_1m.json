@@ -1,0 +1,78 @@
+{
+  "declared_budgets": {
+    "12000": {
+      "ingest": [
+        60,
+        1024
+      ],
+      "analyze": [
+        120,
+        1536
+      ]
+    },
+    "100000": {
+      "ingest": [
+        300,
+        2048
+      ],
+      "analyze": [
+        900,
+        4096
+      ]
+    },
+    "1000000": {
+      "ingest": [
+        1800,
+        4096
+      ],
+      "analyze": [
+        3600,
+        6144
+      ]
+    }
+  },
+  "hardware": {
+    "platform": "Linux-6.18.44-fc-v726-x86_64-with-glibc2.39",
+    "machine": "x86_64",
+    "cpus": 2,
+    "memory": "MemTotal:        8216636 kB",
+    "python": "3.13.18"
+  },
+  "dataset": "argos.synthetic.generate_bulk: deterministic synthetic mix (identity, proxy/http, endpoint, dns), 300+ identities",
+  "started_at": "2026-11-20T13:07:42Z",
+  "runs": [
+    {
+      "events": 1000000,
+      "file_mib": 176.7,
+      "generate": {
+        "status": "ok",
+        "elapsed_s": 7.8,
+        "peak_rss_mib": 21.3,
+        "result": {
+          "bytes": 185320111,
+          "seconds": 7.6
+        }
+      },
+      "ingest": {
+        "status": "ok",
+        "elapsed_s": 114.2,
+        "peak_rss_mib": 28.7,
+        "result": {
+          "status": "imported",
+          "accepted": 1000000,
+          "rejected": 0,
+          "total": 1000000,
+          "seconds": 113.99
+        }
+      },
+      "analyze": {
+        "status": "error",
+        "elapsed_s": 215.6,
+        "peak_rss_mib": 6116.4,
+        "error": ""
+      },
+      "db_mib": 2077.7
+    }
+  ],
+  "finished_at": "2026-11-20T13:13:21Z"
+}
