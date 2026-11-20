@@ -312,7 +312,24 @@ def build_parser():
     return p
 
 
+def _utf8_when_redirected():
+    """On Windows, redirected stdout/stderr default to the legacy ANSI code page (e.g. cp1252), so printing
+    paths such as 'Prüfung 测试' raised UnicodeEncodeError. When output is a pipe/file, write UTF-8;
+    interactive consoles are left unchanged. Unencodable characters never crash the program."""
+    for stream in (sys.stdout, sys.stderr):
+        if stream is None or not hasattr(stream, "reconfigure"):
+            continue
+        try:
+            if not stream.isatty():
+                stream.reconfigure(encoding="utf-8", errors="backslashreplace")
+            else:
+                stream.reconfigure(errors="backslashreplace")
+        except (OSError, ValueError):
+            pass
+
+
 def main(argv=None):
+    _utf8_when_redirected()
     argv = list(sys.argv[1:] if argv is None else argv)
     parser = build_parser()
     if not argv and is_frozen():

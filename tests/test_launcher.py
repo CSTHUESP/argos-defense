@@ -142,3 +142,13 @@ def test_frozen_entry_defaults_to_start(monkeypatch):
     monkeypatch.setattr(cli, "is_frozen", lambda: True)
     monkeypatch.setattr(cli, "cmd_start", lambda a, s: called.setdefault("start", a.no_browser) or 0)
     assert cli.main([]) == 0 and called["start"] is False
+
+
+def test_redirected_output_is_utf8_even_with_legacy_codepage(tmp_path):
+    # Simulates Windows: a redirected stream with a legacy code page must not crash on non-ASCII paths.
+    env = {**ENV, "PYTHONIOENCODING": "cp1252"}
+    home = tmp_path / "Prüfung 测试"
+    r = subprocess.run([sys.executable, "-m", "argos", "--data-dir", str(home), "doctor"], capture_output=True, env=env, timeout=120)
+    assert r.returncode == 0, r.stderr.decode("utf-8", "replace")
+    out = r.stdout.decode("utf-8")
+    assert "测试" in out and "RESULT: OK" in out

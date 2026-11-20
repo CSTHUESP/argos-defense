@@ -28,6 +28,7 @@ import zipfile
 from pathlib import Path
 
 RESULTS: list[dict] = []
+SERVERS: list = []
 LOG: list[str] = []
 SECRETS: list[str] = []
 
@@ -103,6 +104,7 @@ class Server:
         if sys.platform.startswith("win"):
             kw["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
         self.out = open(self.cwd / f"server-{int(time.time() * 1000)}.log", "w+", encoding="utf-8")
+        SERVERS.append(self)
         self.proc = subprocess.Popen([str(self.exe), "--data-dir", str(self.data), "start", "--no-browser", "--port", "0"],
                                      cwd=self.cwd, env=clean_env(), stdout=self.out, stderr=subprocess.STDOUT, **kw)
         for _ in range(600):
@@ -199,7 +201,19 @@ def make_upload(dir_: Path) -> Path:
     return p
 
 
+def kill_leftovers():
+    for s in SERVERS:
+        if s.proc is not None and s.proc.poll() is None:
+            s.proc.kill()
+            try:
+                s.proc.wait(30)
+            except subprocess.TimeoutExpired:
+                pass
+
+
 def main(argv=None):
+    for stream in (sys.stdout, sys.stderr):
+        stream.reconfigure(encoding="utf-8", errors="replace")
     ap = argparse.ArgumentParser()
     ap.add_argument("--archive", required=True)
     ap.add_argument("--out", default="smoke-results")
@@ -289,6 +303,8 @@ def main(argv=None):
         record("logs: session token never printed", all(s not in logs for s in SECRETS), "")
     except Exception as exc:  # noqa: BLE001
         record("harness: unexpected error", False, f"{type(exc).__name__}: {exc}\n{traceback.format_exc()[-1500:]}")
+    finally:
+        kill_leftovers()
     passed = all(r["pass"] for r in RESULTS) and len(RESULTS) >= 20
     res = {"overall_pass": passed, "checks_total": len(RESULTS), "checks_passed": sum(r["pass"] for r in RESULTS), **meta,
            "results": RESULTS, "note": "the application under test is the extracted native executable; Playwright/harness run in the runner's Python"}

@@ -1,93 +1,146 @@
-# ARGOS Defense 0.1.0
+# ARGOS Defense
 
-Local defensive investigation of **supplied telemetry files**. ARGOS imports logs, correlates them per case, runs declarative detection rules and explains what the evidence supports along six separate dimensions: **threat activity, automation, LLM involvement, framework (e.g. ARTEX), purpose, entities**. Uncertainty is part of every finding: ARGOS returns *unknown* / *insufficient evidence* rather than guessing, and never identifies a person, nationality, threat group or exact model from IPs, speed, language or style.
+**Local defensive investigation framework for explainable analysis of suspicious, automated, and LLM-assisted activity.**
 
-It is batch analysis — **not** a real-time sensor, EDR agent or live product integration — and performs no blocking, isolation, scanning or other response.
+> **Experimental detection; real-world accuracy not measured.** All validation so far uses synthetic data.
 
-## Install (Linux/macOS)
-```bash
-cd argos-defense
-python3 -m venv .venv                      # offline: python3 -m venv --system-site-packages .venv
-.venv/bin/pip install -r requirements.lock # pinned versions verified in the build env
-.venv/bin/pip install --no-deps --no-build-isolation -e .
-source .venv/bin/activate
-```
-Or simply `scripts/start.sh --demo` (creates the venv if missing, runs doctor, builds the demo, starts the server).
-Windows: `powershell -ExecutionPolicy Bypass -File scripts\start.ps1 -Demo` (the flag applies to that process only; nothing global is changed). **The PowerShell launcher was not tested** (built on Linux).
+[Español: README.es.md](README.es.md) · [Changelog](CHANGELOG.md) · [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md)
 
-## Quick start (verified commands)
-```bash
-python -m argos doctor
-python -m argos demo                                   # separate DEMO/SYNTHETIC case "demo-synthetic"
-python -m argos serve --host 127.0.0.1 --port 8789     # prints http://127.0.0.1:8789/login?token=...
-python -m argos report --case demo-synthetic --format html --output reports/demo.html
-python -m pytest
-```
-Open the printed login URL (token also in `data/.session_token`). API clients use `Authorization: Bearer <token>`.
+ARGOS Defense imports telemetry files you supply (proxy, identity, endpoint, network and AI-agent audit logs), correlates them per case, runs declarative detection rules and explains **what the evidence supports and what it does not**. It is built for a question that agentic offensive tools such as ARTEX make urgent: *is this activity automated, is an LLM involved, is a known framework present, what is the actor after, and which accounts, hosts and processes are involved?* ARGOS keeps those questions separate and answers *unknown* when the data cannot tell.
 
-## Complete example with your own files
-```bash
-python -m argos ingest proxy.csv   --format splunk_csv  --profile proxy --case incident-42
-python -m argos ingest signins.json --format splunk_json --profile auth  --case incident-42
-python -m argos ingest sysmon.xml  --format sysmon_xml  --case incident-42
-python -m argos ingest conn.log    --format zeek_jsonl  --zeek-log conn --case incident-42
-python -m argos ingest audit.jsonl --format native_jsonl --case incident-42 --assume-tz Europe/Budapest
-python -m argos analyze --case incident-42
-python -m argos alerts  --case incident-42
-python -m argos attest <input_id> --trust analyst_attested --note "exported by me from the IdP console on 2026-11-20"
-python -m argos report  --case incident-42 --format json --output reports/incident-42.json
-```
-Workflow in the UI: **Import → case page → Analyze → Alert queue → alert → evidence → notes/status → Export JSON/HTML/CSV**.
+It is batch analysis on your own machine: not a real-time sensor, EDR agent or SIEM connector. It performs no blocking, isolation, scanning or other response. No data leaves the machine by default.
 
-## Supported formats
-| Format | Adapter | Notes |
+![Case assessment (synthetic demo)](docs/screenshots/02-case-assessment.png)
+
+## Download
+
+**v0.2.0** — [Release page](https://github.com/CSTHUESP/argos-defense/releases/tag/v0.2.0). The repository is private: downloads require a GitHub account with access to it.
+
+| Your system | Download | Built and smoke-tested on |
 |---|---|---|
-| ARGOS native JSONL | `native_jsonl` | all event kinds: http, dns, network_connection, process_start, file_create, authentication, cloud_operation, model_interaction, tool_execution, human_approval. Generic route for identity/cloud/agent-audit products **without** a specific adapter |
-| Splunk JSON/JSONL export | `splunk_json` | records may be wrapped in `result`; profiles `proxy`, `auth`, `native` or a custom mapping |
-| Splunk CSV export | `splunk_csv` | **explicit** mapping required (`--profile` or `--mapping file.yaml`) |
-| Sysmon exported to XML | `sysmon_xml` | EventID 1, 3, 11, 22; other IDs rejected with reason. **Binary EVTX not supported** |
-| Zeek JSON logs | `zeek_jsonl` | conn, http, dns; `uid` preserved |
+| Windows 10/11 or Server, 64-bit Intel/AMD | [ARGOS-Defense-0.2.0-windows-x86_64.zip](https://github.com/CSTHUESP/argos-defense/releases/download/v0.2.0/ARGOS-Defense-0.2.0-windows-x86_64.zip) | GitHub runner `windows-2022` |
+| Linux, 64-bit Intel/AMD (glibc ≥ 2.35) | [ARGOS-Defense-0.2.0-linux-x86_64.tar.gz](https://github.com/CSTHUESP/argos-defense/releases/download/v0.2.0/ARGOS-Defense-0.2.0-linux-x86_64.tar.gz) | GitHub runner `ubuntu-22.04` |
+| Mac with Apple Silicon (M1/M2/M3/M4) | [ARGOS-Defense-0.2.0-macos-arm64.zip](https://github.com/CSTHUESP/argos-defense/releases/download/v0.2.0/ARGOS-Defense-0.2.0-macos-arm64.zip) | GitHub runner `macos-15` (arm64) |
+| Mac with Intel processor | [ARGOS-Defense-0.2.0-macos-x86_64.zip](https://github.com/CSTHUESP/argos-defense/releases/download/v0.2.0/ARGOS-Defense-0.2.0-macos-x86_64.zip) | GitHub runner `macos-15-intel` |
+| Any OS with Python 3.11+ | [wheel](https://github.com/CSTHUESP/argos-defense/releases/download/v0.2.0/argos_defense-0.2.0-py3-none-any.whl) · [sdist](https://github.com/CSTHUESP/argos-defense/releases/download/v0.2.0/argos_defense-0.2.0.tar.gz) | CI on Ubuntu, Windows, macOS |
 
-No product has a live connector. Entra/M365/AWS/agent-gateway logs must be converted to the native schema or mapped via a Splunk export.
+Also published: `SHA256SUMS`, `release-manifest.json` (commit, build environment, smoke results, signing status), per-platform CycloneDX SBOMs, and the native smoke-test results/logs. Verify a download with `sha256sum -c SHA256SUMS --ignore-missing` (Linux), `shasum -a 256 <file>` (macOS) or `Get-FileHash <file> -Algorithm SHA256` (PowerShell).
 
-### Native schema (one JSON object per line)
-Required: `event_time` (ISO-8601 with zone or epoch; zone-less needs `--assume-tz`), `event_kind`. Optional: `observation_vantage` (`victim_network|managed_endpoint|identity_cloud|agent_or_model_audit`; defaulted from kind with a warning), `action`, `outcome` (`success|failure|unknown`), `tenant_id`, `host`, `user`, `account_type`, `app_id`, `process_guid`, `process_id`, `process_image`, `process_command_line`, `parent_process_guid`, `parent_process_id`, `parent_image`, `session_id`, `correlation_id`, `src_ip`, `src_port`, `dst_ip`, `dst_port`, `protocol`, `http_method`, `http_host`, `http_uri`, `http_status`, `http_user_agent`, `dns_query`, `dns_rcode`, `resource`, `resource_type`, `file_path`, `bytes_src_to_dst`, `bytes_dst_to_src`, `bytes_basis` (**required to declare direction**), `model_provider`, `model_name_declared`, `model_tool_name`, `model_tool_input`, `linked_process_guid`, `message`. Unknown fields are ignored with a quality warning; self-declared trust fields are ignored. Missing fields stay null.
-Stored per event additionally: `schema_version`, `event_id`, `original_timestamp`, `timestamp_note`, `ingested_at`, `source_type`, `source_format`, `quality_warnings`, `evidence_ref` (`ev:<sha16>:<record>`), `zeek_uid`.
+The packages contain everything they need. No Python installation is required, and the core works offline.
 
-### Byte-counter direction
-Proxy profile: `cs_bytes` → `bytes_src_to_dst`, `sc_bytes` → `bytes_dst_to_src` per the W3C Extended Log Format prefix convention (cs = client-to-server); **check your proxy's documentation**. Zeek: `orig_bytes` originator→responder. Custom mappings must declare `bytes_basis` or are rejected.
+**Tested baselines:** the native packages were tested only on the GitHub-hosted runner images named above. They were not tested on Windows 10/11 desktop editions, other Linux distributions, or other macOS versions; those are expected to work if they meet the requirements, but that is not verified.
 
-## What ARGOS can and cannot conclude
-- **Threat:** observed actions with severity; severity is independent of human/LLM origin (slow attacks alert).
-- **Automation:** timing/volume ⇒ *consistent with automation*; agent audit records or the authorized registry ⇒ *observed*; human approval records ⇒ *manual component* / *mixed*. Absence of AI indicators never means "human".
-- **LLM:** AI-provider connection ⇒ *possible* only. *Directly observed* requires model-audit records linked to execution (same session / ProcessGuid), and is stated "according to the supplied records". Victim-side traffic cannot see attacker-side model calls. Declared model names stay labelled as declared.
-- **ARTEX/framework:** four experimental, source-derived fingerprints visible only on a host *running* ARTEX or a gateway on its egress path; text mentions are weak. Best case: *corroborated presence*. Responsibility for an activity is never inferred.
-- **Purpose:** hypotheses with stage (indicator/attempt/observed success); volume or successful sign-in ≠ data theft.
-- **Entities:** strong vs weak keys; shared IPs never merge accounts; account owner ≠ operator.
+## Start
 
-## Layout
+| | Steps |
+|---|---|
+| **Windows** | Extract the ZIP → double-click **`Start ARGOS Defense.cmd`**. SmartScreen may warn because the executable is not code-signed. Check the file hash against `SHA256SUMS`, then choose *More info → Run anyway* if you decide to trust it. |
+| **macOS** | Double-click the ZIP to extract it → double-click **`Start ARGOS Defense.command`**. The build is not notarized, so Gatekeeper may block the first launch. Open *System Settings → Privacy & Security* and click *Open Anyway* (Apple's documented procedure), then launch again. |
+| **Linux** | `tar xzf ARGOS-Defense-0.2.0-linux-x86_64.tar.gz && ./ARGOS-Defense-0.2.0-linux-x86_64/start-argos-defense.sh` |
+
+The launcher starts the local server on `http://127.0.0.1:8789` (loopback only) and opens your browser already logged in. Stop it with **Ctrl+C**, or by closing the terminal window.
+
+Options (the same executable is under `argos-defense/`): `start --no-browser` prints the token-file location instead of opening a browser; `--port 0` picks a free port; `--data-dir <folder>` chooses where data lives. If the port is in use, ARGOS says so and exits.
+
+### Authenticate
+The session token is a random secret stored in `<data dir>/.session_token`. The launcher passes it to your browser. With `--no-browser`, open `http://127.0.0.1:<port>/login` and paste the token from that file. It is never printed unless you use `--show-token`.
+
+## Try the demo (no private data, no API keys)
+In a terminal inside the extracted folder:
+
 ```
-reference/ARTEX   pinned ARTEX checkout (static, AGPL, never executed)
-src/argos/{ingest,normalize,entities,correlate,detect,evidence,api,reporting,llm,templates,static}
-rules/detections  26 YAML rules       rules/iocs  synthetic IOC set
-config/           authorized_automation.yaml, rule_overrides.yaml
-fixtures/         demo + acceptance data; ground_truth/ (never imported)
-tests/  scripts/  docs/  data/ (runtime DB, originals, token)  reports/
+argos-defense/argos-defense demo          # Windows: argos-defense\argos-defense.exe demo
 ```
-(`correlate` logic lives in `detect/engine.py` grouping/sequence code; the package is a placeholder.)
+Then start the UI. The **demo-synthetic** case (purple *DEMO/SYNTHETIC* banner) contains generated proxy, identity, Sysmon, Zeek, EDR and agent-audit data with RFC 5737 addresses. It covers an authorized scanner, a password spray, a slow account takeover, a web shell, a service-principal credential addition, an archive-and-upload, and a developer workstation running an LLM agent.
 
-## Privacy
-Everything stays in `data/`. No telemetry, files, secrets or prompts leave the machine by default. The optional LLM explainer is **disabled**; it can be enabled for a local Ollama (`ARGOS_LLM_PROVIDER=ollama ARGOS_LLM_MODEL=...`); remote endpoints require `ARGOS_LLM_ALLOW_REMOTE=1`. Secrets are redacted (pattern-based) in UI and exports; originals keep them.
+## Investigate your own data
+1. **Import:** *Import* page → choose the case, adapter, mapping profile (for Splunk) and file. The result lists accepted and rejected records with the actual reasons. CLI: `argos-defense ingest FILE --format FORMAT --case CASE`.
+2. **Analyze:** case page → *Analyze / re-analyze* (CLI: `argos-defense analyze --case CASE`). Re-analysis is idempotent and keeps notes and history.
+3. **Investigate:** *Alert queue* with filters for severity, confidence, activity, automation, LLM and framework → alert page showing the six dimensions, matched predicates, timeline, evidence references (each opens the normalized record and the original line), alternative hypotheses, missing visibility, and data that would resolve the uncertainty. Add notes and set status. *Entities* shows accounts, devices, processes, sessions and IPs, keeping observed relationships separate from inferred ones.
+4. **Export:** *Export JSON / Export HTML / Alerts CSV* (CLI: `argos-defense report --case CASE --format html`). Exports include the timeline, evidence references, versions and configuration. Secrets are redacted and spreadsheet formulas neutralized.
 
-## Limitations (v0.1)
-Batch files only; in-memory analysis per case (tested to 12k events); EVTX, Windows event formats other than Sysmon XML, PCAP and live connectors not supported; SPL/Sigma translations **not implemented**; single-user local auth; synthetic validation only — real-world accuracy NOT MEASURED. See docs/.
+![Alert detail (synthetic demo)](docs/screenshots/04-alert-detail.png)
 
-## Troubleshooting
-- `doctor` reports a missing module → activate `.venv` or reinstall with `pip install -r requirements.lock`.
-- Login shows "Host not allowed" → use `http://127.0.0.1:<port>` or `localhost`, not another hostname.
-- Form says "CSRF token missing" → reload the page (session changed after restart; log in again with the token).
-- Records rejected as "ambiguous timestamp" → re-import with `--assume-tz <zone>` after confirming the source zone.
-- Port in use → `python -m argos serve --port 8790`.
+## The six evidence dimensions
+| Dimension | Values | What it takes |
+|---|---|---|
+| A · Threat activity | severity + informational / suspicious / likely malicious | observed actions; independent of whether a human or an LLM acted (slow attacks still alert) |
+| B · Automation | unknown · consistent with automation · observed automation · observed manual component · mixed | timing alone gives only "consistent"; agent audit records or the authorized-automation registry give "observed"; human-approval records give a manual component |
+| C · LLM involvement | unknown · possible · directly observed | a connection to an AI provider gives "possible" only; "directly observed" needs model-audit records linked to an execution (same session or ProcessGuid). Missing AI evidence never means "human". Victim-side traffic cannot see an attacker's model calls |
+| D · Framework | unknown · consistent with · corroborated presence | experimental fingerprints; presence needs two independent artifacts on one host; execution and responsibility for an incident are never inferred |
+| E · Purpose | observed action + hypothesis + stage (indicator / attempt / observed success) | a hypothesis, not a fact; volume or a successful sign-in is not proof of data theft |
+| F · Entities | accounts, service principals, devices, processes, sessions, tenants, IPs, domains | strong vs weak keys; a shared IP never merges accounts; who owns an account is not who controls it |
 
-## Docs
-`docs/ARTEX_SOURCE_REVIEW.md`, `docs/INSPIRATION_MAP.md`, `docs/DETECTION_MODEL.md`, `docs/THREAT_MODEL.md`, `docs/VALIDATION.md`, `docs/BUILD_STATE.md`, `THIRD_PARTY_NOTICES.md`.
+Confidence (insufficient / low / medium / high) is separate from severity and capped by documented rules. Experimental rules are capped at low, and imported files with unverified provenance at medium. Heuristic evidence scores count each distinct evidence family once and are **not probabilities**. ARGOS never names a person, nationality, threat group or exact model.
+
+## ARGOS and ARTEX
+- **Architectural inspiration:** ARGOS adapts ideas from ARTEX (BaaRai/ARTEX v0.6.0, commit `a13c68cb…`), an open-source LLM-driven offensive framework: task/intent orchestration, an evidence graph, observed-versus-inferred facts, LLM call recording and human-approval records. All of them are re-implemented independently for defence ([docs/INSPIRATION_MAP.md](docs/INSPIRATION_MAP.md)).
+- **Experimental fingerprints:** a static source review found four candidate observables, all visible only on a machine *running* ARTEX or at a model gateway on its outbound path. **No validated victim-side fingerprint was found in the reviewed version** ([docs/ARTEX_SOURCE_REVIEW.md](docs/ARTEX_SOURCE_REVIEW.md)).
+- **Reused code: none.** ARTEX (AGPL-3.0) is not bundled, imported or executed. A pinned manifest and `scripts/fetch_artex_reference.sh` retrieve the exact reviewed source for research.
+
+## Supported inputs
+| Adapter | Format | What it has been tested against |
+|---|---|---|
+| `native_jsonl` | ARGOS JSONL schema: HTTP, DNS, connections, processes, files, authentication, cloud operations, model interactions, tool executions, human approvals | synthetic fixtures |
+| `splunk_json` | Splunk JSON/JSONL exports, including `result` wrappers and metadata lines; profiles `proxy`, `auth`, `native` or a custom mapping | schema-shaped fixtures built from documented field names |
+| `splunk_csv` | Splunk CSV with an **explicit** mapping (BOM, quoted newlines) | schema-shaped fixtures |
+| `sysmon_xml` | Sysmon events 1/3/11/22 exported to XML, with or without a root element or namespace | schema-shaped fixtures |
+| `zeek_jsonl` | Zeek JSON conn/http/dns logs (epoch or ISO `ts`, `uid` kept); TSV is rejected | schema-shaped fixtures |
+
+No genuine vendor or organizational exports have been tested. EVTX, PCAP and live connectors are not supported. Field reference and byte-direction rules: [docs/DETECTION_MODEL.md](docs/DETECTION_MODEL.md).
+
+## Data, privacy, updates, backups, uninstall
+- **Data location:** Windows `%LOCALAPPDATA%\ARGOS Defense`, macOS `~/Library/Application Support/ARGOS Defense`, Linux `~/.local/share/argos-defense` (or `$XDG_DATA_HOME`), or `--data-dir` / `ARGOS_HOME`. Inside: `argos.sqlite3`, `cases/` (read-only copies of imported files), `config/` (editable registry and rule overrides), `reports/`, `logs/`, `.session_token`. Nothing is written inside the application folder.
+- **Privacy/offline:** no telemetry, no external calls. The optional LLM explainer is disabled by default and refuses remote endpoints unless explicitly allowed.
+- **Update:** extract the new version next to the old one and start it; your data directory is reused. Databases from 0.1.0 are migrated automatically, and a `.v1-backup.sqlite3` copy is kept.
+- **Backup:** stop ARGOS and copy the data directory.
+- **Uninstall:** delete the extracted folder; delete the data directory to remove all data.
+
+## Install from source (contributors)
+```bash
+git clone https://github.com/CSTHUESP/argos-defense && cd argos-defense
+python3 -m venv .venv && source .venv/bin/activate        # Windows: .venv\Scripts\Activate.ps1
+pip install -r requirements.lock -r requirements-dev.lock && pip install --no-deps -e .
+argos-defense doctor && argos-defense demo && argos-defense start
+python -m pytest                       # full suite
+python scripts/validate.py             # synthetic demo scenarios
+python scripts/auth_eval.py            # labeled auth-rule evaluation
+```
+Native packaging: [docs/PACKAGING.md](docs/PACKAGING.md). Rule export to Sigma/SPL: `argos-defense export-rules --output DIR` ([docs/RULE_EXPORTS.md](docs/RULE_EXPORTS.md)).
+
+## Architecture
+```
+files ─► adapters (native/Splunk/Sysmon/Zeek) ─► normalization + provenance (sha256, record no., vantage, tz)
+      ─► SQLite case store ─► entities/relationships ─► YAML rules (each/threshold/sequence/baseline)
+      ─► evaluator (confidence caps, registry, IOC validity, absence/source-history checks, missing visibility)
+      ─► alerts + case assessment (6 dimensions) ─► Starlette UI / JSON API ─► JSON/HTML/CSV export
+```
+
+## Signing and integrity
+| | Status |
+|---|---|
+| Windows Authenticode | **not signed** (no certificate configured) |
+| Apple Developer ID / notarization | **not signed / not notarized** (ad-hoc signature only) |
+| GitHub artifact attestations | **not generated** (unavailable for private repositories outside GitHub Enterprise Cloud) |
+| Checksums | `SHA256SUMS` + `release-manifest.json`: integrity only, not proof of who published the files |
+
+## Capability status (v0.2.0)
+| Capability | Status |
+|---|---|
+| Import/normalize native, Splunk JSON/CSV, Sysmon XML, Zeek JSON | IMPLEMENTED_AND_TESTED (synthetic / schema-shaped data) |
+| 27 rules, six-dimension assessment, registry, IOC validity, baselines | IMPLEMENTED_AND_TESTED (synthetic) |
+| Web UI, auth/CSRF, notes/status, exports | IMPLEMENTED_AND_TESTED |
+| Native packages Windows x64 / Linux x64 / macOS arm64 / macOS x64 | IMPLEMENTED_AND_TESTED on the CI runner images listed above |
+| Sigma / SPL export (faithful subset) | IMPLEMENTED_AND_TESTED for syntax/structure; NOT executed in Splunk or a Sigma backend |
+| Optional Ollama explainer | IMPLEMENTED_NOT_VERIFIED with a real model (tested against a simulated endpoint) |
+| Genuine vendor exports, Windows/macOS desktop editions | NOT VERIFIED |
+| EVTX, PCAP, live EDR/SIEM connectors, automatic containment, universal human-vs-LLM classifier | NOT_IMPLEMENTED (out of scope) |
+| Real-world detection accuracy | NOT MEASURED |
+
+Validation details: [docs/RELEASE_VALIDATION.md](docs/RELEASE_VALIDATION.md), [docs/VALIDATION.md](docs/VALIDATION.md), [docs/AUTH_RULE_EVALUATION.md](docs/AUTH_RULE_EVALUATION.md). Threat model: [docs/THREAT_MODEL.md](docs/THREAT_MODEL.md).
+
+## Known limitations
+Synthetic validation only. The authentication rules still alert at low confidence on repeated typos from a user's own device, and they miss an attacker who both rotates source addresses and interleaves with the real user's sign-ins. Analysis is in-memory per case (tested with 12,000 events). Secret redaction is pattern-based. There is a single local user, and a loopback UI without TLS.
+
+## License
+ARGOS Defense: Apache-2.0 ([LICENSE](LICENSE); basis in [docs/LICENSING.md](docs/LICENSING.md)). Third-party components keep their own licenses ([THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)). ARTEX (AGPL-3.0) is not distributed.
