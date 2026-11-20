@@ -219,8 +219,8 @@ def test_r03_same_first_line_same_length_files_both_delivered(env, tmp_path):
     from argos.watch import add_source, poll_once
     d = tmp_path / "SYNTHETIC-watch"
     d.mkdir()
-    (d / "a.jsonl").write_text(_line(0, "shared.example") + _line(1, "only-in-a.example"))
-    (d / "b.jsonl").write_text(_line(0, "shared.example") + _line(1, "only-in-b.example"))
+    (d / "a.jsonl").write_text(_line(0, "shared.example") + _line(1, "only-in-a.example"), newline="")
+    (d / "b.jsonl").write_text(_line(0, "shared.example") + _line(1, "only-in-b.example"), newline="")
     assert (d / "a.jsonl").stat().st_size == (d / "b.jsonl").stat().st_size
     c = env.case("r03")
     src = add_source(env.store, c, d, "*.jsonl", "native_jsonl")
@@ -238,10 +238,10 @@ def test_r03_restart_append_truncate_trailing_and_failed_import(env, tmp_path, m
     f = d / "app.jsonl"
     c = env.case("r03b")
     src = W.add_source(env.store, c, d, "*.jsonl", "native_jsonl")
-    f.write_text(_line(0, "e0.example") + _line(1, "e1.example")[:15])
+    f.write_text(_line(0, "e0.example") + _line(1, "e1.example")[:15], newline="")
     W.poll_once(env.store, env.settings, src)
     assert _queries(env, c) == ["e0.example"]
-    with open(f, "a") as fh:
+    with open(f, "a", newline="") as fh:
         fh.write(_line(1, "e1.example")[15:])
     # failed import: nothing consumed
     real = W.ingest_file
@@ -264,7 +264,7 @@ def test_r03_restart_append_truncate_trailing_and_failed_import(env, tmp_path, m
     assert "after-truncate.example" in _queries(env, c) and s["rotations"] >= 1
     # rename rotation + new file: old generation keeps its checkpoint (no duplicates), new file read fully
     f.rename(d / "app.2.jsonl")
-    (d / "app.jsonl").write_text(_line(20, "new-file.example"))
+    (d / "app.jsonl").write_text(_line(20, "new-file.example"), newline="")
     W.poll_once(env.store, env.settings, src)
     q = _queries(env, c)
     assert q.count("after-truncate.example") == 1 and "new-file.example" in q and q.count("e0.example") == 1
@@ -274,7 +274,7 @@ def test_r03_rejected_segment_does_not_advance(env, tmp_path, monkeypatch):
     import argos.watch as W
     d = tmp_path / "w3"
     d.mkdir()
-    (d / "x.jsonl").write_text(_line(0, "a.example"))
+    (d / "x.jsonl").write_text(_line(0, "a.example"), newline="")
     c = env.case("r03c")
     src = W.add_source(env.store, c, d, "*.jsonl", "native_jsonl")
     real = W.ingest_file
@@ -617,7 +617,7 @@ def test_r03_legacy_v030_checkpoint_adopted_without_duplicates(env, tmp_path):
     d.mkdir()
     first = _line(0, "old-0.example")
     f = d / "feed.jsonl"
-    f.write_text(first + _line(1, "old-1.example"))
+    f.write_text(first + _line(1, "old-1.example"), newline="")
     c = env.case("r03-legacy")
     src = add_source(env.store, c, d, "*.jsonl", "native_jsonl")
     poll_once(env.store, env.settings, src)
@@ -626,7 +626,7 @@ def test_r03_legacy_v030_checkpoint_adopted_without_duplicates(env, tmp_path):
     fp = h.sha256(first.encode()).hexdigest()[:32] + f":{len(first.encode())}"
     with env.store.tx() as cx:
         cx.execute("UPDATE watch_checkpoints SET file_id=?, dev=NULL, ino=NULL, head_fp=NULL, tail_sha=NULL, legacy=1", (fp,))
-    with open(f, "a") as fh:
+    with open(f, "a", newline="") as fh:
         fh.write(_line(2, "new-2.example"))
     s = poll_once(env.store, env.settings, src)
     assert any("legacy v0.3.0 checkpoint adopted" in e for e in s["errors"])
@@ -672,7 +672,7 @@ def test_fu1_import_validation_error_and_failed_analysis_are_redacted(env, monke
 def _two_records(tmp_path, name="feed.jsonl"):
     d = tmp_path / "fu2-watch"
     d.mkdir(exist_ok=True)
-    (d / name).write_text(_line(0, "r0.example") + _line(1, "r1.example"))
+    (d / name).write_text(_line(0, "r0.example") + _line(1, "r1.example"), newline="")
     return d
 
 
@@ -792,8 +792,8 @@ def test_fu3_occurrences_independent_of_chunk_size_and_repeat_lines(env, tmp_pat
     d = tmp_path / f"fu3-{chunk}"
     d.mkdir()
     shared = _line(0, "shared.example")
-    (d / "a.jsonl").write_text(shared + _line(1, "only-a.example") + shared)  # same bytes again at another offset
-    (d / "b.jsonl").write_text(shared + _line(1, "only-b.example"))
+    (d / "a.jsonl").write_text(shared + _line(1, "only-a.example") + shared, newline="")  # same bytes again at another offset
+    (d / "b.jsonl").write_text(shared + _line(1, "only-b.example"), newline="")
     c = env.case(f"fu3-{chunk}")
     src = add_source(env.store, c, d, "*.jsonl", "native_jsonl")
     for _ in range(20):

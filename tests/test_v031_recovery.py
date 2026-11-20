@@ -88,7 +88,7 @@ def test_a_watch_failure_at_activation_boundary_is_not_certified_and_recovers(en
     d = tmp_path / "a-watch"
     d.mkdir()
     lines = [(line(0, "r0.example"), "r0.example"), (line(1, "r1.example"), "r1.example")]
-    (d / "feed.jsonl").write_text("".join(t for t, _ in lines))
+    (d / "feed.jsonl").write_text("".join(t for t, _ in lines), newline="")
     c = env.case("recov-a1")
     src = W.add_source(env.store, c, d, "*.jsonl", "native_jsonl")
     arm(env.store)
@@ -191,7 +191,7 @@ def test_b_append_before_checkpoint_recovery_keeps_each_occurrence_once(env, tmp
     d.mkdir()
     f = d / "feed.jsonl"
     lines = [(SHARED, "shared.example"), (line(1, "r1.example"), "r1.example")]
-    f.write_text("".join(t for t, _ in lines))
+    f.write_text("".join(t for t, _ in lines), newline="")
     c = env.case(f"recov-b1-{first_budget}")
     src = W.add_source(env.store, c, d, "*.jsonl", "native_jsonl")
     _crash_checkpoint_once(monkeypatch)
@@ -200,7 +200,7 @@ def test_b_append_before_checkpoint_recovery_keeps_each_occurrence_once(env, tmp
     committed = occurrences(env.store, c["case_id"])
     assert committed and committed[0] == ("feed.jsonl", 0, len(SHARED), "shared.example")
     # the source grows BEFORE recovery; the appended record is byte-identical to the first one (distinct offset)
-    with open(f, "a") as fh:
+    with open(f, "a", newline="") as fh:
         fh.write(SHARED)
     lines.append((SHARED, "shared.example"))
     for _ in range(4):
@@ -223,7 +223,7 @@ def test_b_recovery_with_different_chunk_budget_does_not_change_committed_identi
     d.mkdir()
     f = d / "feed.jsonl"
     lines = [(SHARED, "shared.example"), (line(1, "r1.example"), "r1.example"), (SHARED, "shared.example")]
-    f.write_text("".join(t for t, _ in lines))
+    f.write_text("".join(t for t, _ in lines), newline="")
     c = env.case(f"recov-b2-{recovery_budget}")
     src = W.add_source(env.store, c, d, "*.jsonl", "native_jsonl")
     _crash_checkpoint_once(monkeypatch)
@@ -248,7 +248,7 @@ def test_b_changed_bytes_of_a_committed_range_pause_instead_of_duplicating(env, 
     d = tmp_path / "b-changed"
     d.mkdir()
     f = d / "feed.jsonl"
-    f.write_text(SHARED + line(1, "r1.example"))
+    f.write_text(SHARED + line(1, "r1.example"), newline="")
     c = env.case("recov-b3")
     src = W.add_source(env.store, c, d, "*.jsonl", "native_jsonl")
     _crash_checkpoint_once(monkeypatch)

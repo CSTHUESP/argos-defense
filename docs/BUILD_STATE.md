@@ -9,6 +9,7 @@ COMMUNITY_CONTRIBUTIONS: welcomed
 The owner explicitly chose a public, open project. This supersedes all earlier "intended private" entries below. They are kept as history and explain why earlier candidates were held locally; they are no longer blockers.
 
 - Release work: community docs committed on `v0.3.1-local` on top of `a048ae3`, fast-forwarded to `main`, then CI + `create-tag.yml` (version 0.3.1, publish=true) on the final SHA. Results are recorded below once known.
+- CI run [44791375680](https://github.com/CSTHUESP/argos-defense/actions/runs/44791375680) on `5ffc0dd` (first Windows run of the v0.3.1 watcher tests): Linux/macOS/package jobs passed; Windows failed 10 watcher tests. Cause was **test-only**: the tests wrote JSONL in text mode, so Windows produced CRLF lines while expected byte offsets / first-line fingerprints were computed from LF strings. Product offsets were correct (real bytes). Fix: the tests write bytes exactly (`newline=""`); no product code changed. `5ffc0dd` is therefore not the release SHA.
 - Repository settings writes (description, topics, Discussions, private vulnerability reporting, protections, immutable releases) are refused for this session ("Repository settings writes are not permitted through this proxy"); labels and issues can be created.
 
 ---
