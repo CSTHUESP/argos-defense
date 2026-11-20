@@ -81,9 +81,17 @@ V3_INPUTS = """CREATE TABLE IF NOT EXISTS inputs (
   imported_at TEXT NOT NULL,
   options_hash TEXT NOT NULL DEFAULT '', revision INTEGER NOT NULL DEFAULT 1, active INTEGER NOT NULL DEFAULT 1,
   status TEXT NOT NULL DEFAULT 'imported', supersedes TEXT, coverage TEXT, source_ref TEXT, delivery_key TEXT,
+  finalized INTEGER NOT NULL DEFAULT 0,
   UNIQUE(case_id, sha256, format, options_hash));"""
-# An input row only certifies a durable import when its status is one of these (follow-up defect 2).
+# An input row only certifies a durable import when its status is one of these (follow-up defect 2) AND its
+# finalization committed (finalized=1): counts, final status and the activation decision are written in ONE
+# transaction (finalize_input). A completed status without finalized=1 can only come from a pre-fix database whose
+# finalization was interrupted; such a row is treated as incomplete and re-run, never certified.
 COMPLETED_INPUT_STATUSES = ("imported", "rejected", "failed_kept_previous")
+_FINALIZED_BACKFILL = """UPDATE inputs SET finalized=1 WHERE finalized=0 AND status IN ('imported','rejected','failed_kept_previous') AND (
+  active=1 OR status='failed_kept_previous' OR EXISTS (
+    SELECT 1 FROM inputs n WHERE n.case_id=inputs.case_id AND n.sha256=inputs.sha256 AND n.delivery_key IS inputs.delivery_key
+      AND n.revision>inputs.revision AND n.status IN ('imported','rejected')))"""
 V3_EXTRA = """
 CREATE TABLE IF NOT EXISTS runs (
   run_id TEXT PRIMARY KEY, case_id TEXT NOT NULL, seq INTEGER NOT NULL, started_at TEXT NOT NULL,
@@ -181,6 +189,7 @@ class Store:
             self.conn.commit()
         self.last_migration: dict | None = None
         self._migrate()
+        self._ensure_finalization_state()
         for suffix in ("", "-wal", "-shm"):
             private_file(Path(str(self.db_path) + suffix))
 
@@ -191,6 +200,18 @@ class Store:
             return 1
         row = c.execute("SELECT value FROM meta WHERE key='schema_version'").fetchone()
         return int(row[0]) if row else 1
+
+    def _ensure_finalization_state(self):
+        """Idempotent: add `inputs.finalized` to databases created before it existed (v3 migrations and pre-release v4
+        candidates) and classify existing rows. Finalized: completed and active, kept-previous, or superseded by a newer
+        completed revision of the same delivery. A completed-status row that is inactive and was never superseded is an
+        interrupted finalization (pre-fix defect A) and stays finalized=0, so recovery re-runs it."""
+        cols = [r[1] for r in self.conn.execute("PRAGMA table_info(inputs)")]
+        if not cols or "finalized" in cols:
+            return
+        with self.tx() as c:
+            c.execute("ALTER TABLE inputs ADD COLUMN finalized INTEGER NOT NULL DEFAULT 0")
+            c.execute(_FINALIZED_BACKFILL)
 
     def _migrate(self):
         current = self._version()
@@ -345,18 +366,19 @@ class Store:
         """Remove the partial rows of an import that never completed (processing/interrupted/failed) so it can be
         re-run from its retained original under the same deterministic ids. The row stays inactive."""
         with self.tx() as c:
-            st = c.execute("SELECT status, active FROM inputs WHERE input_id=?", (input_id,)).fetchone()
-            if st is None or st[0] in COMPLETED_INPUT_STATUSES or st[1]:
+            st = c.execute("SELECT status, active, finalized FROM inputs WHERE input_id=?", (input_id,)).fetchone()
+            if st is None or st[1] or (st[0] in COMPLETED_INPUT_STATUSES and st[2]):
                 raise ValueError(f"input {input_id} is not an incomplete import")
             c.execute("DELETE FROM events WHERE input_id=?", (input_id,))
             c.execute("DELETE FROM rejects WHERE input_id=?", (input_id,))
-            c.execute("UPDATE inputs SET status='processing', records_total=NULL, records_accepted=NULL, records_rejected=NULL "
+            c.execute("UPDATE inputs SET status='processing', finalized=0, records_total=NULL, records_accepted=NULL, records_rejected=NULL "
                       "WHERE input_id=?", (input_id,))
 
     def recover_interrupted_imports(self) -> int:
         """At server start (single process per data dir): imports left 'processing' by a dead process are 'interrupted'."""
         with self.tx() as c:
-            return c.execute("UPDATE inputs SET status='interrupted' WHERE status='processing' AND active=0").rowcount
+            return c.execute("UPDATE inputs SET status='interrupted' WHERE finalized=0 AND active=0 "
+                             "AND status IN ('processing','imported','rejected')").rowcount
 
     def add_input(self, row: dict):
         cols = ",".join(row)
@@ -372,16 +394,44 @@ class Store:
         with self.tx() as c:
             c.execute("UPDATE inputs SET status=? WHERE input_id=?", (status, input_id))
 
+    def finalize_input(self, input_id: str, total: int, accepted: int, rejected: int, status: str, activate: bool):
+        """Finish an import ATOMICALLY (defect A): record counts, final status, finalized=1 and -- when this revision
+        becomes the interpretation -- deactivate the superseded revision of the same delivery and activate this one,
+        all in one transaction. A failure leaves the row unfinalized and the previous revision untouched."""
+        if status not in COMPLETED_INPUT_STATUSES:
+            raise ValueError(f"not a completion status: {status}")
+        with self.tx() as c:
+            r = c.execute("SELECT case_id, sha256, delivery_key FROM inputs WHERE input_id=?", (input_id,)).fetchone()
+            if not r:
+                raise ValueError("unknown input")
+            c.execute("UPDATE inputs SET records_total=?, records_accepted=?, records_rejected=?, status=?, finalized=1 WHERE input_id=?",
+                      (total, accepted, rejected, status, input_id))
+            if activate:
+                c.execute("UPDATE inputs SET active=0 WHERE case_id=? AND sha256=? AND delivery_key IS ? AND input_id<>?",
+                          (r[0], r[1], r[2], input_id))
+                c.execute("UPDATE inputs SET active=1 WHERE input_id=?", (input_id,))
+
     def activate_revision(self, input_id: str):
         """Make one revision the active interpretation of its file content (exactly one active per content)."""
         with self.tx() as c:
-            r = c.execute("SELECT case_id, sha256, delivery_key, status FROM inputs WHERE input_id=?", (input_id,)).fetchone()
+            r = c.execute("SELECT case_id, sha256, delivery_key, status, finalized FROM inputs WHERE input_id=?", (input_id,)).fetchone()
             if not r:
                 raise ValueError("unknown input")
-            if r[3] not in COMPLETED_INPUT_STATUSES:
-                raise ValueError(f"input {input_id} is {r[3]}; only completed imports can be activated")
+            if r[3] not in COMPLETED_INPUT_STATUSES or not r[4]:
+                raise ValueError(f"input {input_id} is {r[3]}{'' if r[4] else ' (finalization incomplete)'}; "
+                                 "only completed imports can be activated")
             c.execute("UPDATE inputs SET active=0 WHERE case_id=? AND sha256=? AND delivery_key IS ?", (r[0], r[1], r[2]))
             c.execute("UPDATE inputs SET active=1 WHERE input_id=?", (input_id,))
+
+    def find_delivery_attempt(self, case_id: str, source_id: str, file_id: str, start: int) -> dict | None:
+        """Watcher recovery (defect B): an earlier delivery of this source/generation that STARTS at `start` and left a
+        durable input row (completed or not). Its recorded byte range must be re-delivered unchanged before any newly
+        appended bytes, so recovery never depends on a re-computed chunk end. Finalized deliveries take precedence."""
+        prefix = json.dumps([source_id, file_id, start], separators=(",", ":"))[:-1] + ","
+        r = self.conn.execute("SELECT * FROM inputs WHERE case_id=? AND delivery_key IS NOT NULL AND substr(delivery_key,1,?)=? "
+                              "ORDER BY finalized DESC, imported_at DESC, revision DESC LIMIT 1",
+                              (case_id, len(prefix), prefix)).fetchone()
+        return dict(r) if r else None
 
     def rebase_originals(self, cases_dir: Path) -> int:
         """After restore into another data directory: point EVERY original reference at the location the

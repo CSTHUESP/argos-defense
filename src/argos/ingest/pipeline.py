@@ -194,13 +194,14 @@ def _ingest_locked(store, settings, case, src, fmt, opts, profile, cov, parser_v
                    original_name, reprocess, source_ref, delivery_key):
     same = store.find_input(case["case_id"], digest, fmt, oh)
     resumed = False
-    if same and same["status"] in COMPLETED_INPUT_STATUSES:
+    if same and same["status"] in COMPLETED_INPUT_STATUSES and same.get("finalized"):
         return {"status": "already_imported", "completed": True, "input_id": same["input_id"], "sha256": digest,
                 "revision": same["revision"], "active": bool(same["active"]), "input_status": same["status"],
                 "accepted": same["records_accepted"], "rejected": same["records_rejected"],
                 "total": same["records_total"], "new_events": 0}
     if same:
-        # an earlier attempt of exactly this import did not complete: discard its partial rows and redo it
+        # an earlier attempt of exactly this import did not complete (including an interrupted finalization):
+        # discard its partial rows and redo it
         store.restart_incomplete_input(same["input_id"])
         resumed = True
     revisions = [r for r in store.revisions_of(case["case_id"], digest, delivery_key) if not same or r["input_id"] != same["input_id"]]
@@ -310,16 +311,19 @@ def _ingest_locked(store, settings, case, src, fmt, opts, profile, cov, parser_v
         except Exception:  # noqa: BLE001 - the original error matters more; a later import treats 'processing' alike
             pass
         raise
-    store.update_input_counts(input_id, total, accepted, rejected)
-    # decide whether this revision becomes the active interpretation
+    # decide whether this revision becomes the active interpretation, then finalize ATOMICALLY (defect A)
     previous_usable = active is not None and (active["records_accepted"] or 0) > 0
-    if file_error and previous_usable or (accepted == 0 and previous_usable):
-        store.set_input_status(input_id, "failed_kept_previous")
-        status = "reprocess_failed_previous_kept"
-    else:
-        store.set_input_status(input_id, "rejected" if file_error else "imported")
-        store.activate_revision(input_id)
-        status = "rejected" if file_error else ("reprocessed" if active else "imported")
+    keep_previous = bool(file_error and previous_usable or (accepted == 0 and previous_usable))
+    final = "failed_kept_previous" if keep_previous else ("rejected" if file_error else "imported")
+    try:
+        store.finalize_input(input_id, total, accepted, rejected, final, activate=not keep_previous)
+    except BaseException:
+        try:
+            store.set_input_status(input_id, "interrupted")
+        except Exception:  # noqa: BLE001
+            pass
+        raise
+    status = "reprocess_failed_previous_kept" if keep_previous else ("rejected" if file_error else ("reprocessed" if active else "imported"))
     res = {"status": status, "input_id": input_id, "sha256": digest, "revision": revision, "options_hash": oh,
            "accepted": accepted, "rejected": rejected, "skipped": max(0, total - accepted - rejected), "total": total,
            "new_events": new, "stored_copy": str(stored), "superseded": active["input_id"] if active and status == "reprocessed" else None,

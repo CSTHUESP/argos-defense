@@ -13,8 +13,11 @@ Behaviour
 - Namespace: all segments of one watched source carry the declared collector id `watch:<source id>`.
 - Each new chunk of complete lines is written to an owner-private segment file and imported through
   the normal pipeline (hash, original retention, rejects, unverified provenance). The checkpoint is
-  advanced only after that delivery's import is COMPLETED; a crash before the checkpoint update re-runs the
-  same delivery, which the pipeline recognises (same delivery key, completed) -> no duplicate events.
+  advanced only after that delivery's import is COMPLETED (finalized atomically, see pipeline). Recovery
+  never recomputes a pending range: if an earlier delivery starting at the checkpoint offset left a durable
+  input row (completed before a lost checkpoint update, or interrupted), exactly that recorded byte range is
+  re-delivered first (content verified by hash), so appended data or a different chunk budget cannot change the
+  identity of committed occurrences. Only then are newly appended bytes read.
 - A segment that is not durably imported (error or non-imported status) does not advance the checkpoint.
 - Delivery identity vs content identity (v0.3.1 follow-up): every chunk is imported as a delivery identified by
   (source, file generation, byte range). Re-polling or restarting after a completed delivery is idempotent; a
@@ -192,7 +195,23 @@ def poll_once(store: Store, settings: Settings, source: dict, max_chunk_bytes: i
                     summary["backpressure"] = True
                     break
                 budget = min(max_chunk_bytes, max_cycle_bytes - cycle_bytes)
-                chunk = _complete_chunk(p, offset, budget)
+                attempt = store.find_delivery_attempt(case["case_id"], sid, fid, offset)
+                if attempt is not None:
+                    # defect B: an earlier delivery starting here left a durable input (completed before a lost
+                    # checkpoint update, or interrupted). Re-deliver EXACTLY its recorded range -- never a range
+                    # recomputed from the current file size or chunk budget -- and verify it is the same content.
+                    end = json.loads(attempt["delivery_key"])[3]
+                    if end > st.st_size:
+                        summary["errors"].append(f"{p.name}@{offset}: earlier delivery {offset}-{end} extends beyond the file; source paused")
+                        break
+                    with open(p, "rb") as fh:
+                        fh.seek(offset)
+                        chunk = fh.read(end - offset)
+                    if not chunk.endswith(b"\n") or hashlib.sha256(chunk).hexdigest() != attempt["sha256"]:
+                        summary["errors"].append(f"{p.name}@{offset}: bytes of earlier delivery {offset}-{end} changed; source paused")
+                        break
+                else:
+                    chunk = _complete_chunk(p, offset, budget)
                 if not chunk:
                     if budget < max_chunk_bytes:
                         summary["backpressure"] = True
