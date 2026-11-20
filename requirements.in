@@ -1,5 +1,5 @@
-# Runtime dependencies, exact versions (verified in the build environment 2026-11-20; resolved on every
-# release target by CI). Install: pip install -r requirements.lock
+# Runtime dependencies: top-level exact pins (input). The universal hashed lock requirements.lock is
+# generated from this file by .github/workflows/deps.yml (uv pip compile --universal --generate-hashes).
 starlette==1.7.0
 uvicorn==0.54.0
 pydantic==2.13.5

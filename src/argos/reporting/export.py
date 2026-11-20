@@ -4,6 +4,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+import os
 from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
@@ -124,4 +125,6 @@ def write_report(store: Store, settings: Settings, case_ref: str, fmt: str, outp
         output.write_text(alerts_csv([a for a in exp["alerts"] if a.get("current", True)]), encoding="utf-8")
     else:
         raise ValueError("format must be json, html or csv")
+    if os.name == "posix":
+        os.chmod(output, 0o600)  # reports contain investigation data (F07)
     return output

@@ -31,18 +31,17 @@ jobs:
       - name: Resolve universal hashed locks
         run: |
           mkdir -p out
-          for f in requirements.lock requirements-dev.lock requirements-build.in; do
-            base=$(basename "$f" .in); base=${base%.lock}
-            uv pip compile --universal --generate-hashes --python-version 3.11 --no-header \
-              "$f" -o "out/${base}.hashed.txt"
-            test -s "out/${base}.hashed.txt"
-            echo "===== BEGIN out/${base}.hashed.txt ====="; cat "out/${base}.hashed.txt"; echo "===== END out/${base}.hashed.txt ====="
+          C="uv pip compile --universal --generate-hashes --python-version 3.11 --no-header"
+          $C requirements.in -o out/requirements.lock
+          $C requirements.in requirements-dev.in requirements-build.in -o out/requirements-ci.lock
+          for f in out/requirements.lock out/requirements-ci.lock; do
+            echo "===== BEGIN $f ====="; cat "$f"; echo "===== END $f ====="
           done
       - name: Vulnerability audit of the resolved sets
         run: |
           set +e
           rc=0
-          for f in out/*.hashed.txt; do
+          for f in out/*.lock; do
             echo "===== pip-audit $f ====="
             pip-audit --disable-pip --no-deps --require-hashes -r "$f" --format json -o "$f.audit.json"; r=$?
             python -c "import json,sys; d=json.load(open(sys.argv[1])); v=[(x['name'],x['version'],[(y['id'],y.get('fix_versions')) for y in x.get('vulns',[])]) for x in d['dependencies'] if x.get('vulns')]; print('AUDIT', sys.argv[1], 'packages', len(d['dependencies']), 'with findings', v)" "$f.audit.json"

@@ -550,7 +550,8 @@ def main(argv=None):
     except Exception as exc:  # noqa: BLE001 - visible error reporting for launcher users
         try:
             (settings.home / "logs").mkdir(parents=True, exist_ok=True)
-            with open(settings.home / "logs" / "error.log", "a", encoding="utf-8") as fh:
+            fd = os.open(settings.home / "logs" / "error.log", os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
+            with os.fdopen(fd, "a", encoding="utf-8") as fh:
                 fh.write(traceback.format_exc() + "\n")
         except OSError:
             pass

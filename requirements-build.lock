@@ -1,5 +1,0 @@
-# Native packaging and packaged smoke-test tooling (top-level versions pinned; the fully resolved
-# set for each target is recorded in that target's build-info and SBOM).
-pyinstaller==6.22.3
-build==1.6.1
-playwright==1.65.2

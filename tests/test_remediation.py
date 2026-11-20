@@ -654,3 +654,15 @@ def test_analysis_size_limit_refuses_cleanly_and_keeps_previous(env):
     with pytest.raises(AnalysisError, match="supported analysis limit"):
         run_analysis(env.store, env.settings, c["case_id"])
     assert env.store.latest_successful_run(c["case_id"])["run_id"] == before
+
+
+@pytest.mark.skipif(os.name == "nt", reason="POSIX modes")
+def test_f07_reports_are_owner_private(env):
+    from argos.reporting.export import write_report
+    c = env.run("f07r", [{"event_time": ts(0), "event_kind": "dns", "dns_query": "a"}])
+    old = os.umask(0o022)
+    try:
+        p = write_report(env.store, env.settings, c["case_id"], "html", env.settings.reports_dir / "r.html")
+    finally:
+        os.umask(old)
+    assert stat.S_IMODE(p.stat().st_mode) == 0o600
