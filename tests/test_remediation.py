@@ -266,7 +266,8 @@ def test_f06_migration_backup_includes_committed_wal_after_unclean_exit(tmp_path
     assert b.execute("SELECT COUNT(*) FROM cases").fetchone()[0] == live == 3
     assert b.execute("SELECT COUNT(*) FROM notes").fetchone()[0] == 1
     b.close()
-    assert stat.S_IMODE(bk.stat().st_mode) & 0o077 == 0
+    if os.name == "posix":
+        assert stat.S_IMODE(bk.stat().st_mode) & 0o077 == 0
     # idempotent restart: no second migration, data intact
     st = Store(db)
     assert st.schema_version() == 3 and st.conn.execute("SELECT COUNT(*) FROM cases").fetchone()[0] == 3
@@ -317,6 +318,15 @@ def test_f07_private_permissions_under_permissive_umask(env, tmp_path):
     os.chmod(env.settings.cases_dir, 0o755)
     f = permission_findings(env.settings.home)
     assert f and "chmod 700" in f[0]
+
+
+@pytest.mark.skipif(not sys.platform.startswith("win"), reason="Windows ACL behaviour")
+def test_f07_windows_private_acl_on_new_data_dirs(env):
+    from argos.config import permission_findings
+    import subprocess as sp
+    out = sp.run(["icacls", str(env.settings.home)], capture_output=True).stdout.decode("oem", "replace")
+    assert "(I)" not in out.split("\n")[0] or "Everyone" not in out  # inheritance removed on the data root
+    assert permission_findings(env.settings.home) == [], out
 
 
 # ------------------------------------------------------------------ F08

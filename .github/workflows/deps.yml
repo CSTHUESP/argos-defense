@@ -1,0 +1,56 @@
+name: Dependency locks and vulnerability review
+
+# Resolves universal (all supported OS/architectures, Python >= 3.11) hashed lock files from the
+# top-level exact pins in requirements*.lock / requirements-build.in, and audits them with pip-audit
+# against the PyPI/OSV advisory data available at run time. Results are printed to the log and
+# uploaded as an artifact; a maintainer commits updated locks after review (docs/DEPENDENCIES.md).
+# "No known findings" means none in the queried databases at that time, not proof of absence.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 5 3 * *"   # monthly review
+
+permissions:
+  contents: read
+
+jobs:
+  lock-and-audit:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - name: Install resolver and auditor (versions recorded below)
+        run: |
+          python -m pip install --upgrade uv pip-audit
+          echo "TOOLS: uv $(uv --version) | $(pip-audit --version) | date $(date -u +%FT%TZ)"
+      - name: Resolve universal hashed locks
+        run: |
+          mkdir -p out
+          for f in requirements.lock requirements-dev.lock requirements-build.in; do
+            base=$(basename "$f" .in); base=${base%.lock}
+            uv pip compile --universal --generate-hashes --python-version 3.11 --no-header --emit-index-url=false \
+              "$f" -o "out/${base}.hashed.txt" 2>&1 | tail -3 || true
+            test -s "out/${base}.hashed.txt"
+            echo "===== BEGIN out/${base}.hashed.txt ====="; cat "out/${base}.hashed.txt"; echo "===== END out/${base}.hashed.txt ====="
+          done
+      - name: Vulnerability audit of the resolved sets
+        run: |
+          set +e
+          rc=0
+          for f in out/*.hashed.txt; do
+            echo "===== pip-audit $f ====="
+            pip-audit --disable-pip --no-deps --require-hashes -r "$f" --format json -o "$f.audit.json"; r=$?
+            python -c "import json,sys; d=json.load(open(sys.argv[1])); v=[(x['name'],x['version'],[y['id'] for y in x.get('vulns',[])]) for x in d['dependencies'] if x.get('vulns')]; print('AUDIT', sys.argv[1], 'packages', len(d['dependencies']), 'with findings', v)" "$f.audit.json"
+            [ $r -ne 0 ] && rc=$r
+          done
+          echo "pip-audit exit status: $rc (non-zero means findings or errors; review required)"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: dependency-locks
+          retention-days: 30
+          path: out/

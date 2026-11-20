@@ -1,10 +1,10 @@
 {
   "events": 12000,
   "chunk_size": 1000,
-  "ingest_seconds": 3.885,
-  "analyze_seconds": 8.688,
+  "ingest_seconds": 4.774,
+  "analyze_seconds": 8.587,
   "python_tracemalloc_peak_mb": 93.7,
-  "rss_delta_mb": 158.7,
+  "rss_delta_mb": 161.4,
   "alerts": 3,
   "machine": "Linux x86_64 py3.13.18 cpus=2",
   "note": "single run on the build sandbox; not a performance guarantee"

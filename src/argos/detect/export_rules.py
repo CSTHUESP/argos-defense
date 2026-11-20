@@ -95,6 +95,9 @@ def to_sigma(rule) -> dict:
             continue
         if p.op in ("eq", "in"):
             sel[tgt] = vals if len(vals) > 1 else vals[0]
+        elif p.op == "regex":
+            # native regexes are case-insensitive; Sigma's `re` is case-sensitive unless the `i` sub-modifier is set
+            sel[f"{tgt}|re|i"] = vals if len(vals) > 1 else vals[0]
         elif p.op in SIGMA_MOD:
             sel[f"{tgt}|{SIGMA_MOD[p.op]}"] = vals if len(vals) > 1 else vals[0]
         elif p.op == "exists":

@@ -1,0 +1,136 @@
+{
+  "declared_budgets": {
+    "12000": {
+      "ingest": [
+        60,
+        1024
+      ],
+      "analyze": [
+        120,
+        1536
+      ]
+    },
+    "100000": {
+      "ingest": [
+        300,
+        2048
+      ],
+      "analyze": [
+        900,
+        4096
+      ]
+    },
+    "1000000": {
+      "ingest": [
+        1800,
+        4096
+      ],
+      "analyze": [
+        3600,
+        6144
+      ]
+    }
+  },
+  "hardware": {
+    "platform": "Linux-6.18.44-fc-v726-x86_64-with-glibc2.39",
+    "machine": "x86_64",
+    "cpus": 2,
+    "memory": "MemTotal:        8216636 kB",
+    "python": "3.13.18"
+  },
+  "dataset": "argos.synthetic.generate_bulk: deterministic synthetic mix (identity, proxy/http, endpoint, dns), 300+ identities",
+  "started_at": "2026-11-20T13:07:05Z",
+  "runs": [
+    {
+      "events": 12000,
+      "file_mib": 2.1,
+      "generate": {
+        "status": "ok",
+        "elapsed_s": 0.3,
+        "peak_rss_mib": 0.2,
+        "result": {
+          "bytes": 2219393,
+          "seconds": 0.11
+        }
+      },
+      "ingest": {
+        "status": "ok",
+        "elapsed_s": 0.8,
+        "peak_rss_mib": 28.6,
+        "result": {
+          "status": "imported",
+          "accepted": 12000,
+          "rejected": 0,
+          "total": 12000,
+          "seconds": 0.57
+        }
+      },
+      "analyze": {
+        "status": "ok",
+        "elapsed_s": 1.8,
+        "peak_rss_mib": 136.5,
+        "result": {
+          "stats": {
+            "events": 12000,
+            "alerts": 3,
+            "rules_evaluated": 25,
+            "rules_not_evaluable": 4,
+            "rules_disabled": 0,
+            "rules_failed": 0,
+            "new": 3,
+            "updated": 0,
+            "no_longer_produced": 0
+          },
+          "seconds": 1.53
+        }
+      },
+      "db_mib": 36.7
+    },
+    {
+      "events": 100000,
+      "file_mib": 17.7,
+      "generate": {
+        "status": "ok",
+        "elapsed_s": 1.0,
+        "peak_rss_mib": 21.2,
+        "result": {
+          "bytes": 18512092,
+          "seconds": 0.73
+        }
+      },
+      "ingest": {
+        "status": "ok",
+        "elapsed_s": 7.3,
+        "peak_rss_mib": 28.6,
+        "result": {
+          "status": "imported",
+          "accepted": 100000,
+          "rejected": 0,
+          "total": 100000,
+          "seconds": 7.17
+        }
+      },
+      "analyze": {
+        "status": "ok",
+        "elapsed_s": 21.3,
+        "peak_rss_mib": 836.1,
+        "result": {
+          "stats": {
+            "events": 100000,
+            "alerts": 62,
+            "rules_evaluated": 25,
+            "rules_not_evaluable": 4,
+            "rules_disabled": 0,
+            "rules_failed": 0,
+            "new": 62,
+            "updated": 0,
+            "no_longer_produced": 0
+          },
+          "seconds": 20.94
+        }
+      },
+      "db_mib": 283.3
+    }
+  ],
+  "finished_at": "2026-11-20T13:07:38Z"
+}
