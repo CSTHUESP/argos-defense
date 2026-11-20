@@ -43,7 +43,8 @@ def test_cli_workflow_in_path_with_spaces_and_non_ascii(tmp_path, capsys):
     out = home / "reports" / "demo-synthetic.html"
     assert out.exists() and "DEMO/SYNTHETIC" in out.read_text("utf-8")
     assert main(["--version"]) == 0
-    assert "0.2.0" in capsys.readouterr().out
+    from argos import __version__
+    assert __version__ in capsys.readouterr().out
 
 
 def test_v01_database_migrates_with_backup(tmp_path):
@@ -54,10 +55,10 @@ def test_v01_database_migrates_with_backup(tmp_path):
     c.commit()
     c.close()
     st = Store(db)
-    assert st.schema_version() == 2 and st.get_case("old")["case_id"] == "case-x"
+    assert st.schema_version() == 3 and st.get_case("old")["case_id"] == "case-x"
     assert (tmp_path / "argos.v1-backup.sqlite3").exists()
     st.close()
-    assert Store(db).schema_version() == 2  # idempotent
+    assert Store(db).schema_version() == 3  # idempotent
 
 
 def _free_port():

@@ -25,17 +25,32 @@ class Match:
         self.extra = {}
 
 
+# Fields whose specification allows case-insensitive comparison (DNS names, account/UPN names,
+# directory tenant ids, derived basenames). Every other identifier - session ids, tool call ids,
+# process GUIDs, application ids, correlation ids - is opaque and compared exactly.
+CASE_INSENSITIVE_FIELDS = {"user", "host", "http_host", "dns_query", "domain", "tenant_id", "process_name",
+                           "parent_name", "file_ext", "remote"}
+
+
+def key_value(field: str, v):
+    if v is None or v == "":
+        return None
+    if isinstance(v, str) and field in CASE_INSENSITIVE_FIELDS:
+        return v.lower()
+    return v
+
+
 def _group_key(rule: Rule, ev: dict):
     vals = []
     for f in rule.group_by:
-        v = ev.get(f)
-        if v is None or v == "":
+        v = key_value(f, ev.get(f))
+        if v is None:
             return None
-        vals.append(str(v).lower() if isinstance(v, str) else v)
+        vals.append(v)
     return tuple(vals)
 
 
-def evaluate_rule(rule: Rule, events: list[dict], ev_fn: Evaluator, coverage_start: dict) -> tuple[list[Match], dict]:
+def evaluate_rule(rule: Rule, events: list[dict], ev_fn: Evaluator, cov_ctx=None) -> tuple[list[Match], dict]:
     stats = {"selected": 0, "missing_required_telemetry": 0, "ungroupable": 0, "groups": 0, "matches": 0}
     groups: dict[tuple, list] = defaultdict(list)
     first_trace: dict[str, list] = {}
@@ -67,7 +82,7 @@ def evaluate_rule(rule: Rule, events: list[dict], ev_fn: Evaluator, coverage_sta
         elif agg.type == "sequence":
             out += _sequence(rule, group, evs, ev_fn)
         elif agg.type == "baseline":
-            out += _baseline(rule, group, evs, first_trace, coverage_start)
+            out += _baseline(rule, group, evs, first_trace, cov_ctx)
     stats["matches"] = len(out)
     return out, stats
 
@@ -153,10 +168,17 @@ def _sequence(rule, group, evs, ev_fn):
         step_events, step_traces, j, ok = {}, {}, i, True
         for si, st in enumerate(steps):
             got, distinct = [], set()
+            allowed = None
+            if st.same_as is not None:
+                ref = step_events.get(st.same_as.step, [])
+                allowed = {key_value(st.same_as.field, e.get(st.same_as.step_field)) for e in ref} - {None}
             while j < n and evs[j]["event_epoch"] - start_t <= rule.window_s:
                 if resets[j][si] and flags[j][si] is None:
                     got, distinct = [], set()  # run interrupted
                     j += 1
+                    continue
+                if flags[j][si] is not None and allowed is not None and key_value(st.same_as.field, evs[j].get(st.same_as.field)) not in allowed:
+                    j += 1  # e.g. executed tool differs from the requested tool: not part of this chain
                     continue
                 if flags[j][si] is not None:
                     got.append(evs[j])
@@ -180,25 +202,32 @@ def _sequence(rule, group, evs, ev_fn):
     return out
 
 
-def _baseline(rule, group, evs, traces, coverage_start):
+def _baseline(rule, group, evs, traces, cov_ctx):
+    """Compare the evaluated window with the entity's OWN prior windows - but only windows in which
+    collection is evidenced (analyst-declared coverage, or other records of the same entity from the
+    rule's vantage). Windows without such evidence are gaps, never zero-count history."""
     agg = rule.aggregate
     out = []
     for m in _threshold(rule, group, evs, Evaluator(), traces):
         start = m.events[0]["event_epoch"]
         w = rule.window_s
-        hist_counts = []
-        earliest = coverage_start.get(tuple(rule.observation_vantage))
+        hist_counts, kinds, gaps = [], Counter(), 0
         k = 1
         while k * w <= agg.history_lookback_s:
             ws, we = start - k * w, start - (k - 1) * w
-            if earliest is None or ws < earliest:
-                break
-            hist_counts.append(sum(1 for e in evs if ws <= e["event_epoch"] < we))
+            status = cov_ctx.window_status(rule, group, ws, we) if cov_ctx is not None else "gap"
+            if status == "gap":
+                gaps += 1
+            else:
+                kinds[status] += 1
+                hist_counts.append(sum(1 for e in evs if ws <= e["event_epoch"] < we))
             k += 1
         info = {"reference": "observed_history", "history_windows": len(hist_counts), "window_s": w,
+                "covered_window_basis": dict(kinds), "gap_windows_excluded": gaps,
                 "min_history_windows": agg.min_history_windows, "factor": agg.factor,
                 "current_count": len(m.events), "history_max": max(hist_counts) if hist_counts else None,
-                "history_counts": hist_counts[:50], "uses_only_prior_events": True}
+                "history_counts": hist_counts[:50], "uses_only_prior_events": True,
+                "note": "windows count only when collection for this entity is evidenced (declared coverage or the entity's own records)"}
         if len(hist_counts) < agg.min_history_windows:
             info["status"] = "insufficient_baseline"
             m.baseline = info

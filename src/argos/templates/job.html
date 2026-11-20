@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block head %}{% if job.status in ('queued','running') %}<meta http-equiv="refresh" content="1">{% endif %}{% endblock %}
+{% block content %}
+<h1>Job {{ job.job_id }}</h1>
+<p>{{ job.kind }} · case <a href="/cases/{{ job.case_id }}">{{ job.case_id }}</a> · status <b>{{ job.status }}</b></p>
+<progress max="1" value="{{ job.progress }}"></progress> {{ (job.progress*100)|round|int }}% <span class="small">{{ job.message or '' }}</span>
+{% if job.error %}<p class="warn">{{ job.error }}</p>{% endif %}
+{% if job.status in ('queued','running') %}<form method="post" action="/jobs/{{ job.job_id }}/cancel"><input type="hidden" name="csrf" value="{{ csrf }}"><button type="submit">Cancel</button></form>
+<p class="small">Cancelling keeps the previous successful analysis; partial results are never committed.</p>{% endif %}
+{% if job.status == 'succeeded' %}<p class="ok">Analysis run {{ job.result.run_id }} completed. <a class="button" href="/cases/{{ job.case_id }}?analyzed={{ job.result.run_id }}">Open case</a></p>{% endif %}
+{% if job.status in ('failed','cancelled','interrupted') %}<p>The last successful analysis of the case is unchanged. <a href="/cases/{{ job.case_id }}">Back to case</a></p>{% endif %}
+{% endblock %}

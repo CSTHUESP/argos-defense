@@ -29,6 +29,62 @@ def platform_data_dir() -> Path:
     return Path(base) / "argos-defense"
 
 
+def _windows_private_acl(path: Path) -> bool:
+    """Replace inherited ACEs with: current user, SYSTEM, Administrators (full control, inherited by children).
+    Uses the built-in icacls tool; returns False if it could not be applied."""
+    import subprocess
+    user = os.environ.get("USERNAME")
+    if not user:
+        return False
+    dom = os.environ.get("USERDOMAIN")
+    principal = f"{dom}\\{user}" if dom else user
+    cmd = ["icacls", str(path), "/inheritance:r", "/grant:r", f"{principal}:(OI)(CI)F", "*S-1-5-18:(OI)(CI)F", "*S-1-5-32-544:(OI)(CI)F"]
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+        return r.returncode == 0
+    except (OSError, subprocess.SubprocessError):
+        return False
+
+
+def make_private_dir(d: Path) -> bool:
+    """Create d if needed. Only directories created here get private permissions."""
+    d = Path(d)
+    if d.exists():
+        return False
+    d.mkdir(parents=True, exist_ok=True)
+    if os.name == "posix":
+        os.chmod(d, 0o700)
+    elif sys.platform.startswith("win"):
+        _windows_private_acl(d)
+    return True
+
+
+def permission_findings(home: Path) -> list[str]:
+    """Report (do not fix) data locations readable by other local accounts."""
+    out = []
+    home = Path(home)
+    if not home.exists():
+        return out
+    if os.name == "posix":
+        import stat as _st
+        for p in [home] + [home / n for n in ("cases", "reports", "logs", "backups", "config", "argos.sqlite3", ".session_token")]:
+            if p.exists():
+                m = _st.S_IMODE(p.stat().st_mode)
+                if m & 0o077:
+                    out.append(f"{p} is accessible by group/other (mode {oct(m)}); remediation: chmod {'700' if p.is_dir() else '600'} '{p}'")
+    elif sys.platform.startswith("win"):
+        import subprocess
+        try:
+            r = subprocess.run(["icacls", str(home)], capture_output=True, text=True, timeout=30)
+            broad = [ln.strip() for ln in r.stdout.splitlines() if any(x in ln for x in ("Everyone:", "BUILTIN\\Users:", "Authenticated Users:"))]
+            if broad:
+                out.append(f"{home} grants access to broad groups ({'; '.join(broad)[:200]}); remediation: "
+                           f"icacls \"{home}\" /inheritance:r /grant:r \"%USERDOMAIN%\\%USERNAME%:(OI)(CI)F\" *S-1-5-18:(OI)(CI)F *S-1-5-32-544:(OI)(CI)F")
+        except (OSError, subprocess.SubprocessError) as exc:
+            out.append(f"could not inspect ACL of {home}: {exc}")
+    return out
+
+
 def default_home() -> Path:
     env = os.environ.get("ARGOS_HOME")
     return Path(env).expanduser().resolve() if env else platform_data_dir()
@@ -76,17 +132,25 @@ class Settings:
     def logs_dir(self) -> Path:
         return self.home / "logs"
 
+    @property
+    def backups_dir(self) -> Path:
+        return self.home / "backups"
+
     def ensure(self) -> None:
+        """Create the data layout. Directories ARGOS creates are owner-private; existing directories chosen
+        by the user are not recursively re-permissioned (see `doctor` for warnings)."""
         self.home = Path(self.home).expanduser().resolve()
-        for d in (self.home, self.cases_dir, self.reports_dir, self.logs_dir):
-            d.mkdir(parents=True, exist_ok=True)
+        for d in (self.home, self.cases_dir, self.reports_dir, self.logs_dir, self.backups_dir):
+            make_private_dir(d)
         if self.config_dir_override is None:
             # First run: copy editable defaults; never overwrite the user's edits.
-            self.config_dir.mkdir(parents=True, exist_ok=True)
+            make_private_dir(self.config_dir)
             for src in default_config_dir().glob("*.yaml"):
                 dst = self.config_dir / src.name
                 if not dst.exists():
                     shutil.copyfile(src, dst)
+                    if os.name == "posix":
+                        os.chmod(dst, 0o600)
 
     def analysis_config(self) -> dict:
         """The subset of configuration that influences analysis results."""

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Compare runs — case {{ case.name }}</h1>
+<form method="get"><label>Run A <select name="a">{% for r in runs %}<option value="{{ r.run_id }}" {{ 'selected' if r.run_id==a }}>#{{ r.seq }} {{ r.started_at }}</option>{% endfor %}</select></label>
+<label>Run B <select name="b">{% for r in runs %}<option value="{{ r.run_id }}" {{ 'selected' if r.run_id==b }}>#{{ r.seq }} {{ r.started_at }}</option>{% endfor %}</select></label><button type="submit">Compare</button></form>
+{% if error %}<p class="warn">{{ error }}</p>{% endif %}
+{% if result %}{% set x = result %}
+<p><b>Attribution of change:</b> {{ x.attribution }}</p>
+<p class="small">added {{ x.summary.added }} · removed {{ x.summary.removed }} · changed {{ x.summary.changed }} · unchanged {{ x.summary.unchanged }}</p>
+<h2>What differs between the runs' inputs</h2>
+<pre class="small">{{ x.inputs_changed|tojson_pretty }}</pre>
+{% if x.case_level %}<h2>Case-level assessment</h2><ul>{% for k, v in x.case_level.items() %}<li>{{ k }}: {{ v.a }} → {{ v.b }}</li>{% endfor %}</ul>{% endif %}
+<h2>Alerts</h2>
+<table><thead><tr><th>Change</th><th>Alert</th><th>Rule</th><th>Detail</th></tr></thead><tbody>
+{% for a in x.alerts.added %}<tr><td>added</td><td class="small">{{ a.alert_id }}</td><td>{{ a.rule_id }}{% if a.rule_changed %} (rule changed){% endif %}</td><td>{{ a.what }}</td></tr>{% endfor %}
+{% for a in x.alerts.removed %}<tr><td>removed</td><td class="small">{{ a.alert_id }}</td><td>{{ a.rule_id }}{% if a.rule_changed %} (rule changed){% endif %}</td><td>{{ a.what }}</td></tr>{% endfor %}
+{% for a in x.alerts.changed %}<tr><td>changed</td><td class="small"><a href="/alerts/{{ a.alert_id }}">{{ a.alert_id }}</a></td><td>{{ a.rule_id }}{% if a.rule_changed %} (rule changed){% endif %}</td><td class="small">{% for k, v in a.changes.items() %}{{ k }}: {{ v.a }} → {{ v.b }}<br>{% endfor %}</td></tr>{% endfor %}
+</tbody></table>
+<p class="small">Comparison uses only each run's stored snapshot. Analyst statuses and notes are not part of either run and are unchanged.</p>
+{% endif %}
+<p><a href="/cases/{{ case.case_id }}">Back to case</a></p>
+{% endblock %}

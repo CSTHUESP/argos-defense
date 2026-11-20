@@ -5,7 +5,7 @@
 {% if result %}
   {% if result.status == 'error' %}<div class="error">Import failed: {{ result.error }}</div>
   {% else %}<div class="{{ 'ok' if result.status=='imported' else 'warnbox' }}">
-    <b>{{ result.status }}</b> — accepted {{ result.accepted }}, rejected {{ result.rejected }} of {{ result.total }} records; new events {{ result.new_events }}; sha256 <span class="mono">{{ result.sha256 }}</span>
+    <b>{{ result.status }}</b>{% if result.revision %} (revision {{ result.revision }}){% endif %}{% if result.status == 'different_options_require_reprocess' %} — this content was already imported with other options; tick “Reprocess” to create a new revision{% endif %} — accepted {{ result.accepted }}, rejected {{ result.rejected }} of {{ result.total }} records; new events {{ result.new_events }}; sha256 <span class="mono">{{ result.sha256 }}</span>
     {% if result.error %}<br>Error: {{ result.error }}{% endif %}
     <br><a href="/cases/{{ result.case_id }}">Open case</a></div>
     {% if result.rejects_sample %}<h3>Rejected records (actual errors)</h3><table><thead><tr><th>Record</th><th>Reason</th></tr></thead><tbody>
@@ -27,6 +27,11 @@ bytes_basis: 'declare the direction of each byte counter'
 constants: {event_kind: http, observation_vantage: victim_network}"></textarea></label>
 <label class="opt opt-zeek_jsonl">Zeek log type <select name="zeek_log"><option value="">auto-detect</option><option>conn</option><option>http</option><option>dns</option></select></label>
 <label>Assume time zone for zone-less timestamps (explicit option; leave empty to reject them) <input name="assume_tz" placeholder="e.g. UTC or Europe/Budapest or +01:00"></label>
+<fieldset><legend>Declared collection coverage (optional, analyst-declared, not verified by ARGOS)</legend>
+<label>start <input name="coverage_start" placeholder="2026-11-01T00:00:00Z"></label> <label>end <input name="coverage_end"></label>
+<label>scope <input name="coverage_scope" placeholder="all | tenant:&lt;id&gt; | host:&lt;name&gt; | app_id:&lt;id&gt;"></label>
+<label>basis <input name="coverage_note" placeholder="how you know the export is complete for this window"></label></fieldset>
+<label><input type="checkbox" name="reprocess"> Reprocess: this file was imported before with different options — create a new revision</label>
 <label>File <input type="file" name="file" required></label>
 <button type="submit">Import</button>
 </form>

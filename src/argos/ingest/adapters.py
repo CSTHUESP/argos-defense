@@ -1,6 +1,7 @@
-"""Format adapters. Each adapter yields (record_no, raw_record | None, error | None)
-from a locally retained copy of the original file, streaming line by line or
-element by element. Adapters never execute or follow anything in the data."""
+"""Format adapters. Each adapter yields (record_no, raw_record | None, error | None, locator)
+from a locally retained copy of the original file, streaming line by line or element by
+element. `locator` is a versioned, format-aware description of where the record lives in the
+original bytes (see evidence/original.py). Adapters never execute or follow anything in the data."""
 from __future__ import annotations
 
 import csv
@@ -15,30 +16,36 @@ class AdapterError(ValueError):
     pass
 
 
+LOCATOR_VERSION = 1
+
+
 def _iter_lines(path: Path, max_record_bytes: int):
+    pos = 0
     with open(path, "rb") as fh:
         for no, line in enumerate(fh, start=1):
+            start, pos = pos, pos + len(line)
+            loc = {"v": LOCATOR_VERSION, "kind": "jsonl_line", "line": no, "byte_start": start, "byte_end": pos}
             if len(line) > max_record_bytes:
-                yield no, None, f"record exceeds {max_record_bytes} bytes"
+                yield no, None, f"record exceeds {max_record_bytes} bytes", loc
                 continue
             s = line.strip()
             if not s:
                 continue
             try:
-                yield no, s.decode("utf-8"), None
+                yield no, s.decode("utf-8"), None, loc
             except UnicodeDecodeError:
-                yield no, None, "invalid UTF-8"
+                yield no, None, "invalid UTF-8", loc
 
 
 def read_jsonl(path: Path, max_record_bytes: int):
     first = True
-    for no, text, err in _iter_lines(path, max_record_bytes):
+    for no, text, err, loc in _iter_lines(path, max_record_bytes):
         if err:
-            yield no, None, err
+            yield no, None, err, loc
             continue
         if text.startswith("#"):
             # Zeek TSV header/comment lines (#separator, #fields...) - only Zeek JSON logs are supported
-            yield no, None, "comment/TSV header line (only JSON logs are supported; Zeek TSV is not)"
+            yield no, None, "comment/TSV header line (only JSON logs are supported; Zeek TSV is not)", loc
             continue
         if first and text.startswith("["):
             # JSON array file (e.g. Splunk JSON export of a result list). Bounded by max file size.
@@ -49,51 +56,56 @@ def read_jsonl(path: Path, max_record_bytes: int):
         try:
             obj = json.loads(text)
         except json.JSONDecodeError as exc:
-            yield no, None, f"malformed JSON: {exc.msg} at col {exc.colno}"
+            yield no, None, f"malformed JSON: {exc.msg} at col {exc.colno}", loc
             continue
         if not isinstance(obj, dict):
-            yield no, None, "record is not a JSON object"
+            yield no, None, "record is not a JSON object", loc
             continue
-        yield no, obj, None
+        yield no, obj, None, loc
 
 
 def _read_json_array(path: Path):
     try:
-        data = json.loads(path.read_text("utf-8"))
+        data = json.loads(path.read_text("utf-8-sig"))
     except (json.JSONDecodeError, UnicodeDecodeError) as exc:
-        yield 0, None, f"malformed JSON array file: {exc}"
+        yield 0, None, f"malformed JSON array file: {exc}", {"v": LOCATOR_VERSION, "kind": "file"}
         return
     for i, obj in enumerate(data, start=1):
+        loc = {"v": LOCATOR_VERSION, "kind": "json_array_index", "index": i - 1, "pointer": f"/{i - 1}"}
         if isinstance(obj, dict):
-            yield i, obj, None
+            yield i, obj, None, loc
         else:
-            yield i, None, "array element is not an object"
+            yield i, None, "array element is not an object", loc
 
 
 def read_csv(path: Path, max_record_bytes: int):
     with open(path, "r", encoding="utf-8-sig", newline="") as fh:  # tolerate a UTF-8 BOM (Excel/Splunk exports)
         reader = csv.DictReader(fh)
         if not reader.fieldnames:
-            yield 0, None, "CSV without header row"
+            yield 0, None, "CSV without header row", {"v": LOCATOR_VERSION, "kind": "file"}
             return
+        prev = reader.line_num  # header end line
         try:
             for row in reader:
                 no = reader.line_num
+                # a record may span several physical lines (quoted newlines)
+                loc = {"v": LOCATOR_VERSION, "kind": "csv_record", "line_start": prev + 1, "line_end": no, "header_lines": 1}
+                prev = no
                 if None in row:
-                    yield no, None, "row has more columns than header"
+                    yield no, None, "row has more columns than header", loc
                     continue
                 if sum(len(v or "") for v in row.values()) > max_record_bytes:
-                    yield no, None, "record too large"
+                    yield no, None, "record too large", loc
                     continue
-                yield no, dict(row), None
+                yield no, dict(row), None, loc
         except csv.Error as exc:
-            yield reader.line_num, None, f"CSV error: {exc}"
+            yield reader.line_num, None, f"CSV error: {exc}", {"v": LOCATOR_VERSION, "kind": "csv_record", "line_end": reader.line_num}
 
 
 SYSMON_NS = "{http://schemas.microsoft.com/win/2004/08/events/event}"
 
 
-def read_sysmon_xml(path: Path, max_record_bytes: int):
+def xml_source(path: Path):
     head = path.read_bytes()[:4096].upper()
     if b"<!DOCTYPE" in head or b"<!ENTITY" in head:
         raise AdapterError("XML document type declarations / entities are not accepted")
@@ -107,38 +119,49 @@ def read_sysmon_xml(path: Path, max_record_bytes: int):
         # root element; wrap them so the document is well-formed (bounded by the file size limit).
         import io
         source = io.BytesIO(b"<Events>" + body + b"</Events>")
+    return source
+
+
+def iter_xml_events(path: Path):
+    """Yield (ordinal, Event element) with safe parsing; caller must not keep references."""
+    source = xml_source(path)
     try:
         ordinal = 0
         for _evt, elem in DET.iterparse(source, events=("end",), forbid_dtd=True, forbid_entities=True, forbid_external=True):
-            tag = elem.tag.replace(SYSMON_NS, "")
-            if tag != "Event":
+            if elem.tag.replace(SYSMON_NS, "") != "Event":
                 continue
             ordinal += 1
-            rec: dict = {}
-            system = elem.find(f"{SYSMON_NS}System")
-            if system is None:
-                system = elem.find("System")
-            if system is not None:
-                for child in system:
-                    name = child.tag.replace(SYSMON_NS, "")
-                    if name == "TimeCreated":
-                        rec["_TimeCreated"] = child.get("SystemTime")
-                    elif name == "Provider":
-                        rec["_Provider"] = child.get("Name")
-                    else:
-                        rec["_" + name] = (child.text or "").strip()
-            data = elem.find(f"{SYSMON_NS}EventData")
-            if data is None:
-                data = elem.find("EventData")
-            if data is not None:
-                for d in data:
-                    n = d.get("Name")
-                    if n:
-                        rec[n] = (d.text or "").strip()
+            yield ordinal, elem
             elem.clear()
-            yield ordinal, rec, None
     except (DET.ParseError, DefusedXmlException) as exc:
         raise AdapterError(f"XML rejected: {exc}") from exc
+
+
+def read_sysmon_xml(path: Path, max_record_bytes: int):
+    for ordinal, elem in iter_xml_events(path):
+        rec: dict = {}
+        system = elem.find(f"{SYSMON_NS}System")
+        if system is None:
+            system = elem.find("System")
+        if system is not None:
+            for child in system:
+                name = child.tag.replace(SYSMON_NS, "")
+                if name == "TimeCreated":
+                    rec["_TimeCreated"] = child.get("SystemTime")
+                elif name == "Provider":
+                    rec["_Provider"] = child.get("Name")
+                else:
+                    rec["_" + name] = (child.text or "").strip()
+        data = elem.find(f"{SYSMON_NS}EventData")
+        if data is None:
+            data = elem.find("EventData")
+        if data is not None:
+            for d in data:
+                n = d.get("Name")
+                if n:
+                    rec[n] = (d.text or "").strip()
+        yield ordinal, rec, None, {"v": LOCATOR_VERSION, "kind": "xml_element", "ordinal": ordinal,
+                                   "event_record_id": rec.get("_EventRecordID")}
 
 
 READERS = {

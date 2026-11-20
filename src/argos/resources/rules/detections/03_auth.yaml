@@ -32,7 +32,7 @@ sources: ["Microsoft Security blog 2026-10-21 Storm-0940 (cross-tenant password 
 suppressible_by_registry: false
 ---
 id: ARG-AUTH-002
-version: 1
+version: 2
 title: Failures, then success, then sensitive action by the same identity
 description: |
   The same tenant+account had failed sign-ins, then a successful sign-in, then a
@@ -71,7 +71,7 @@ contributes:
   purpose: {observed_action: "sign-in failures; a success; then a sensitive operation", hypothesis: privilege_escalation, stage: observed_success}
 evidence_family: auth_compromise_chain
 required_evidence: Authentication and audit records for the same tenant and account
-explanation: "Ordered sequence for {group}: failed sign-ins, success, then sensitive action within {window_s}s."
+explanation: "Ordered sequence for {group}: failed sign-ins, success, then a sensitive-action record within {window_s}s (action outcome: {terminal_outcome})."
 alternatives: [legitimate user who mistyped and then performed planned admin work, helpdesk password reset followed by setup]
 false_positives: [admins with typos]
 missing_visibility_hints: ["who controls the account is not established by account ownership"]

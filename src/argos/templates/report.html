@@ -15,7 +15,8 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
 {% if x.case.synthetic %}<div class="banner">DEMO/SYNTHETIC — data and all derived findings are synthetic</div>{% endif %}
 <h1>ARGOS Defense case report: {{ x.case.name }}</h1>
 <p class="small">{{ x.banner }} · generated {{ x.generated_at }} · case {{ x.case.case_id }} · status {{ x.case.status }}</p>
-<p class="small">Versions: argos {{ x.versions.argos }}, {{ x.versions.engine }}, schema {{ x.versions.schema }}, rules hash {{ x.versions.rules_hash }}{% if x.versions.latest_run %}, manifest {{ x.versions.latest_run.manifest_hash }}, config {{ x.versions.latest_run.config_hash }}, registry {{ x.versions.latest_run.registry_hash }}, ioc {{ x.versions.latest_run.ioc_hash }}{% endif %}.</p>
+<p class="small">{% if x.run %}Run <b>{{ x.run.run_id }}</b> (#{{ x.run.seq }}, {{ x.run.started_at }}) — basis: {{ x.run.basis }}.{% else %}No succeeded analysis run.{% endif %}</p>
+<p class="small">Versions: argos {{ x.versions.argos }}, {{ x.versions.engine }}, schema {{ x.versions.schema }}, rules hash {{ x.versions.rules_hash }}{% if x.versions.run_versions %}, manifest {{ x.versions.run_versions.manifest_hash }}, config {{ x.versions.run_versions.config_hash }}, registry {{ x.versions.run_versions.registry_hash }}, ioc {{ x.versions.run_versions.ioc_hash }}{% endif %}.</p>
 <h2>Limitations</h2><ul>{% for l in x.limitations %}<li>{{ l }}</li>{% endfor %}{% if x.assessment %}{% for l in x.assessment.limitations %}<li>{{ l }}</li>{% endfor %}{% endif %}</ul>
 {% if x.assessment %}{% set a = x.assessment %}
 <h2>Case assessment</h2>
@@ -31,7 +32,7 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
 {% for v, c in a.coverage.items() %}<tr><td>{{ v }}</td><td>{{ c.status }}</td><td>{{ c.event_count }}</td><td>{{ c.first or '' }} → {{ c.last or '' }}</td></tr>{% endfor %}</table>
 {% endif %}
 <h2>Alerts</h2>
-{% for al in x.alerts if al.current %}
+{% for al in x.alerts if al.current is not defined or al.current %}
 <h3>{{ al.rule_title }} <span class="badge sev-{{ al.threat.severity }}">{{ al.threat.severity }}</span> <span class="badge">confidence {{ al.confidence }}</span> <span class="badge">{{ al.disposition }}</span></h3>
 <p class="small">{{ al.alert_id }} · {{ al.rule_id }}@{{ al.rule_version }} · {{ al.first_time }} → {{ al.last_time }} · analyst status {{ al.analyst_status }}</p>
 <p><b>Why:</b> {{ al.why }}</p>
@@ -47,7 +48,7 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
 <td class="small">{{ e.user or e.app_id or '' }} {{ e.src_ip or '' }} {{ e.host or '' }}</td><td class="small mono">{{ (e.http_uri or e.process_command_line or e.file_path or e.dns_query or e.action or '')|truncate(200) }}</td><td class="small mono">{{ e.evidence_ref }}</td></tr>{% endfor %}</table>
 <h2>Inputs</h2><table><tr><th>File</th><th>Format</th><th>SHA-256</th><th>Accepted/rejected</th><th>Trust</th></tr>
 {% for i in x.inputs %}<tr><td>{{ i.original_name }}</td><td>{{ i.format }} ({{ i.parser_version }})</td><td class="mono small">{{ i.sha256 }}</td><td>{{ i.records_accepted }}/{{ i.records_rejected }}</td><td>{{ i.provenance_trust }}</td></tr>{% endfor %}</table>
-<h2>Notes</h2><ul>{% for n in x.notes %}<li>{{ n.created_at }} {{ n.text }}</li>{% else %}<li>none</li>{% endfor %}</ul>
+<h2>Notes</h2><ul>{% for n in x.notes %}<li>{{ n.created_at }} {{ n.text|redact }}</li>{% else %}<li>none</li>{% endfor %}</ul>
 <h2>Configuration</h2><pre class="small">{{ x.configuration|tojson_pretty }}</pre>
 <h2>Runs</h2><pre class="small">{{ x.runs|tojson_pretty }}</pre>
 </body></html>

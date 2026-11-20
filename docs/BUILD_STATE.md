@@ -38,3 +38,12 @@ pytest 75 passed · validate.py 15/15 scenarios · 12k events: ingest ~3.1 s, an
 - 11:0x GitHub app installed by owner; repo CSTHUESP/argos-defense (private, empty) attached; pushed main. CI run 44715570390 green (7 jobs).
 - Release dry runs: 44716220769 (Windows spec tzdata TOC bug; others 30/30), 44716998681 (Windows cp1252 output crash + harness hang), 44719465528 (after fixes).
 - Proxy limits: artifact/blob downloads blocked from session -> verification via job logs; repo settings writes blocked (description must be set by owner).
+
+## v0.3.0 remediation pass checkpoints (2026-11-20, see docs/AUDIT_REMEDIATION.md)
+- 13:30 Baseline 2 recorded (docs/RELEASE_BASELINE.md); F01–F13 reproduced with scripts/audit_repro.py. Repo found PUBLIC (not changed).
+- 14:xx Schema v3 (input revisions, run snapshots, jobs, watch checkpoints, status history); F01–F10 implemented;
+  backup/restore (argos/backup.py), jobs (argos/jobs.py), watcher (argos/watch.py), run comparison (reporting/compare.py),
+  original-record retrieval (evidence/original.py); CLI: inputs/activate/coverage/runs/compare-runs/status/backup/verify-backup/restore/watch.
+  pytest 148 passed. tests/conftest.py now uses a private config copy (a test previously wrote into packaged defaults — reverted).
+- Next: F11/F12/F13 (release preflight, asset contract + negative tests, content-hash fingerprint), packaging launcher tests,
+  evaluation protocol v2, benchmarks, Sigma/SPL review, dependency locks/audit, docs, CI, release.

@@ -18,7 +18,7 @@ class MappingError(ValueError):
 
 NATIVE_ALLOWED = set(EVENT_FIELDS) - {
     "schema_version", "event_id", "case_id", "input_id", "record_no", "event_epoch", "ingested_at",
-    "original_timestamp", "timestamp_note", "quality_warnings", "evidence_ref", "source_format",
+    "original_timestamp", "timestamp_note", "quality_warnings", "evidence_ref", "source_format", "source_locator", "revision",
 }
 # Fields that an imported record might use to claim trust. They are never honoured.
 SELF_TRUST_FIELDS = {"provenance_trust", "trusted", "verified", "provenance", "trust"}

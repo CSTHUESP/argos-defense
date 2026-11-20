@@ -1,8 +1,13 @@
 """Import pipeline: copy original -> hash -> stream-parse -> normalize -> store in chunks.
 
-Re-importing the same file into the same case is idempotent: event ids derive
-from (case, file sha256, format, record number), so identical-looking but
-distinct records are preserved while the same record never duplicates.
+Normalization revisions (v0.3): an import is identified by
+  (case, original content sha256, adapter format, parser version, canonical effective options/mapping hash).
+* Importing the same file with the same effective options again is idempotent (`already_imported`).
+* Importing the same content with different options is refused unless `reprocess=True`, which creates
+  a new revision; exactly one revision per content is active, so analyses never double count.
+* A failed reprocess (file rejected, or no accepted records while the active revision has some)
+  is kept for inspection but does not replace the usable active revision.
+* Original bytes and every revision's events/rejects are retained; past runs keep their manifests.
 """
 from __future__ import annotations
 
@@ -16,14 +21,16 @@ from pathlib import Path
 
 from argos import PARSER_VERSIONS
 from argos.config import Settings
+from argos.evidence.redact import redact, redact_obj
 from argos.ingest.adapters import READERS, AdapterError
 from argos.normalize import mappers
 from argos.normalize.timeutil import TimestampError, iso, now_iso, parse_timestamp
-from argos.store import Store
+from argos.store import Store, options_hash
 
 # Unicode letters/digits allowed (e.g. "Prüfung é.xml"); path separators, control chars and ".." are not.
 SAFE_NAME_RE = re.compile(r"^[^\W_][\w .,()+\-]{0,200}$", re.UNICODE)
 ALLOWED_EXT = {".jsonl", ".json", ".ndjson", ".log", ".csv", ".xml", ".txt"}
+COVERAGE_SCOPE_RE = re.compile(r"^(all|tenant:[^\s]{1,200}|host:[^\s]{1,200}|app_id:[^\s]{1,200})$")
 
 
 class ImportError_(ValueError):
@@ -49,17 +56,24 @@ def safe_join(base: Path, *parts: str) -> Path:
     return p
 
 
+def _private_dir(d: Path):
+    d.mkdir(parents=True, exist_ok=True)
+    if os.name == "posix":
+        os.chmod(d, 0o700)
+
+
 def _copy_and_hash(src: Path, dest_dir: Path, max_bytes: int) -> tuple[str, Path, int]:
     if src.is_symlink() or not src.is_file():
         raise ImportError_("input must be a regular file (symlinks are not followed)")
     size = src.stat().st_size
     if size > max_bytes:
         raise ImportError_(f"file is {size} bytes; limit is {max_bytes}")
-    dest_dir.mkdir(parents=True, exist_ok=True)
+    _private_dir(dest_dir)
     tmp = dest_dir / (".incoming-" + os.urandom(6).hex())
     h = hashlib.sha256()
     n = 0
-    with open(src, "rb") as fi, open(tmp, "wb") as fo:
+    fd = os.open(str(tmp), os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_BINARY", 0), 0o600)
+    with open(src, "rb") as fi, os.fdopen(fd, "wb") as fo:
         while True:
             b = fi.read(1024 * 1024)
             if not b:
@@ -76,50 +90,94 @@ def _copy_and_hash(src: Path, dest_dir: Path, max_bytes: int) -> tuple[str, Path
     if final.exists():
         tmp.unlink()
     else:
-        tmp.rename(final)
-        os.chmod(final, stat.S_IRUSR | stat.S_IRGRP)  # read-only local copy (not tamper-proof)
+        os.replace(tmp, final)
+        os.chmod(final, stat.S_IRUSR)  # owner read-only local copy (integrity aid; not tamper-proof)
     return digest, final, n
 
 
-def ingest_file(store: Store, settings: Settings, case: dict, path: str | Path, fmt: str,
-                options: dict | None = None, original_name: str | None = None) -> dict:
+def effective_options(fmt: str, options: dict | None) -> tuple[dict, dict | None]:
+    """Canonical options used for parsing (custom mapping content inlined; file paths dropped)."""
     options = dict(options or {})
-    if fmt not in READERS:
-        raise ImportError_(f"unknown format {fmt!r}; supported: {', '.join(READERS)}")
     profile = None
     if fmt in ("splunk_json", "splunk_csv"):
         if fmt == "splunk_json" and not options.get("profile") and not options.get("mapping"):
             options["profile"] = "native"
         profile = mappers.load_profile(options.get("profile"), options.get("mapping"))
         if options.get("mapping"):
-            options["mapping_inline"] = profile  # recorded for reproducibility
+            options["mapping_inline"] = profile
+            options.pop("mapping", None)  # temp/user path is not part of the interpretation
+            options.pop("profile", None)
     assume_tz = options.get("assume_tz") or None
     if assume_tz:
         try:
             parse_timestamp("2000-01-01T00:00:00", assume_tz)
         except TimestampError as exc:
             raise ImportError_(str(exc)) from exc
+    return {k: v for k, v in options.items() if v not in (None, "")}, profile
+
+
+def validate_coverage(cov: dict | None) -> dict | None:
+    """Analyst-declared collection coverage for an input (never taken from inside the file)."""
+    if not cov:
+        return None
+    start, end, scope = cov.get("start"), cov.get("end"), (cov.get("scope") or "all")
+    if not start or not end:
+        raise ImportError_("declared coverage needs start and end")
+    try:
+        s, _ = parse_timestamp(start)
+        e, _ = parse_timestamp(end)
+    except TimestampError as exc:
+        raise ImportError_(f"coverage: {exc}") from exc
+    if e <= s:
+        raise ImportError_("coverage end must be after start")
+    if not COVERAGE_SCOPE_RE.match(scope):
+        raise ImportError_("coverage scope must be 'all', 'tenant:<id>', 'host:<name>' or 'app_id:<id>'")
+    return {"start": iso(s), "end": iso(e), "start_epoch": s.timestamp(), "end_epoch": e.timestamp(), "scope": scope,
+            "basis": "analyst-declared (not verified by ARGOS)", "note": (cov.get("note") or "")[:500]}
+
+
+def ingest_file(store: Store, settings: Settings, case: dict, path: str | Path, fmt: str,
+                options: dict | None = None, original_name: str | None = None, reprocess: bool = False,
+                coverage: dict | None = None, source_ref: dict | None = None) -> dict:
+    if fmt not in READERS:
+        raise ImportError_(f"unknown format {fmt!r}; supported: {', '.join(READERS)}")
+    opts, profile = effective_options(fmt, options)
+    cov = validate_coverage(coverage)
+    parser_version = PARSER_VERSIONS[fmt]
+    oh = options_hash(fmt, parser_version, opts)
     src = Path(path)
     case_dir = safe_join(settings.cases_dir, case["case_id"])
+    _private_dir(case_dir)
     digest, stored, size = _copy_and_hash(src, case_dir / "originals", settings.max_file_bytes)
-    existing = store.find_input(case["case_id"], digest, fmt)
-    if existing:
-        return {"status": "already_imported", "input_id": existing["input_id"], "sha256": digest,
-                "accepted": existing["records_accepted"], "rejected": existing["records_rejected"],
-                "total": existing["records_total"], "new_events": 0}
-    input_id = "in-" + digest[:16] + "-" + hashlib.sha256((case["case_id"] + fmt).encode()).hexdigest()[:6]
+    same = store.find_input(case["case_id"], digest, fmt, oh)
+    if same:
+        return {"status": "already_imported", "input_id": same["input_id"], "sha256": digest, "revision": same["revision"],
+                "active": bool(same["active"]), "accepted": same["records_accepted"], "rejected": same["records_rejected"],
+                "total": same["records_total"], "new_events": 0}
+    revisions = store.revisions_of(case["case_id"], digest)
+    active = next((r for r in revisions if r["active"]), None)
+    if revisions and not reprocess:
+        return {"status": "different_options_require_reprocess", "sha256": digest, "active_input_id": active["input_id"] if active else None,
+                "message": "this file content was already imported with other parsing options; use reprocess to create a new revision",
+                "accepted": 0, "rejected": 0, "total": 0, "new_events": 0}
+    revision = store.next_revision(case["case_id"], digest)
+    input_id = "in-" + digest[:16] + "-" + hashlib.sha256(f"{case['case_id']}|{fmt}|{oh}".encode()).hexdigest()[:6]
     store.add_input({
         "input_id": input_id, "case_id": case["case_id"], "sha256": digest,
         "original_name": original_name or src.name, "stored_path": str(stored), "format": fmt,
-        "parser_version": PARSER_VERSIONS[fmt], "options": json.dumps(options, sort_keys=True, default=str),
+        "parser_version": parser_version, "options": json.dumps(opts, sort_keys=True, default=str),
         "size_bytes": size, "provenance_trust": "unverified",
         "provenance_note": "imported file; origin not independently verified (sha256 establishes integrity only)",
-        "imported_at": now_iso(),
+        "imported_at": now_iso(), "options_hash": oh, "revision": revision, "active": 0, "status": "processing",
+        "supersedes": active["input_id"] if active else None, "coverage": json.dumps(cov) if cov else None,
+        "source_ref": json.dumps(source_ref) if source_ref else None,
     })
     ingested_at = now_iso()
     total = accepted = rejected = new = 0
     chunk, rej_chunk = [], []
-    count_cap = settings.max_events_per_case - store.count_events(case["case_id"])
+    replaced = (active["records_accepted"] or 0) if active else 0
+    count_cap = settings.max_events_per_case - store.count_events(case["case_id"]) + replaced
+    assume_tz = opts.get("assume_tz") or None
 
     def flush():
         nonlocal new, chunk, rej_chunk
@@ -129,9 +187,9 @@ def ingest_file(store: Store, settings: Settings, case: dict, path: str | Path, 
             store.insert_rejects(rej_chunk)
         chunk, rej_chunk = [], []
 
+    file_error = None
     try:
-        records = READERS[fmt](stored, settings.max_record_bytes)
-        for record_no, raw, err in records:
+        for record_no, raw, err, locator in READERS[fmt](stored, settings.max_record_bytes):
             total += 1
             ev = None
             ts_raw = None
@@ -144,16 +202,14 @@ def ingest_file(store: Store, settings: Settings, case: dict, path: str | Path, 
                     elif fmt == "sysmon_xml":
                         ev, ts_raw, err = mappers.map_sysmon(raw)
                     elif fmt == "zeek_jsonl":
-                        ev, ts_raw, err = mappers.map_zeek(raw, options.get("zeek_log"))
+                        ev, ts_raw, err = mappers.map_zeek(raw, opts.get("zeek_log"))
                 except Exception as exc:  # noqa: BLE001 - record and continue
                     err = f"normalization error: {type(exc).__name__}"
             if err is None:
                 err = mappers.finalize_kind_vantage(ev)
             if err is None:
                 try:
-                    tz_opt = assume_tz
-                    if fmt == "sysmon_xml":
-                        tz_opt = "UTC"  # Sysmon 'UtcTime' is defined as UTC by the producer
+                    tz_opt = "UTC" if fmt == "sysmon_xml" else assume_tz  # Sysmon 'UtcTime' is defined as UTC by the producer
                     dt, note = parse_timestamp(ts_raw, tz_opt)
                     if fmt == "sysmon_xml":
                         note = "sysmon_UtcTime_documented_as_UTC"
@@ -163,18 +219,18 @@ def ingest_file(store: Store, settings: Settings, case: dict, path: str | Path, 
                 err = "case event limit reached"
             if err is not None:
                 rejected += 1
-                excerpt = None
-                if raw is not None:
-                    excerpt = json.dumps(raw, default=str)[:300]
-                rej_chunk.append((case["case_id"], input_id, record_no, err[:300], excerpt))
+                # F05: redact the whole value first, then truncate (truncation must not split a secret past the pattern)
+                excerpt = redact(json.dumps(redact_obj(raw) if isinstance(raw, (dict, list)) else raw, default=str, ensure_ascii=False))[:300] \
+                    if raw is not None else None
+                rej_chunk.append((case["case_id"], input_id, record_no, redact(err)[:300], excerpt))
             else:
                 accepted += 1
                 ev.update(
-                    event_id=hashlib.sha256(f"{case['case_id']}|{digest}|{fmt}|{record_no}".encode()).hexdigest()[:32],
-                    case_id=case["case_id"], input_id=input_id, record_no=record_no,
+                    event_id=hashlib.sha256(f"{case['case_id']}|{digest}|{fmt}|{oh}|{record_no}".encode()).hexdigest()[:32],
+                    case_id=case["case_id"], input_id=input_id, record_no=record_no, revision=revision,
                     event_time=iso(dt), event_epoch=dt.timestamp(), original_timestamp=str(ts_raw),
                     timestamp_note=note, ingested_at=ingested_at, source_format=fmt,
-                    evidence_ref=f"ev:{digest[:16]}:{record_no}",
+                    evidence_ref=f"ev:{digest[:16]}:{record_no}", source_locator=locator,
                 )
                 if ev["source_type"] is None:
                     ev["source_type"] = fmt
@@ -184,14 +240,25 @@ def ingest_file(store: Store, settings: Settings, case: dict, path: str | Path, 
         flush()
     except AdapterError as exc:
         flush()
+        file_error = str(exc)
         rejected += 1
         store.insert_rejects([(case["case_id"], input_id, 0, f"file rejected: {exc}"[:300], None)])
-        store.update_input_counts(input_id, total, accepted, rejected)
-        return {"status": "rejected", "input_id": input_id, "sha256": digest, "error": str(exc),
-                "accepted": accepted, "rejected": rejected, "total": total, "new_events": new}
     store.update_input_counts(input_id, total, accepted, rejected)
-    return {"status": "imported", "input_id": input_id, "sha256": digest, "accepted": accepted,
-            "rejected": rejected, "total": total, "new_events": new, "stored_copy": str(stored)}
+    # decide whether this revision becomes the active interpretation
+    previous_usable = active is not None and (active["records_accepted"] or 0) > 0
+    if file_error and previous_usable or (accepted == 0 and previous_usable):
+        store.set_input_status(input_id, "failed_kept_previous")
+        status = "reprocess_failed_previous_kept"
+    else:
+        store.activate_revision(input_id)
+        store.set_input_status(input_id, "rejected" if file_error else "imported")
+        status = "rejected" if file_error else ("reprocessed" if active else "imported")
+    res = {"status": status, "input_id": input_id, "sha256": digest, "revision": revision, "options_hash": oh,
+           "accepted": accepted, "rejected": rejected, "skipped": max(0, total - accepted - rejected), "total": total,
+           "new_events": new, "stored_copy": str(stored), "superseded": active["input_id"] if active and status == "reprocessed" else None}
+    if file_error:
+        res["error"] = file_error
+    return res
 
 
 def remove_copy_dir(path: Path):  # used by tests only

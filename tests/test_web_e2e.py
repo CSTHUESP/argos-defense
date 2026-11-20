@@ -133,7 +133,14 @@ def test_16_full_workflow_browser_and_api(env):
         assert st == 200 and "rejected" in page and "not accepted" in page
         # --- analyze
         st, hdr, _ = cl.form(f"/cases/{cid}/analyze", {"csrf": csrf})
-        assert st == 303 and "analyzed=run-" in hdr["location"]
+        assert st == 303 and hdr["location"].startswith("/jobs/job-")
+        job_path = hdr["location"]
+        for _ in range(300):  # background job: poll its page (it auto-refreshes in a browser)
+            st, _, page = cl.req("GET", job_path)
+            if "status <b>succeeded</b>" in page or "status <b>failed</b>" in page:
+                break
+            time.sleep(0.1)
+        assert st == 200 and "status <b>succeeded</b>" in page and "analyzed=run-" in page, page[-800:]
         st, _, page = cl.req("GET", f"/cases/{cid}")
         assert "DEMO/SYNTHETIC CASE" in page and "corroborated_presence" in page and "unavailable" not in page.split("Coverage by")[1][:200]
         # --- alert queue with filters

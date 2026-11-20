@@ -17,7 +17,7 @@ from argos.models import EVENT_FIELDS, VANTAGES
 OPERATORS = {"eq", "ne", "in", "not_in", "contains", "not_contains", "startswith", "endswith", "regex", "gt", "gte", "lt", "lte",
              "exists", "not_exists", "cidr", "not_cidr", "ioc_valid", "ioc_any"}
 DERIVED_FIELDS = {"uri_path", "process_name", "parent_name", "file_ext", "dst_is_private", "src_is_private",
-                  "http_status_class", "domain", "proc_link", "remote"}
+                  "http_status_class", "domain", "proc_link", "remote", "session_key", "call_key"}
 KNOWN_FIELDS = set(EVENT_FIELDS) | DERIVED_FIELDS
 FAMILIES = ["automation_burst", "enumeration_adaptation", "auth_sequence", "service_principal_abuse",
             "endpoint_process", "model_tool_linkage", "framework_candidate", "collection_exfil_persistence", "ioc_context"]
@@ -73,6 +73,13 @@ CondT = Union[Predicate, Cond]
 Cond.model_rebuild()
 
 
+class SameAs(Strict):
+    """Require this step's `field` to equal `step_field` of an event already collected for `step`."""
+    step: str
+    field: str
+    step_field: str
+
+
 class Step(Strict):
     name: str
     where: CondT
@@ -82,6 +89,7 @@ class Step(Strict):
     # Events matching reset_where (in the same group) discard the events collected so far
     # for this step, i.e. the step requires an uninterrupted run (e.g. consecutive failures).
     reset_where: Optional[CondT] = None
+    same_as: Optional[SameAs] = None
 
 
 class Aggregate(Strict):

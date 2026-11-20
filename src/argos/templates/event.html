@@ -2,10 +2,12 @@
 {% block banner %}{% if case.synthetic %}<div class="synthbanner">DEMO/SYNTHETIC</div>{% endif %}{% endblock %}
 {% block content %}
 <h1>Event {{ ev.evidence_ref }} {{ synth(case.synthetic) }}</h1>
-<p class="small">Normalized record. Values are shown as data (escaped, secrets redacted); nothing in evidence is executed or followed.</p>
-<table class="kv">{% for k, v in ev.items() %}{% if v is not none and v != [] %}<tr><th>{{ k }}</th><td class="mono small">{{ v|string|redact }}</td></tr>{% endif %}{% endfor %}</table>
+{% if raw %}<p class="warn"><b>RAW VIEW</b> — secrets are NOT redacted on this page. Do not screenshot or share it. <a href="/events/{{ ev.event_id }}">Return to the redacted view</a>.</p>
+{% else %}<p class="small">Normalized record. Values are shown as data (escaped, secrets redacted); nothing in evidence is executed or followed. <a href="/events/{{ ev.event_id }}?raw=1">Show raw (unredacted) record</a></p>{% endif %}
+<table class="kv">{% for k, v in ev.items() %}{% if v is not none and v != [] %}<tr><th>{{ k }}</th><td class="mono small">{% if raw %}{{ v|string }}{% else %}{{ v|string|redact }}{% endif %}</td></tr>{% endif %}{% endfor %}</table>
 {% if orig %}<h2>Original record</h2>
-<p class="small">{{ orig.original_name }} · {{ orig.format }} · {{ orig.location }} · sha256 <span class="mono">{{ orig.sha256 }}</span> · trust {{ orig.provenance_trust }}</p>
-<pre class="mono small">{{ (orig.record_text or '(not available inline)')|redact }}</pre>{% endif %}
+<p class="small">{{ orig.original_name }} · {{ orig.format }} · revision {{ orig.revision }} · {{ orig.location or '' }} · sha256 <span class="mono">{{ orig.sha256 }}</span> · trust {{ orig.provenance_trust }}</p>
+<p class="small">Lookup: <b>{{ orig.status }}</b>{% if orig.detail %} — {{ orig.detail }}{% endif %}</p>
+<pre class="mono small">{% if orig.record_text is none %}(not available){% elif raw %}{{ orig.record_text }}{% else %}{{ orig.record_text|redact }}{% endif %}</pre>{% endif %}
 <p><a href="/cases/{{ ev.case_id }}">Back to case</a></p>
 {% endblock %}

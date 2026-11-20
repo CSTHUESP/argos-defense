@@ -16,6 +16,7 @@
 <button type="submit">Set status</button></form>
 </div>
 {% if request.query_params.get('analyzed') %}<p class="ok">Analysis run {{ request.query_params.get('analyzed') }} completed.</p>{% endif %}
+{% for j in jobs if j.status in ('queued','running') %}<p class="warn">Job <a href="/jobs/{{ j.job_id }}">{{ j.job_id }}</a> {{ j.kind }} is {{ j.status }} ({{ (j.progress*100)|round|int }}%).</p>{% endfor %}
 {% if assessment %}{% set a = assessment %}
 <h2>Case assessment <span class="small">(run {{ a.run_id }})</span></h2>
 <div class="dims">
@@ -33,12 +34,37 @@
 {% for v, cv in a.coverage.items() %}<tr><td>{{ v }}</td><td><span class="badge {{ 'ok' if cv.event_count else 'miss' }}">{{ cv.status }}</span></td><td>{{ cv.event_count }}</td>
 <td class="small">{% for i in cv.intervals or [] %}{{ i.first }} → {{ i.last }} ({{ i.events }})<br>{% endfor %}</td><td class="small">{{ (cv.event_kinds or [])|join(', ') }}</td><td>{{ cv.rejected_records_in_inputs or 0 }}</td></tr>{% endfor %}
 </tbody></table>
+{% set d = a.diagnostics or {} %}{% set rs = d.rule_status_counts or {} %}
+<h3>Rule eligibility (this run)</h3>
+{% set notrun = (rs.vantage_absent or 0) + (rs.missing_required_telemetry or 0) + (rs.insufficient_history or 0) + (rs.processing_error or 0) + (rs.disabled or 0) %}
+{% if notrun %}<p class="warn"><b>{{ notrun }} rule(s) could not fully evaluate this case.</b> "No alert" from those rules is not evidence of absence.</p>{% endif %}
+<p class="small">{% for k, v in rs|dictsort %}<span class="badge">{{ k }}: {{ v }}</span> {% endfor %}</p>
+<details><summary>Per-rule status</summary><table><thead><tr><th>Rule</th><th>Status</th><th>Candidate records</th><th>Missing required telemetry</th><th>Alerts</th><th>Detail</th></tr></thead><tbody>
+{% for rid, r in (a.rule_stats or {})|dictsort %}<tr><td>{{ rid }}</td><td>{{ r.status }}</td><td>{{ r.selected if r.selected is defined else '' }}</td><td>{{ r.missing_required_telemetry if r.missing_required_telemetry is defined else '' }}</td><td>{{ r.alerts if r.alerts is defined else '' }}</td><td class="small">{{ r.reason or r.error or '' }}</td></tr>{% endfor %}
+</tbody></table></details>
+<h3>Sources (this run)</h3>
+<table><thead><tr><th>Input</th><th>Rev / status</th><th>Trust</th><th>Events</th><th>Rejected</th><th>Vantages</th><th>Missing key fields</th><th>Declared coverage</th></tr></thead><tbody>
+{% for x in d.sources or [] %}<tr><td>{{ x.original_name }}</td><td>{{ x.revision }} / {{ x.status }}</td><td>{{ x.trust }}</td><td>{{ x.events }}</td><td>{{ x.rejected }}</td><td class="small">{{ x.vantages }}</td><td class="small">{{ x.missing_fields }}</td>
+<td class="small">{% if x.declared_coverage %}{{ x.declared_coverage.start }} → {{ x.declared_coverage.end }} ({{ x.declared_coverage.scope }}; {{ x.declared_coverage.basis }}){% else %}<span class="warn">none declared — absence cannot be demonstrated</span>{% endif %}</td></tr>{% endfor %}
+</tbody></table>
+{% if d.observation_gaps %}<h3>Observation gaps (&gt; 6 h without records)</h3><ul class="small">{% for g in d.observation_gaps %}<li>{{ g.vantage }}: {{ g.from }} → {{ g.to }} ({{ g.hours }} h)</li>{% endfor %}</ul>{% endif %}
 <h3>Limitations</h3><ul>{% for l in a.limitations %}<li>{{ l }}</li>{% endfor %}</ul>
 {% else %}<p>Not analysed yet.</p>{% endif %}
 
-<h2>Inputs (provenance)</h2>
+<h2>Inputs (provenance, revisions)</h2>
 <table><thead><tr><th>Input</th><th>Format / parser</th><th>SHA-256</th><th>Records (ok / rejected)</th><th>Provenance trust</th><th>Change trust</th></tr></thead><tbody>
-{% for i in inputs %}<tr><td>{{ i.original_name }}<br><span class="small">{{ i.input_id }} · {{ i.imported_at }}</span></td><td>{{ i.format }}<br><span class="small">{{ i.parser_version }} {{ i.options }}</span></td>
+{% for i in inputs %}<tr{% if not i.active %} class="inactive"{% endif %}><td>{{ i.original_name }}<br><span class="small">{{ i.input_id }} · {{ i.imported_at }}</span><br>
+<span class="badge">revision {{ i.revision }}</span> <span class="badge {{ 'ok' if i.active else 'miss' }}">{{ 'active' if i.active else 'inactive' }}</span> <span class="small">{{ i.status }}</span>
+{% if not i.active %}<form method="post" action="/inputs/{{ i.input_id }}/activate" class="inline"><input type="hidden" name="csrf" value="{{ csrf }}"><button type="submit">Activate this revision</button></form>{% endif %}
+<details><summary>Reprocess with corrected options</summary><form method="post" action="/inputs/{{ i.input_id }}/reprocess"><input type="hidden" name="csrf" value="{{ csrf }}">
+<label>assume_tz <input name="assume_tz" placeholder="UTC"></label> <label>profile <input name="profile"></label> <label>zeek_log <input name="zeek_log"></label>
+<label>mapping YAML<br><textarea name="mapping_yaml" rows="3"></textarea></label><button type="submit">Create new revision</button></form>
+<p class="small">The original bytes are reparsed into a new revision. The previous revision stays available; if reprocessing fails it remains active.</p></details>
+<details><summary>Declare collection coverage</summary>{% if i.coverage %}<p class="small">current: {{ i.coverage }}</p>{% endif %}<form method="post" action="/inputs/{{ i.input_id }}/coverage"><input type="hidden" name="csrf" value="{{ csrf }}">
+<label>start <input name="start" placeholder="2026-11-01T00:00:00Z" required></label> <label>end <input name="end" required></label> <label>scope <input name="scope" placeholder="all | tenant:&lt;id&gt; | host:&lt;name&gt; | app_id:&lt;id&gt;"></label>
+<label>basis <input name="note" placeholder="how completeness was established"></label><button type="submit">Save</button></form>
+<p class="small">Analyst-declared; ARGOS does not verify it. Without it, absence is reported only as "not observed in supplied records".</p></details></td>
+<td>{{ i.format }}<br><span class="small">{{ i.parser_version }} {{ i.options }}</span></td>
 <td class="mono small">{{ i.sha256 }}</td><td>{{ i.records_accepted }} / {{ i.records_rejected }}</td>
 <td><span class="badge trust-{{ i.provenance_trust }}">{{ i.provenance_trust }}</span><br><span class="small">{{ i.provenance_note }}</span></td>
 <td><form method="post" action="/inputs/{{ i.input_id }}/attest"><input type="hidden" name="csrf" value="{{ csrf }}">
@@ -53,12 +79,14 @@
 </tbody></table>{% else %}<p>No rejected records.</p>{% endif %}
 
 <h2>Analysis runs</h2>
-<table><thead><tr><th>#</th><th>Run</th><th>Started</th><th>Versions</th><th>Stats</th></tr></thead><tbody>
-{% for r in runs %}<tr><td>{{ r.seq }}</td><td class="small">{{ r.run_id }}</td><td class="small">{{ r.started_at }}</td>
+{% if runs|selectattr('status','equalto','succeeded')|list|length >= 2 %}<p><a class="button" href="/cases/{{ case.case_id }}/compare">Compare latest two runs</a></p>{% endif %}
+<table><thead><tr><th>#</th><th>Run</th><th>Status</th><th>Started</th><th>Versions</th><th>Stats</th></tr></thead><tbody>
+{% for r in runs %}<tr><td>{{ r.seq }}</td><td class="small">{{ r.run_id }}{% if r.status == 'succeeded' %}<br><a href="/cases/{{ case.case_id }}/export.html?run={{ r.run_id }}">report</a> · <a href="/cases/{{ case.case_id }}/export.json?run={{ r.run_id }}">json</a>{% endif %}</td>
+<td>{{ r.status }}{% if r.error %}<br><span class="small">{{ r.error }}</span>{% endif %}{% if not r.snapshot_available %}<br><span class="small">legacy: no snapshot</span>{% endif %}</td><td class="small">{{ r.started_at }}</td>
 <td class="small">engine {{ r.versions.engine }} · rules {{ r.versions.rules_hash }} · config {{ r.versions.config_hash }} · manifest {{ r.versions.manifest_hash }} · registry {{ r.versions.registry_hash }} · ioc {{ r.versions.ioc_hash }}</td>
 <td class="small">{{ r.stats }}</td></tr>{% endfor %}</tbody></table>
 
 <h2>Case notes</h2>
-<ul>{% for n in notes %}<li><span class="small">{{ n.created_at }}{% if n.alert_id %} · alert <a href="/alerts/{{ n.alert_id }}">{{ n.alert_id }}</a>{% endif %}</span><br>{{ n.text }}</li>{% else %}<li>No notes.</li>{% endfor %}</ul>
+<ul>{% for n in notes %}<li><span class="small">{{ n.created_at }}{% if n.alert_id %} · alert <a href="/alerts/{{ n.alert_id }}">{{ n.alert_id }}</a>{% endif %}</span><br>{{ n.text|redact }}</li>{% else %}<li>No notes.</li>{% endfor %}</ul>
 <form method="post" action="/cases/{{ case.case_id }}/notes"><input type="hidden" name="csrf" value="{{ csrf }}"><textarea name="text" rows="3" required></textarea><br><button type="submit">Add note</button></form>
 {% endblock %}

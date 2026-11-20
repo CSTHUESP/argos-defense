@@ -129,8 +129,8 @@ def test_ep_rules(env):
 
 # ---------- family 6: model linkage
 def test_llm_rules(env):
-    audit = [ev(0, event_kind="model_interaction", session_id="s1", model_tool_name="bash", host="d1", linked_process_guid="{x}"),
-             ev(2, event_kind="tool_execution", session_id="s1", host="d1", linked_process_guid="{x}")]
+    audit = [ev(0, event_kind="model_interaction", session_id="s1", model_tool_name="bash", tool_call_id="k1", host="d1", linked_process_guid="{x}"),
+             ev(2, event_kind="tool_execution", session_id="s1", tool_name="bash", tool_call_id="k1", host="d1", linked_process_guid="{x}")]
     proc = [ev(3, event_kind="process_start", host="d1", process_guid="{x}", process_image="/bin/bash")]
     c = env.run("llm", audit + proc)
     assert env.alerts(c, "ARG-LLM-002")[0]["llm"]["level"] == "directly_observed"

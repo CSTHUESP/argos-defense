@@ -24,7 +24,12 @@ class Env:
         self.settings = Settings()
         self.settings.home = tmp / "home"
         self.settings.rules_dir = RULES
-        self.settings.config_dir = default_config_dir()
+        # private copy: tests must never modify the packaged default configuration
+        cfg = tmp / "config"
+        cfg.mkdir(parents=True, exist_ok=True)
+        for src in default_config_dir().glob("*.yaml"):
+            (cfg / src.name).write_bytes(src.read_bytes())
+        self.settings.config_dir = cfg
         self.settings.ensure()
         self.store = Store(self.settings.db_path)
         self._n = 0
@@ -42,13 +47,13 @@ class Env:
     def case(self, name: str, synthetic: bool = True):
         return self.store.create_case(name, synthetic)
 
-    def ingest(self, case, rows_or_path, fmt="native_jsonl", options=None, name=None):
+    def ingest(self, case, rows_or_path, fmt="native_jsonl", options=None, name=None, coverage=None):
         if isinstance(rows_or_path, Path):
             p = rows_or_path
         else:
             self._n += 1
             p = self.write(name or f"in{self._n}.jsonl", rows_or_path)
-        return ingest_file(self.store, self.settings, case, p, fmt, options or {})
+        return ingest_file(self.store, self.settings, case, p, fmt, options or {}, coverage=coverage)
 
     def analyze(self, case):
         return run_analysis(self.store, self.settings, case["case_id"])
@@ -60,9 +65,9 @@ class Env:
     def assessment(self, case):
         return self.store.latest_assessment(case["case_id"])
 
-    def run(self, name, rows, synthetic=True, fmt="native_jsonl", options=None):
+    def run(self, name, rows, synthetic=True, fmt="native_jsonl", options=None, coverage=None):
         c = self.case(name, synthetic)
-        self.ingest(c, rows, fmt, options)
+        self.ingest(c, rows, fmt, options, coverage=coverage)
         self.analyze(c)
         return c
 

@@ -95,8 +95,8 @@ EVENT_FIELDS = [
     "resource", "resource_type", "file_path",
     "bytes_src_to_dst", "bytes_dst_to_src", "bytes_basis",
     "model_provider", "model_name_declared", "model_tool_name", "model_tool_input",
-    "linked_process_guid", "message",
-    "quality_warnings", "evidence_ref", "zeek_uid",
+    "linked_process_guid", "tool_call_id", "tool_name", "message",
+    "quality_warnings", "evidence_ref", "zeek_uid", "source_locator", "revision",
 ]
 
 INT_FIELDS = {"src_port", "dst_port", "http_status", "bytes_src_to_dst", "bytes_dst_to_src", "process_id", "parent_process_id"}

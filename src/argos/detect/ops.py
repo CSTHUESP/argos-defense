@@ -54,6 +54,10 @@ def derive(ev: dict) -> dict:
     d = ev.get("dns_query") or ev.get("http_host")
     ev["domain"] = d.lower().rstrip(".") if d else None
     ev["remote"] = ev.get("dst_ip") or ev["domain"] or ev.get("src_ip")
+    # Opaque session ids are only meaningful inside the collection source and tenant that issued them.
+    sid = ev.get("session_id")
+    ev["session_key"] = f"{ev.get('source_type') or '?'}|{ev.get('tenant_id') or '-'}|{sid}" if sid else None
+    ev["call_key"] = f"{ev['session_key']}|{ev['tool_call_id']}" if sid and ev.get("tool_call_id") else None
     # proc_link joins an agent/model audit record to the endpoint process it names
     ev["proc_link"] = ev.get("linked_process_guid") if ev.get("event_kind") in ("model_interaction", "tool_execution") else ev.get("process_guid")
     return ev

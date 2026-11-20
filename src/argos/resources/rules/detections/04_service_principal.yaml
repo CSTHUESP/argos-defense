@@ -1,8 +1,11 @@
 # Family 4 - service principal access followed by credential/permission changes or unusual secret reads.
 id: ARG-SP-001
-version: 1
-title: Service principal sign-in followed by credential or permission change
-description: A service principal signed in and then the same principal added credentials or changed role/permission assignments.
+version: 2
+title: Service principal sign-in followed by a credential or permission change attempt
+description: |
+  A service principal signed in and the same principal then attempted or performed a credential addition or a
+  role/permission assignment. v2: the reported outcome comes from the change record itself (success, failure or
+  unknown); the earlier sign-in success never implies that the change succeeded.
 family: service_principal_abuse
 status: test
 validation_status: synthetic-scenario tests only
@@ -28,11 +31,11 @@ reference: {type: not_applicable, description: ordered sequence within 2h}
 severity: high
 base_confidence: high
 contributes:
-  threat: {activity: Service principal credential/permission change after sign-in, suspicion: likely_malicious}
-  purpose: {observed_action: SP sign-in then credential/permission change, hypothesis: persistence, stage: observed_success}
+  threat: {activity: Service principal credential/permission change (attempted or performed) after sign-in, suspicion: likely_malicious}
+  purpose: {observed_action: "SP sign-in, then a credential/permission change record (see terminal action outcome)", hypothesis: persistence, stage: observed_success}
 evidence_family: sp_change_chain
 required_evidence: SP sign-in and audit records for the same tenant+app id
-explanation: "Service principal {group} signed in then changed credentials/permissions within {window_s}s."
+explanation: "Service principal {group} signed in, then a credential/permission change record followed within {window_s}s (change outcome: {terminal_outcome})."
 alternatives: [automated secret rotation pipeline, IaC deployment]
 false_positives: [planned credential rotation]
 resolving_data: [change ticket, deployment pipeline logs, who consented to the application]

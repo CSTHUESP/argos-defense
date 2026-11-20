@@ -97,11 +97,12 @@ def build_alert(m, case: dict, inputs: dict, coverage: dict, registry, all_event
     llm_limits = []
     audit_cov = coverage.get("agent_or_model_audit", {})
     if c.llm == "directly_observed":
-        llm_basis.append("model-interaction records linked to execution in the same session/process, according to supplied audit records")
+        llm_basis.append("model interaction recorded by the supplied agent/model audit source - " + rule.title.replace("[EXPERIMENTAL] ", ""))
         if any(p["provenance_trust"] != "analyst_attested" for p in prov if p["format"] in ("native_jsonl", "splunk_json", "splunk_csv")):
             llm_limits.append("audit records have unverified provenance; their authenticity is not established by ARGOS")
     elif c.llm == "possible":
-        llm_basis.append("connection to an AI provider observed; this establishes only the connection, not model-driven actions")
+        llm_basis.append(rule.title + ": consistent with model involvement but no verifiable link between a model request and the "
+                         "observed action (e.g. only a provider connection, or no call identifier)")
     else:
         if not audit_cov.get("event_count"):
             llm_limits.append("no agent/model audit telemetry supplied: LLM involvement is UNKNOWN (absence of AI indicators "
@@ -109,10 +110,10 @@ def build_alert(m, case: dict, inputs: dict, coverage: dict, registry, all_event
         else:
             inside = audit_cov["first_epoch"] <= first["event_epoch"] and last["event_epoch"] <= audit_cov["last_epoch"]
             if inside:
-                llm_limits.append(f"agent/model audit telemetry covers this interval but contains no records linked to this "
-                                  f"activity; model use from other systems (e.g. attacker-side) is not observable")
+                llm_limits.append("agent/model audit records exist around this interval (observation span, not demonstrated complete "
+                                  "collection) but none is linked to this activity; model use elsewhere (e.g. attacker-side) is not observable")
             else:
-                llm_limits.append("agent/model audit telemetry does not cover this alert's interval")
+                llm_limits.append("no agent/model audit records were supplied for this alert's interval")
     if "victim_network" in rule.observation_vantage and c.llm != "directly_observed":
         llm_limits.append("victim-side traffic does not reveal calls an attacker makes to an LLM provider from another machine")
     # framework
@@ -150,12 +151,30 @@ def build_alert(m, case: dict, inputs: dict, coverage: dict, registry, all_event
         expl = rule.explanation.format(**counts)
     except (KeyError, IndexError, ValueError):
         expl = rule.explanation
+    # F03: the action outcome comes from the TERMINAL step (or the matched events of single-event rules);
+    # an earlier successful sign-in never makes a later failed change "successful".
+    terminal_step = list(m.steps)[-1] if m.steps else None
+    term_evs = m.steps[terminal_step] if terminal_step else evs
+    t_out = {e.get("outcome") for e in term_evs}
+    if t_out == {"success"}:
+        terminal_outcome = "success"
+    elif "success" in t_out and "failure" in t_out:
+        terminal_outcome = "mixed"
+    elif "failure" in t_out and "success" not in t_out:
+        terminal_outcome = "failure" if t_out <= {"failure"} else "failure_or_unknown"
+    else:
+        terminal_outcome = "unknown"
     stage = c.purpose.stage
-    outcomes = {e.get("outcome") for e in evs}
-    if stage == "attempt" and outcomes == {"success"}:
-        stage = "observed_success"
-    elif stage == "observed_success" and "success" not in outcomes and outcomes <= {"failure", "unknown", None} and m.rule.aggregate.type != "sequence":
-        stage = "attempt"
+    if stage in ("attempt", "observed_success"):
+        stage = {"success": "observed_success", "mixed": "observed_success", "failure": "attempt",
+                 "failure_or_unknown": "attempt", "unknown": "attempt" if stage == "attempt" else "outcome_unknown"}[terminal_outcome]
+    counts["terminal_outcome"] = terminal_outcome
+    try:
+        expl = rule.explanation.format(**counts)
+    except (KeyError, IndexError, ValueError):
+        expl = rule.explanation
+    if terminal_step or terminal_outcome != "unknown":
+        expl += f" Terminal action outcome: {terminal_outcome}" + (f" (step '{terminal_step}')." if terminal_step else ".")
     where = sorted({x for e in evs for x in (e.get("host"), e.get("http_host"), e.get("dst_ip"), e.get("tenant_id")) if x})[:10]
     alert = {
         "alert_id": _alert_id(case["case_id"], rule, m.group, first["event_id"]),
@@ -171,6 +190,8 @@ def build_alert(m, case: dict, inputs: dict, coverage: dict, registry, all_event
         "framework": fw or {"name": None, "level": "unknown", "basis": "no framework-specific evidence in this alert",
                              "limitations": ["speed, style, language, IP, User-Agent or filenames alone do not identify a framework"]},
         "purpose": {"observed_action": c.purpose.observed_action, "hypothesis": c.purpose.hypothesis, "stage": stage,
+                    "action_outcome": {"terminal_step": terminal_step, "outcome": terminal_outcome,
+                                       "basis": "outcome field of the terminal step's records" if terminal_step else "outcome field of the matched records"},
                     "note": "hypothesized objective, not an observed fact"},
         "entities": sorted(entities.values(), key=lambda x: (x["etype"], x["key"])),
         "confidence": conf, "confidence_rationale": rationale,
@@ -284,6 +305,10 @@ def case_assessment(case: dict, alerts: list[dict], coverage: dict, rejects: int
 
 
 def compute_coverage(events: list[dict], inputs: list[dict], rejects_by_input: dict) -> dict:
+    """Observation SPAN per vantage (first..last record) plus analyst-declared collection coverage.
+    A span is not proof of complete collection; see analysis.CoverageContext."""
+    import json as _json
+    declared = {i["input_id"]: _json.loads(i["coverage"]) for i in inputs if i.get("coverage")}
     cov = {}
     for v in VANTAGES:
         evs = [e for e in events if e["observation_vantage"] == v]
@@ -295,7 +320,9 @@ def compute_coverage(events: list[dict], inputs: list[dict], rejects_by_input: d
         for i in ins:
             ie = [e["event_epoch"] for e in evs if e["input_id"] == i]
             intervals.append({"input_id": i, "first": iso_from(min(ie)), "last": iso_from(max(ie)), "events": len(ie)})
-        cov[v] = {"status": "present", "event_count": len(evs), "first": evs[0]["event_time"], "last": evs[-1]["event_time"],
+        cov[v] = {"status": "present", "semantics": "observation span of supplied records (not demonstrated collection coverage)",
+                  "declared_coverage": [{"input_id": i, **{k: declared[i][k] for k in ("start", "end", "scope", "basis")}} for i in ins if i in declared],
+                  "event_count": len(evs), "first": evs[0]["event_time"], "last": evs[-1]["event_time"],
                   "first_epoch": evs[0]["event_epoch"], "last_epoch": evs[-1]["event_epoch"],
                   "event_kinds": sorted({e["event_kind"] for e in evs}), "intervals": intervals,
                   "rejected_records_in_inputs": sum(rejects_by_input.get(i, 0) for i in ins)}

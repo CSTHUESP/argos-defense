@@ -4,6 +4,7 @@ import shutil
 
 from argos.analysis import run_analysis
 from argos.store import Store
+from argos.synthetic import ts
 from conftest import ROOT, RULES, ev
 
 FIX = ROOT / "fixtures"
@@ -23,6 +24,10 @@ def strip_assessment(a):
         a.pop(k, None)
     a["framework"] = {"level": a["framework"]["level"]}
     a["versions"] = {k: v for k, v in a["versions"].items() if k != "manifest_hash"}
+    if "diagnostics" in a:  # input ids are administrative identifiers, like case ids
+        d = dict(a["diagnostics"])
+        d["sources"] = [{k: v for k, v in s.items() if k != "input_id"} for s in d.get("sources", [])]
+        a["diagnostics"] = d
     return a
 
 
@@ -80,8 +85,8 @@ def test_04_audit_chain_increases_llm_evidence(env):
     network_only = [ev(0, event_kind="http", src_ip="192.0.2.5", http_host="h", http_uri="/a", http_status=200)]
     c1 = env.run("llm-before", network_only)
     before = env.assessment(c1)["llm"]
-    audit = [ev(0, event_kind="model_interaction", session_id="sx", model_tool_name="bash", host="d", linked_process_guid="{p}"),
-             ev(1, event_kind="tool_execution", session_id="sx", host="d", linked_process_guid="{p}"),
+    audit = [ev(0, event_kind="model_interaction", session_id="sx", model_tool_name="bash", tool_call_id="c1", host="d", linked_process_guid="{p}"),
+             ev(1, event_kind="tool_execution", session_id="sx", tool_name="bash", tool_call_id="c1", host="d", linked_process_guid="{p}"),
              ev(2, event_kind="process_start", host="d", process_guid="{p}", process_image="/bin/bash")]
     c2 = env.run("llm-after", network_only + audit)
     after = env.assessment(c2)["llm"]
@@ -163,10 +168,14 @@ def test_13_success_without_data_access_not_exfiltration(env):
     rows = [ev(i * 30, event_kind="authentication", tenant_id="t", user="bob@x", outcome="failure", src_ip="192.0.2.10") for i in range(6)]
     rows += [ev(300, event_kind="authentication", tenant_id="t", user="bob@x", outcome="success", src_ip="192.0.2.10"),
              ev(20000, event_kind="authentication", tenant_id="t", user="zed@x", outcome="success", src_ip="192.0.2.11")]
-    c = env.run("noexf", rows)
+    # F02: without declared collection coverage, absence is only "not observed in supplied records"
+    c0 = env.run("noexf-nocov", rows)
+    assert env.alerts(c0, "ARG-AUTH-003")[0]["absence_checks"][0]["status"] == "not_observed_in_supplied_records"
+    cov = {"start": ts(-3600), "end": ts(30000), "scope": "tenant:t", "vantages": ["identity_provider", "cloud_control_plane"]}
+    c = env.run("noexf", rows, coverage=cov)
     a = env.alerts(c, "ARG-AUTH-003")[0]
     assert a["purpose"]["hypothesis"] == "credential_access"
-    assert a["absence_checks"][0]["status"] == "absent_within_demonstrated_coverage"
+    assert a["absence_checks"][0]["status"] == "absent_within_declared_coverage"
     hyps = {p["hypothesis"] for p in env.assessment(c)["purpose"]}
     assert "possible_exfiltration" not in hyps and "collection" not in hyps
     # with a later data read the follow-up check reports it as present

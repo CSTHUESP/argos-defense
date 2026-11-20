@@ -4,9 +4,9 @@ ARGOS analyses telemetry files supplied by an analyst. It is not a real-time
 sensor, an EDR agent or a live product integration.
 """
 
-__version__ = "0.2.0"
-ENGINE_VERSION = "argos-engine/0.2.0"
-SCHEMA_VERSION = "argos-event/1"
+__version__ = "0.3.0"
+ENGINE_VERSION = "argos-engine/0.3.0"
+SCHEMA_VERSION = "argos-event/2"  # /2 adds tool_call_id, tool_name, source_locator, revision
 
 # Parser versions are recorded on every imported input and every analysis run.
 PARSER_VERSIONS = {

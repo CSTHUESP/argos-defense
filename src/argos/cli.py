@@ -50,7 +50,7 @@ def cmd_doctor(args, settings):
         ok &= present
     from argos.analysis import load_context
     settings.ensure()
-    rules, h, errors, registry, iocs = load_context(settings)
+    rules, h, errors, registry, iocs, disabled = load_context(settings)
     print(f"{'ok  ' if not errors else 'FAIL'} rules: {len(rules)} valid, hash {h}" + (f", errors: {errors}" if errors else ""))
     ok &= not errors
     print(f"ok   registry entries: {len(registry.entries)} ({registry.digest}); IOC values: {len(iocs.items)} ({iocs.digest})")
@@ -62,6 +62,12 @@ def cmd_doctor(args, settings):
     except OSError as exc:
         print(f"FAIL data dir not writable: {exc}")
         ok = False
+    from argos.config import permission_findings
+    perm = permission_findings(settings.home)
+    for f in perm:
+        print(f"WARN data protection: {f}")
+    if not perm:
+        print("ok   data protection: application data not accessible to other local accounts (POSIX modes / Windows ACL check)")
     print(f"info parsers: {', '.join(PARSER_VERSIONS.values())}")
     print(f"info LLM layer: {settings.llm_provider} (default disabled; no data is sent anywhere by default)")
     print("RESULT:", "OK" if ok else "PROBLEMS FOUND")
@@ -95,20 +101,34 @@ def cmd_ingest(args, settings):
     case = existing or st.create_case(args.case, synthetic=args.synthetic)
     opts = {k: v for k, v in {"profile": args.profile, "mapping": args.mapping, "assume_tz": args.assume_tz,
                               "zeek_log": args.zeek_log}.items() if v}
+    cov = None
+    if args.coverage_start or args.coverage_end:
+        cov = {"start": args.coverage_start, "end": args.coverage_end, "scope": args.coverage_scope or "all", "note": args.coverage_note or ""}
     try:
-        r = ingest_file(st, settings, case, args.file, args.format, opts)
+        r = ingest_file(st, settings, case, args.file, args.format, opts, reprocess=args.reprocess, coverage=cov)
     except ValueError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
     print(json.dumps(r, indent=2))
-    return 0 if r["status"] != "rejected" else 3
+    if r["status"] == "different_options_require_reprocess":
+        print("note: this file content was already imported with other options; add --reprocess to create a new revision", file=sys.stderr)
+        return 4
+    return 0 if r["status"] not in ("rejected", "reprocess_failed_previous_kept") else 3
 
 
 def cmd_analyze(args, settings):
     from argos.analysis import AnalysisError, run_analysis
     st = _store(settings)
+    def progress(frac, msg):
+        if not args.quiet:
+            print(f"\r[{frac * 100:5.1f}%] {msg[:60]:<60}", end="", file=sys.stderr, flush=True)
     try:
-        r = run_analysis(st, settings, args.case)
+        r = run_analysis(st, settings, args.case, progress=progress)
+        if not args.quiet:
+            print(file=sys.stderr)
+    except KeyboardInterrupt:
+        print("\nanalysis interrupted; the previous successful run is unchanged", file=sys.stderr)
+        return 130
     except AnalysisError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
@@ -120,7 +140,11 @@ def cmd_report(args, settings):
     from argos.reporting.export import write_report
     st = _store(settings)
     out = Path(args.output) if args.output else settings.reports_dir / f"{args.case}.{args.format}"
-    p = write_report(st, settings, args.case, args.format, out)
+    try:
+        p = write_report(st, settings, args.case, args.format, out, run_id=args.run)
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
     print(f"wrote {p}")
     return 0
 
@@ -244,6 +268,136 @@ def cmd_attest(args, settings):
     return 0
 
 
+def _case_or_exit(st, ref):
+    case = st.get_case(ref)
+    if not case:
+        print(f"unknown case {ref!r}", file=sys.stderr)
+        raise SystemExit(2)
+    return case
+
+
+def cmd_inputs(args, settings):
+    st = _store(settings)
+    case = _case_or_exit(st, args.case)
+    for i in st.list_inputs(case["case_id"], include_inactive=True):
+        print(f"{i['input_id']}  rev {i['revision']}  {'ACTIVE  ' if i['active'] else 'inactive'}  {i['status']:<22} {i['format']:<12} "
+              f"ok={i['records_accepted']} rej={i['records_rejected']}  {i['original_name']}  options={i['options']}"
+              + (f"  coverage={i['coverage']}" if i.get('coverage') else ""))
+    return 0
+
+
+def cmd_activate(args, settings):
+    st = _store(settings)
+    if not st.get_input(args.input_id):
+        print("unknown input", file=sys.stderr)
+        return 2
+    st.activate_revision(args.input_id)
+    print(f"{args.input_id} is now the active revision; re-run analyze to use it")
+    return 0
+
+
+def cmd_coverage(args, settings):
+    from argos.ingest.pipeline import validate_coverage
+    st = _store(settings)
+    if not st.get_input(args.input_id):
+        print("unknown input", file=sys.stderr)
+        return 2
+    cov = validate_coverage({"start": args.start, "end": args.end, "scope": args.scope, "note": args.note or ""})
+    st.set_input_coverage(args.input_id, cov)
+    print(json.dumps(cov, indent=2))
+    return 0
+
+
+def cmd_runs(args, settings):
+    st = _store(settings)
+    case = _case_or_exit(st, args.case)
+    for r in st.list_runs(case["case_id"]):
+        print(f"#{r['seq']:<3} {r['run_id']}  {r['status']:<11} {r['started_at']}  alerts={(r.get('stats') or {}).get('alerts', '-')}"
+              f"  rules={r['versions'].get('rules_hash') if r.get('versions') else '-'}  snapshot={'yes' if r.get('snapshot_available', 1) else 'legacy-none'}"
+              + (f"  error={r['error']}" if r.get("error") else ""))
+    return 0
+
+
+def cmd_compare_runs(args, settings):
+    from argos.reporting.compare import compare_runs
+    st = _store(settings)
+    try:
+        res = compare_runs(st, args.run_a, args.run_b)
+    except ValueError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    from argos.evidence.redact import redact_obj
+    print(json.dumps(redact_obj(res), indent=2, sort_keys=True))
+    return 0
+
+
+def cmd_status(args, settings):
+    st = _store(settings)
+    if not st.get_alert(args.alert_id):
+        print("unknown alert", file=sys.stderr)
+        return 2
+    st.set_alert_status(args.alert_id, args.status, rationale=args.rationale or "", author="analyst-cli")
+    print(f"{args.alert_id}: {args.status}")
+    return 0
+
+
+def cmd_backup(args, settings):
+    from argos.backup import create_backup
+    res = create_backup(settings, Path(args.output) if args.output else None)
+    print(json.dumps(res, indent=2))
+    return 0
+
+
+def cmd_restore(args, settings):
+    from argos.backup import BackupError, restore_backup
+    try:
+        res = restore_backup(Path(args.backup), settings)
+    except (BackupError, OSError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    print(json.dumps(res, indent=2))
+    return 0
+
+
+def cmd_verify_backup(args, settings):
+    from argos.backup import BackupError, verify_backup
+    try:
+        m = verify_backup(Path(args.backup))
+    except BackupError as exc:
+        print(f"INVALID: {exc}", file=sys.stderr)
+        return 2
+    print(f"OK: {len(m['files'])} files, created {m['created_at']} by ARGOS {m['argos_version']} (schema {m['schema_version']})")
+    return 0
+
+
+def cmd_watch(args, settings):
+    from argos.watch import WatchError, add_source, list_sources, run_watch
+    st = _store(settings)
+    if args.status:
+        print(json.dumps(list_sources(st), indent=2, default=str))
+        return 0
+    if not (args.case and args.dir and args.format):
+        print("error: --case, --dir and --format are required (watching is opt-in and explicit)", file=sys.stderr)
+        return 2
+    case = st.get_case(args.case) or st.create_case(args.case, synthetic=args.synthetic)
+    opts = {k: v for k, v in {"profile": args.profile, "assume_tz": args.assume_tz, "zeek_log": args.zeek_log}.items() if v}
+    try:
+        src = add_source(st, case, Path(args.dir), args.pattern, args.format, opts)
+    except WatchError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    print(f"watching {src['directory']} ({args.pattern}, {args.format}) into case {case['name']} — read-only; Ctrl-C to stop", file=sys.stderr)
+
+    def show(s):
+        if s["segments_imported"] or s["errors"] or args.verbose:
+            print(json.dumps(s), flush=True)
+    try:
+        run_watch(st, settings, src, interval=args.interval, cycles=1 if args.once else args.cycles, on_cycle=show)
+    except KeyboardInterrupt:
+        print("stopped; checkpoints are saved", file=sys.stderr)
+    return 0
+
+
 def cmd_note(args, settings):
     st = _store(settings)
     case = st.get_case(args.case)
@@ -283,8 +437,14 @@ def build_parser():
     i.add_argument("--assume-tz", dest="assume_tz", help="explicit zone for zone-less timestamps (otherwise they are rejected)")
     i.add_argument("--zeek-log", dest="zeek_log", choices=["conn", "http", "dns"])
     i.add_argument("--synthetic", action="store_true", help="mark a NEW case as synthetic")
+    i.add_argument("--reprocess", action="store_true", help="re-interpret already imported content with different options as a new revision")
+    i.add_argument("--coverage-start", dest="coverage_start", help="analyst-declared collection coverage start (not verified by ARGOS)")
+    i.add_argument("--coverage-end", dest="coverage_end")
+    i.add_argument("--coverage-scope", dest="coverage_scope", help="all | tenant:<id> | host:<name> | app_id:<id>")
+    i.add_argument("--coverage-note", dest="coverage_note", help="how completeness was established")
     a = sub.add_parser("analyze", help="(re)analyse a case")
     a.add_argument("--case", required=True)
+    a.add_argument("--quiet", action="store_true", help="no progress output")
     s = sub.add_parser("serve", help="start the local web interface (no browser)")
     _add_server_args(s)
     st = sub.add_parser("start", help="launcher: start the web interface and open the browser")
@@ -294,6 +454,46 @@ def build_parser():
     r.add_argument("--case", required=True)
     r.add_argument("--format", choices=["json", "html", "csv"], default="html")
     r.add_argument("--output", help="output file (default: <data-dir>/reports/<case>.<format>)")
+    r.add_argument("--run", help="export this analysis run (default: latest successful run)")
+    x = sub.add_parser("inputs", help="list inputs and their revisions")
+    x.add_argument("--case", required=True)
+    x = sub.add_parser("activate", help="make an input revision the active interpretation")
+    x.add_argument("input_id")
+    x = sub.add_parser("coverage", help="declare analyst collection coverage for an input")
+    x.add_argument("input_id")
+    x.add_argument("--start", required=True)
+    x.add_argument("--end", required=True)
+    x.add_argument("--scope", default="all")
+    x.add_argument("--note")
+    x = sub.add_parser("runs", help="list analysis runs of a case")
+    x.add_argument("--case", required=True)
+    x = sub.add_parser("compare-runs", help="compare two analysis runs (from their snapshots)")
+    x.add_argument("run_a")
+    x.add_argument("run_b")
+    x = sub.add_parser("status", help="set an alert's analyst status with a rationale")
+    x.add_argument("alert_id")
+    x.add_argument("--status", required=True, choices=["new", "triaged", "escalated", "benign", "false_positive", "true_positive"])
+    x.add_argument("--rationale")
+    x = sub.add_parser("backup", help="write a verified backup zip (database snapshot, originals, config)")
+    x.add_argument("--output")
+    x = sub.add_parser("verify-backup", help="verify a backup zip without restoring")
+    x.add_argument("backup")
+    x = sub.add_parser("restore", help="restore a backup into an EMPTY data directory (use --data-dir)")
+    x.add_argument("backup")
+    w = sub.add_parser("watch", help="opt-in read-only directory ingestion (explicit path)")
+    w.add_argument("--case")
+    w.add_argument("--dir")
+    w.add_argument("--format", choices=["native_jsonl", "splunk_json", "zeek_jsonl"])
+    w.add_argument("--pattern", default="*.jsonl")
+    w.add_argument("--profile")
+    w.add_argument("--assume-tz", dest="assume_tz")
+    w.add_argument("--zeek-log", dest="zeek_log", choices=["conn", "http", "dns"])
+    w.add_argument("--synthetic", action="store_true")
+    w.add_argument("--interval", type=float, default=2.0)
+    w.add_argument("--once", action="store_true", help="poll once and exit")
+    w.add_argument("--cycles", type=int, help="stop after N polls")
+    w.add_argument("--status", action="store_true", help="show watched sources, checkpoints and freshness")
+    w.add_argument("--verbose", action="store_true")
     sub.add_parser("cases", help="list cases")
     al = sub.add_parser("alerts", help="list current alerts of a case")
     al.add_argument("--case", required=True)

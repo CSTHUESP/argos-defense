@@ -39,6 +39,10 @@ from argos.models import CONF_ORDER, SEVERITY_ORDER
 from argos.normalize.mappers import BUILTIN_PROFILES, MappingError
 from argos.reporting.export import alerts_csv, build_case_export, jinja_env, render_html
 from argos.store import Store
+from argos.jobs import CaseBusy, JobRunner
+from argos.reporting.compare import compare_runs
+from argos.ingest.pipeline import validate_coverage
+from argos.evidence.redact import redact_obj
 
 STATIC = static_dir()
 UNSAFE = {"POST", "PUT", "PATCH", "DELETE"}
@@ -57,6 +61,8 @@ class AppState:
         self.allowed_hosts = {f"127.0.0.1:{port}", f"localhost:{port}", f"[::1]:{port}"}
         self.allowed_origins = {f"http://{h}" for h in self.allowed_hosts}
         self.server = None  # set by the CLI launcher; enables /api/shutdown
+        self.store.recover_interrupted_jobs()
+        self.jobs = JobRunner(settings)
 
 
 def ensure_token(settings: Settings, rotate: bool = False) -> str:
@@ -210,28 +216,150 @@ async def case_page(request: Request):
             c = _case_or_404(st, request.path_params["cid"])
         except LookupError:
             return render(request, "error.html", status=404, message="Case not found")
-        ctx = dict(case=c, inputs=st.store.list_inputs(c["case_id"]), runs=st.store.list_runs(c["case_id"]),
+        ctx = dict(case=c, inputs=st.store.list_inputs(c["case_id"], include_inactive=True), runs=st.store.list_runs(c["case_id"]),
+                   jobs=st.store.list_jobs(c["case_id"], limit=5),
                    assessment=st.store.latest_assessment(c["case_id"]), notes=st.store.list_notes(c["case_id"]),
                    rejects=st.store.list_rejects(c["case_id"], limit=200), event_count=st.store.count_events(c["case_id"]))
     return render(request, "case.html", **ctx)
 
 
 async def case_analyze(request: Request):
+    """Start analysis as a background job (progress, cancel, per-case serialization).
+    API: waits for completion by default (?wait=0 returns 202 with the job id)."""
     st = _st(request)
-    cid = request.path_params["cid"]
     if request.headers.get("content-type", "").startswith(("application/x-www-form-urlencoded", "multipart/form-data")):
         await get_form(request)
-
-    def work():
+    with st.lock:
+        try:
+            c = _case_or_404(st, request.path_params["cid"])
+        except LookupError:
+            return _err(request, "case not found", 404)
+        try:
+            jid = st.jobs.submit_analysis(st.store, c["case_id"])
+        except CaseBusy as exc:
+            return _err(request, str(exc), 409)
+    is_api = request.url.path.startswith("/api/")
+    if is_api and request.query_params.get("wait", "1") == "0":
+        return JSONResponse({"job_id": jid, "status": "queued"}, status_code=202)
+    if is_api:
+        await run_in_threadpool(st.jobs.wait, jid)
         with st.lock:
-            return run_analysis(st.store, st.settings, cid)
+            j = st.store.get_job(jid)
+        if j["status"] != "succeeded":
+            return JSONResponse({"error": j.get("error") or j.get("message") or j["status"], "job": j}, status_code=400)
+        res = json.loads(j["result"])
+        with st.lock:
+            run = st.store.get_run(res["run_id"])
+        return JSONResponse(redact_obj({"case_id": c["case_id"], "run_id": res["run_id"], "stats": res.get("stats"), "job_id": jid,
+                                        "status": run["status"] if run else None}))
+    return RedirectResponse(f"/jobs/{jid}", status_code=303)
+
+
+async def job_page(request: Request):
+    st = _st(request)
+    with st.lock:
+        j = st.store.get_job(request.path_params["jid"])
+    if not j:
+        return _err(request, "job not found", 404)
+    if j.get("result"):
+        j["result"] = json.loads(j["result"])
+    if request.url.path.startswith("/api/"):
+        return JSONResponse(j)
+    return render(request, "job.html", job=j)
+
+
+async def job_cancel(request: Request):
+    st = _st(request)
+    if request.headers.get("content-type", "").startswith(("application/x-www-form-urlencoded", "multipart/form-data")):
+        await get_form(request)
+    jid = request.path_params["jid"]
+    with st.lock:
+        ok = JobRunner.cancel(st.store, jid)
+    if request.url.path.startswith("/api/"):
+        return JSONResponse({"cancel_requested": ok})
+    return RedirectResponse(f"/jobs/{jid}", status_code=303)
+
+
+async def runs_compare(request: Request):
+    st = _st(request)
+    q = request.query_params
+    with st.lock:
+        try:
+            c = _case_or_404(st, request.path_params["cid"])
+        except LookupError:
+            return _err(request, "case not found", 404)
+        runs = [r for r in st.store.list_runs(c["case_id"]) if r["status"] == "succeeded"]
+        result, error = None, None
+        a, b = q.get("a"), q.get("b")
+        if not a and len(runs) >= 2:
+            a, b = runs[-2]["run_id"], runs[-1]["run_id"]
+        if a and b:
+            try:
+                result = compare_runs(st.store, a, b)
+            except ValueError as exc:
+                error = str(exc)
+    if request.url.path.startswith("/api/"):
+        if error:
+            return JSONResponse({"error": error}, status_code=400)
+        return JSONResponse(redact_obj(result or {"error": "need two succeeded runs"}))
+    return render(request, "compare.html", case=c, runs=runs, result=result, error=error, a=a, b=b)
+
+
+async def input_action(request: Request):
+    """Reprocess an input with corrected options, activate a revision, or declare collection coverage (F10/F04)."""
+    st = _st(request)
+    form = dict(await get_form(request))
+    iid, action = request.path_params["iid"], request.path_params["action"]
+    with st.lock:
+        inp = st.store.get_input(iid)
+    if not inp:
+        return render(request, "error.html", status=404, message="Input not found")
     try:
-        res = await run_in_threadpool(work)
-    except AnalysisError as exc:
+        if action == "activate":
+            with st.lock:
+                if st.jobs.busy(inp["case_id"]):
+                    raise ValueError("an operation is running on this case")
+                st.store.activate_revision(iid)
+        elif action == "coverage":
+            cov = validate_coverage({"start": form.get("start"), "end": form.get("end"), "scope": form.get("scope") or "all",
+                                     "note": form.get("note", "")})
+            with st.lock:
+                st.store.set_input_coverage(iid, cov)
+        elif action == "reprocess":
+            options = {}
+            for k in ("profile", "assume_tz", "zeek_log"):
+                if form.get(k):
+                    options[k] = str(form[k]).strip()
+            mapping_text = str(form.get("mapping_yaml", "") or "").strip()
+            tmp_map = None
+            if mapping_text:
+                staging = safe_join(st.settings.cases_dir, inp["case_id"], "staging")
+                staging.mkdir(parents=True, exist_ok=True)
+                fd, tmp_map = tempfile.mkstemp(suffix=".yaml", dir=str(staging))
+                with os.fdopen(fd, "w") as fh:
+                    fh.write(mapping_text[:65536])
+                options["mapping"] = tmp_map
+                options.pop("profile", None)
+            try:
+                with st.lock:
+                    case = st.store.get_case(inp["case_id"])
+                    if st.jobs.busy(case["case_id"]):
+                        raise ValueError("an operation is running on this case")
+                    res = ingest_file(st.store, st.settings, case, inp["stored_path"], inp["format"], options,
+                                      original_name=inp["original_name"], reprocess=True,
+                                      coverage=json.loads(inp["coverage"]) if inp.get("coverage") else None)
+            finally:
+                if tmp_map:
+                    Path(tmp_map).unlink(missing_ok=True)
+            if request.url.path.startswith("/api/"):
+                return JSONResponse(redact_obj(res))
+        else:
+            return _err(request, "unknown action", 404)
+    except (ImportError_, MappingError, ValueError) as exc:
         return _err(request, str(exc), 400)
     if request.url.path.startswith("/api/"):
-        return JSONResponse(res)
-    return RedirectResponse(f"/cases/{res['case_id']}?analyzed={res['run_id']}", status_code=303)
+        return JSONResponse({"ok": True})
+    return RedirectResponse(f"/cases/{inp['case_id']}", status_code=303)
 
 
 async def case_status(request: Request):
@@ -281,7 +409,7 @@ async def alert_status(request: Request):
         with st.lock:
             if not st.store.get_alert(aid):
                 raise LookupError("alert not found")
-            st.store.set_alert_status(aid, str(body.get("status")))
+            st.store.set_alert_status(aid, str(body.get("status")), rationale=str(body.get("rationale", "") or ""))
     except (LookupError, ValueError) as exc:
         return _err(request, str(exc), 400)
     if request.url.path.startswith("/api/"):
@@ -363,9 +491,17 @@ async def _do_import(request: Request, case_ref: str | None):
                     raise ImportError_("upload exceeds size limit")
                 fh.write(chunk)
 
+        cov = None
+        if form.get("coverage_start") or form.get("coverage_end"):
+            cov = {"start": str(form.get("coverage_start", "")).strip(), "end": str(form.get("coverage_end", "")).strip(),
+                   "scope": str(form.get("coverage_scope", "") or "all").strip(), "note": str(form.get("coverage_note", ""))}
+        reprocess = form.get("reprocess") == "on"
+
         def work():
             with st.lock:
-                return ingest_file(st.store, st.settings, case, tmp, fmt, options, original_name=name)
+                if st.jobs.busy(case["case_id"]):
+                    raise ImportError_("an analysis is running on this case; import after it finishes")
+                return ingest_file(st.store, st.settings, case, tmp, fmt, options, original_name=name, reprocess=reprocess, coverage=cov)
         res = await run_in_threadpool(work)
     finally:
         Path(tmp).unlink(missing_ok=True)
@@ -373,7 +509,7 @@ async def _do_import(request: Request, case_ref: str | None):
             Path(tmp_map).unlink(missing_ok=True)
     res["case_id"] = case["case_id"]
     with st.lock:
-        res["rejects_sample"] = [r for r in st.store.list_rejects(case["case_id"], limit=500) if r["input_id"] == res["input_id"]][:50]
+        res["rejects_sample"] = [r for r in st.store.list_rejects(case["case_id"], limit=500) if r["input_id"] == res.get("input_id")][:50]
     return res
 
 
@@ -430,7 +566,7 @@ async def alerts_page(request: Request):
     alerts = _filter_alerts(alerts, q)
     alerts.sort(key=lambda a: (-SEVERITY_ORDER.index(a["threat"]["severity"]), -CONF_ORDER.index(a["confidence"]), a["first_time"]))
     if request.url.path.startswith("/api/"):
-        return JSONResponse({"alerts": alerts, "count": len(alerts)})
+        return JSONResponse(redact_obj({"alerts": alerts, "count": len(alerts)}))
     return render(request, "alerts.html", alerts=alerts, cases=cases, q=q, severities=SEVERITY_ORDER, confs=CONF_ORDER)
 
 
@@ -445,7 +581,7 @@ async def alert_page(request: Request):
         evs = st.store.get_events(a["event_ids"])
         notes = st.store.list_notes(a["case_id"], aid)
     if request.url.path.startswith("/api/"):
-        return JSONResponse({"alert": a, "events": evs, "notes": notes})
+        return JSONResponse(redact_obj({"alert": a, "events": evs, "notes": notes}))
     return render(request, "alert.html", a=a, case=case, events=evs, notes=notes)
 
 
@@ -465,25 +601,12 @@ async def alert_explain(request: Request):
     return JSONResponse(res)
 
 
-def _original_record(st: AppState, ev: dict):
-    row = st.store.conn.execute("SELECT stored_path, format, original_name, sha256, provenance_trust FROM inputs WHERE input_id=?",
-                                (ev["input_id"],)).fetchone()
+def _original_record(st: AppState, ev: dict, raw: bool = False):
+    from ..evidence.original import original_record
+    row = st.store.get_input(ev["input_id"])
     if not row:
         return None
-    info = dict(row)
-    path = Path(row["stored_path"])
-    text = None
-    if row["format"] in ("native_jsonl", "splunk_json", "zeek_jsonl", "splunk_csv") and path.is_file():
-        with open(path, "rb") as fh:
-            for no, line in enumerate(fh, start=1):
-                if no == ev["record_no"]:
-                    text = line[:8192].decode("utf-8", "replace")
-                    break
-    elif row["format"] == "sysmon_xml":
-        text = f"(XML <Event> element #{ev['record_no']} in the retained file)"
-    info["record_text"] = text
-    info["location"] = f"{'line' if row['format'] != 'sysmon_xml' else 'Event element'} {ev['record_no']}"
-    return info
+    return original_record(row, ev, raw=raw)
 
 
 async def event_page(request: Request):
@@ -494,10 +617,12 @@ async def event_page(request: Request):
             return _err(request, "event not found", 404)
         ev = evs[0]
         case = st.store.get_case(ev["case_id"])
-        orig = _original_record(st, ev)
+        raw = request.query_params.get("raw") == "1"
+        orig = _original_record(st, ev, raw=raw)
+    shown = ev if raw else redact_obj(ev)
     if request.url.path.startswith("/api/"):
-        return JSONResponse({"event": ev, "original": orig})
-    return render(request, "event.html", ev=ev, orig=orig, case=case)
+        return JSONResponse({"event": shown, "original": orig, "redacted": not raw})
+    return render(request, "event.html", ev=shown, orig=orig, case=case, raw=raw)
 
 
 async def entities_page(request: Request):
@@ -508,7 +633,7 @@ async def entities_page(request: Request):
         case = st.store.get_case(q.get("case") or (cases[0]["case_id"] if cases else ""))
         ents = st.store.list_entities(case["case_id"], q.get("type") or None) if case else []
     if request.url.path.startswith("/api/"):
-        return JSONResponse({"entities": ents})
+        return JSONResponse(redact_obj({"entities": ents}))
     return render(request, "entities.html", ents=ents[:1000], case=case, cases=cases, q=q)
 
 
@@ -526,7 +651,7 @@ async def entity_page(request: Request):
 
 async def rules_page(request: Request):
     st = _st(request)
-    rules, rules_hash, errors, registry, iocs = load_context(st.settings)
+    rules, rules_hash, errors, registry, iocs, disabled = load_context(st.settings)
     data = [r.model_dump(by_alias=True) for r in rules]
     if request.url.path.startswith("/api/"):
         return JSONResponse({"rules": data, "rules_hash": rules_hash, "errors": errors})
@@ -539,7 +664,7 @@ async def export(request: Request):
     fmt = request.path_params.get("fmt") or request.query_params.get("format", "json")
     with st.lock:
         try:
-            exp = build_case_export(st.store, st.settings, request.path_params["cid"])
+            exp = build_case_export(st.store, st.settings, request.path_params["cid"], run_id=request.query_params.get("run") or None)
         except ValueError as exc:
             return _err(request, str(exc), 404)
     name = f"argos-{exp['case']['name']}-{datetime.now().strftime('%Y%m%d%H%M%S')}"
@@ -549,7 +674,7 @@ async def export(request: Request):
     if fmt == "html":
         return HTMLResponse(render_html(exp), headers={"Content-Disposition": f'attachment; filename="{name}.html"'})
     if fmt == "csv":
-        return Response(alerts_csv([a for a in exp["alerts"] if a["current"]]), media_type="text/csv",
+        return Response(alerts_csv([a for a in exp["alerts"] if a.get("current", True)]), media_type="text/csv",
                         headers={"Content-Disposition": f'attachment; filename="{name}-alerts.csv"'})
     return _err(request, "format must be json, html or csv", 400)
 
@@ -583,7 +708,7 @@ async def api_assessment(request: Request):
         c = st.store.get_case(request.path_params["cid"])
         if not c:
             return JSONResponse({"error": "case not found"}, status_code=404)
-        return JSONResponse({"case": c, "assessment": st.store.latest_assessment(c["case_id"]), "runs": st.store.list_runs(c["case_id"])})
+        return JSONResponse(redact_obj({"case": c, "assessment": st.store.latest_assessment(c["case_id"]), "runs": st.store.list_runs(c["case_id"])}))
 
 
 async def api_shutdown(request: Request):
@@ -606,10 +731,14 @@ def create_app(settings: Settings | None = None, token: str | None = None, port:
         Route("/cases", create_case, methods=["POST"]),
         Route("/cases/{cid}", case_page),
         Route("/cases/{cid}/analyze", case_analyze, methods=["POST"]),
+        Route("/cases/{cid}/compare", runs_compare),
+        Route("/jobs/{jid}", job_page),
+        Route("/jobs/{jid}/cancel", job_cancel, methods=["POST"]),
         Route("/cases/{cid}/status", case_status, methods=["POST"]),
         Route("/cases/{cid}/notes", add_note, methods=["POST"]),
         Route("/cases/{cid}/export.{fmt}", export),
         Route("/inputs/{iid}/attest", attest_input, methods=["POST"]),
+        Route("/inputs/{iid}/{action}", input_action, methods=["POST"]),
         Route("/import", import_page),
         Route("/import", import_post, methods=["POST"]),
         Route("/alerts", alerts_page),
@@ -624,6 +753,10 @@ def create_app(settings: Settings | None = None, token: str | None = None, port:
         Route("/api/cases/{cid}/import", api_import, methods=["POST"]),
         Route("/api/cases/{cid}/analyze", case_analyze, methods=["POST"]),
         Route("/api/cases/{cid}/assessment", api_assessment),
+        Route("/api/cases/{cid}/compare", runs_compare),
+        Route("/api/jobs/{jid}", job_page),
+        Route("/api/jobs/{jid}/cancel", job_cancel, methods=["POST"]),
+        Route("/api/inputs/{iid}/{action}", input_action, methods=["POST"]),
         Route("/api/cases/{cid}/notes", add_note, methods=["POST"]),
         Route("/api/cases/{cid}/export", export),
         Route("/api/alerts", alerts_page),
