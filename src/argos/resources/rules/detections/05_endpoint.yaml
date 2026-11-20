@@ -1,0 +1,102 @@
+# Family 5 - endpoint process / tool / connection relationships (managed endpoint vantage).
+id: ARG-EP-001
+version: 1
+title: Server or office process spawned a command shell
+description: A web-server, database or office process started a command interpreter (parent-process provenance from ProcessGuid).
+family: endpoint_process
+status: test
+validation_status: synthetic-scenario tests only
+observation_vantage: [managed_endpoint]
+required_telemetry: [event_time, host, parent_image, process_image]
+select:
+  all:
+    - {field: event_kind, op: eq, value: process_start}
+    - {field: parent_name, op: in, value: [w3wp.exe, httpd, httpd.exe, nginx, nginx.exe, php-fpm, php-cgi.exe, tomcat9.exe, java, java.exe, sqlservr.exe, winword.exe, excel.exe, outlook.exe, node, node.exe]}
+    - {field: process_name, op: in, value: [cmd.exe, powershell.exe, pwsh.exe, pwsh, bash, sh, dash, zsh, wscript.exe, cscript.exe, mshta.exe]}
+group_by: [host, parent_process_guid]
+window_s: 600
+aggregate: {type: each}
+reference: {type: not_applicable, description: parent/child relationship match}
+severity: high
+base_confidence: medium
+contributes:
+  threat: {activity: Shell spawned by server/office process, suspicion: likely_malicious}
+  purpose: {observed_action: interpreter started by service process, hypothesis: execution, stage: observed_success}
+evidence_family: suspicious_parent_child
+required_evidence: Process creation with parent image and GUID
+explanation: "Shell started under {group} ({count} event(s))."
+alternatives: [administrative scripts run by application, legitimate CGI scripts, Java app invoking shell utilities]
+false_positives: [build servers, app-managed maintenance tasks]
+resolving_data: [command lines, web access logs at the same time, file creations by the parent]
+sources: ["FBI FLASH-20261113-001 (web shells deployed) accessed 2026-11-20"]
+recommendation: Review the command line and recent web requests to the parent service; preserve the host's logs before changes.
+---
+id: ARG-EP-002
+version: 1
+title: Shell child process followed by external connection from the same process
+description: A shell process created by a service/office parent made an outbound connection to a non-private address (same host + ProcessGuid).
+family: endpoint_process
+status: test
+validation_status: synthetic-scenario tests only
+observation_vantage: [managed_endpoint]
+required_telemetry: [event_time, host, process_guid]
+select:
+  any:
+    - {field: event_kind, op: eq, value: process_start}
+    - {field: event_kind, op: eq, value: network_connection}
+group_by: [host, process_guid]
+window_s: 300
+aggregate:
+  type: sequence
+  steps:
+    - name: shell_start
+      where:
+        all:
+          - {field: event_kind, op: eq, value: process_start}
+          - {field: process_name, op: in, value: [cmd.exe, powershell.exe, pwsh.exe, bash, sh, curl, curl.exe, wget, certutil.exe]}
+    - name: external_connection
+      where: {all: [{field: event_kind, op: eq, value: network_connection}, {field: dst_is_private, op: eq, value: false}]}
+reference: {type: not_applicable, description: ordered relationship within 300s on same ProcessGuid}
+severity: medium
+base_confidence: medium
+contributes:
+  threat: {activity: Shell/tool process with outbound connection, suspicion: suspicious}
+  purpose: {observed_action: interpreter made external connection, hypothesis: command_and_control, stage: indicator}
+evidence_family: process_external_connection
+required_evidence: Process creation and connection records with the same ProcessGuid
+explanation: "Process {group} started then connected to a public address within {window_s}s."
+alternatives: [package download, software update, admin troubleshooting]
+false_positives: [developer workstations]
+resolving_data: [destination reputation from your own sources, proxy logs for the connection]
+sources: ["FBI FLASH-20261113-001 (C2 via proxies, Chisel)"]
+---
+id: ARG-EP-003
+version: 1
+title: Dual-use offensive tool executed
+description: Execution of tools commonly used for scanning, exploitation or tunnelling. Many are also used by administrators and testers.
+family: endpoint_process
+status: test
+validation_status: synthetic-scenario tests only
+observation_vantage: [managed_endpoint]
+required_telemetry: [event_time, host, process_image]
+select:
+  all:
+    - {field: event_kind, op: eq, value: process_start}
+    - {field: process_name, op: in, value: [nmap, nmap.exe, masscan, nuclei, nuclei.exe, sqlmap, ffuf, gobuster, chisel, chisel.exe, hydra, mimikatz.exe, rubeus.exe, bbot, dnsx, httpx]}
+group_by: [host]
+window_s: 3600
+aggregate: {type: each}
+reference: {type: not_applicable, description: tool name list (names are renameable)}
+severity: medium
+base_confidence: low
+contributes:
+  threat: {activity: Dual-use security tool executed, suspicion: suspicious}
+  purpose: {observed_action: security tool execution, hypothesis: reconnaissance, stage: indicator}
+evidence_family: dualuse_tool_name
+required_evidence: Process creation with image path
+explanation: "{count} dual-use tool execution(s) on {group}."
+alternatives: [authorized penetration test, IT administration, security team tooling]
+false_positives: [red team engagements, security engineers]
+resolving_data: [engagement authorization records, user who launched the tool]
+sources: ["ARTEX v0.6.0 skills/bbot-recon, go.mod (dnsx dependency) commit a13c68cb", "FBI FLASH-20261113-001"]
+suppressible_by_registry: true

@@ -1,0 +1,8 @@
+{
+  "_note": "External operator labels for the SAME observable trace. Never imported; the detector cannot see them.",
+  "labels": {
+    "human": "operator typed every command",
+    "script": "bash loop",
+    "llm": "LLM agent (simulated label)"
+  }
+}

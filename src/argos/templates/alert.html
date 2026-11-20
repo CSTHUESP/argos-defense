@@ -1,0 +1,57 @@
+{% extends "base.html" %}{% from "_m.html" import synth, sev, conf, lvl, dims %}
+{% block banner %}{% if a.synthetic %}<div class="synthbanner">DEMO/SYNTHETIC — this finding derives from synthetic data</div>{% endif %}{% endblock %}
+{% block content %}
+<h1>{{ a.rule_title }} {{ synth(a.synthetic) }}</h1>
+<p>{{ sev(a.threat.severity) }} {{ conf(a.confidence) }} {% if a.abstained %}<span class="badge">abstained</span>{% endif %}
+<span class="badge">disposition: {{ a.disposition }}</span> <span class="badge">analyst status: {{ a.analyst_status }}</span>
+{% if not a.current %}<span class="badge miss">not produced by latest run (kept for history)</span>{% endif %}</p>
+<p class="small">alert {{ a.alert_id }} · case <a href="/cases/{{ a.case_id }}">{{ case.name }}</a> · rule {{ a.rule_ids|join(', ') }} v{{ a.rule_version }} ({{ a.rule_status }}) · first run {{ a.first_run }} · runs {{ a.runs|length }}</p>
+
+<h2>Summary</h2>
+<table class="kv">
+<tr><th>What happened</th><td>{{ a.what }}</td></tr>
+<tr><th>Where</th><td>{{ a.where|join(', ') }}</td></tr>
+<tr><th>When (event time, UTC)</th><td>{{ a.when.first }} → {{ a.when.last }} ({{ a.event_count }} records)</td></tr>
+<tr><th>Why it alerted</th><td>{{ a.why }}</td></tr>
+<tr><th>Reference</th><td>{{ a.reference.type }} — {{ a.reference.description }}</td></tr>
+{% if a.baseline %}<tr><th>Baseline</th><td class="small">{{ a.baseline|tojson }}</td></tr>{% endif %}
+{% if a.registry %}<tr><th>Authorized automation</th><td>{{ a.registry.entry_id }} — {{ a.registry.description }} (owner: {{ a.registry.owner }}, expires {{ a.registry.expires }}); matched {{ a.registry.matched_events }}/{{ a.registry.total_events }} events</td></tr>{% endif %}
+{% for ab in a.absence_checks %}<tr><th>Follow-up check</th><td>{{ ab.label }}: <b>{{ ab.status }}</b> {{ ab.detail or '' }}</td></tr>{% endfor %}
+{% for i in a.ioc_matches[:5] %}<tr><th>IOC</th><td>{{ i.value }} — {{ i.source }}, observed {{ i.observed_date }}, valid {{ i.valid_from }}→{{ i.valid_until }}; <b>{{ 'valid' if i.valid_at_event_time else 'EXPIRED' }} at event time</b> (cutoff: {{ i.cutoff_used }}); {{ i.context }}</td></tr>{% endfor %}
+</table>
+
+<h2>Assessment dimensions</h2>
+{{ dims(a) }}
+<h3>Confidence rationale</h3><ul>{% for r in a.confidence_rationale %}<li>{{ r }}</li>{% endfor %}</ul>
+<h3>Alternative hypotheses</h3><ul>{% for x in a.alternatives %}<li>{{ x }}</li>{% endfor %}</ul>
+<h3>Known false positives</h3><ul>{% for x in a.false_positives %}<li>{{ x }}</li>{% else %}<li>none listed</li>{% endfor %}</ul>
+<h3>Missing visibility</h3><ul>{% for x in a.missing_visibility %}<li>{{ x }}</li>{% endfor %}</ul>
+<h3>Data that could resolve the uncertainty</h3><ul>{% for x in a.resolving_data %}<li>{{ x }}</li>{% endfor %}</ul>
+<h3>Recommendation (reviewable text)</h3><p>{{ a.recommendation }}</p>
+
+<h2>Matched predicates</h2>
+<table><thead><tr><th>Step</th><th>Field</th><th>Operator</th><th>Rule value</th><th>Observed</th></tr></thead><tbody>
+{% for step, preds in a.matched_predicates.items() %}{% for p in preds %}<tr><td>{{ step }}</td><td>{{ p.field }}</td><td>{{ p.op }}</td><td class="small">{{ p.value|tojson }}</td><td class="small">{{ p.observed|string|redact }}</td></tr>{% endfor %}{% endfor %}
+</tbody></table>
+
+<h2>Timeline &amp; evidence</h2>
+{% if a.evidence_truncated %}<p class="warn">Evidence list truncated to the first 200 records of {{ a.event_count }}.</p>{% endif %}
+<table><thead><tr><th>Event time</th><th>Step</th><th>Kind</th><th>Vantage</th><th>Outcome</th><th>Actor / host</th><th>Detail</th><th>Evidence ref</th></tr></thead><tbody>
+{% for e in events %}<tr>
+<td class="small">{{ e.event_time }}</td><td class="small">{% for x in a.evidence %}{% if x.event_id==e.event_id %}{{ x.step or '' }}{% endif %}{% endfor %}</td>
+<td>{{ e.event_kind }}</td><td class="small">{{ e.observation_vantage }}</td><td>{{ e.outcome or '—' }}</td>
+<td class="small">{{ e.user or e.app_id or '' }} {{ e.src_ip or '' }} {{ e.host or '' }}</td>
+<td class="small mono">{{ (e.http_method or '') }} {{ (e.http_uri or e.process_command_line or e.file_path or e.dns_query or e.action or '')|redact|truncate(160) }}</td>
+<td class="small"><a href="/events/{{ e.event_id }}">{{ e.evidence_ref }}</a></td></tr>{% endfor %}
+</tbody></table>
+<h3>Provenance of cited inputs</h3>
+<ul>{% for p in a.provenance %}<li>{{ p.original_name }} ({{ p.format }}, {{ p.parser_version }}) sha256 <span class="mono small">{{ p.sha256 }}</span> — trust <b>{{ p.provenance_trust }}</b>: {{ p.provenance_note }}</li>{% endfor %}</ul>
+
+<h2>Analyst workflow</h2>
+<form method="post" action="/alerts/{{ a.alert_id }}/status" class="inline"><input type="hidden" name="csrf" value="{{ csrf }}">
+<select name="status">{% for s in ['new','triaged','escalated','benign','false_positive','true_positive'] %}<option {{ 'selected' if s==a.analyst_status }}>{{ s }}</option>{% endfor %}</select><button type="submit">Set status</button></form>
+<h3>Notes</h3><ul>{% for n in notes %}<li><span class="small">{{ n.created_at }}</span> {{ n.text }}</li>{% else %}<li>No notes.</li>{% endfor %}</ul>
+<form method="post" action="/alerts/{{ a.alert_id }}/notes"><input type="hidden" name="csrf" value="{{ csrf }}"><textarea name="text" rows="3" required></textarea><br><button type="submit">Add note</button></form>
+{% if llm_enabled %}<h3>Optional LLM explanation</h3><p class="small">Explains existing evidence only; output is validated and cannot change verdicts.</p>
+<button type="button" id="explain" data-url="/api/alerts/{{ a.alert_id }}/explain">Explain with configured local model</button><pre id="explain-out" class="small"></pre>{% endif %}
+{% endblock %}

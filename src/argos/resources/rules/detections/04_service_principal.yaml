@@ -1,0 +1,70 @@
+# Family 4 - service principal access followed by credential/permission changes or unusual secret reads.
+id: ARG-SP-001
+version: 1
+title: Service principal sign-in followed by credential or permission change
+description: A service principal signed in and then the same principal added credentials or changed role/permission assignments.
+family: service_principal_abuse
+status: test
+validation_status: synthetic-scenario tests only
+observation_vantage: [identity_cloud]
+required_telemetry: [event_time, tenant_id, app_id]
+select:
+  any:
+    - {field: event_kind, op: eq, value: authentication}
+    - {field: event_kind, op: eq, value: cloud_operation}
+group_by: [tenant_id, app_id]
+window_s: 7200
+aggregate:
+  type: sequence
+  steps:
+    - name: sp_signin
+      where: {all: [{field: event_kind, op: eq, value: authentication}, {field: outcome, op: eq, value: success}, {field: account_type, op: eq, value: service_principal}]}
+    - name: privilege_or_credential_change
+      where:
+        all:
+          - {field: event_kind, op: eq, value: cloud_operation}
+          - {field: action, op: in, value: [credential_add, add_service_principal_credentials, role_assignment, add_app_role_assignment, permission_grant]}
+reference: {type: not_applicable, description: ordered sequence within 2h}
+severity: high
+base_confidence: high
+contributes:
+  threat: {activity: Service principal credential/permission change after sign-in, suspicion: likely_malicious}
+  purpose: {observed_action: SP sign-in then credential/permission change, hypothesis: persistence, stage: observed_success}
+evidence_family: sp_change_chain
+required_evidence: SP sign-in and audit records for the same tenant+app id
+explanation: "Service principal {group} signed in then changed credentials/permissions within {window_s}s."
+alternatives: [automated secret rotation pipeline, IaC deployment]
+false_positives: [planned credential rotation]
+resolving_data: [change ticket, deployment pipeline logs, who consented to the application]
+sources: ["Microsoft Security blog 2026-10-21 (application credential additions, privilege modification attempts)", "FBI FLASH-20261113-001"]
+recommendation: Verify the change with the application owner; preserve audit records before revoking credentials.
+---
+id: ARG-SP-002
+version: 1
+title: Secret reads above the principal's observed history
+description: |
+  Secret/key-vault reads by one principal within an hour exceed its own prior
+  observed history. If the case does not contain enough prior history, the rule
+  abstains and reports an insufficient baseline instead of assuming normality.
+family: service_principal_abuse
+status: test
+validation_status: synthetic-scenario tests only
+observation_vantage: [identity_cloud]
+required_telemetry: [event_time, tenant_id, app_id]
+select: {all: [{field: event_kind, op: eq, value: cloud_operation}, {field: action, op: eq, value: secret_read}]}
+group_by: [tenant_id, app_id]
+window_s: 3600
+aggregate: {type: baseline, min_count: 20, history_lookback_s: 604800, min_history_windows: 24, factor: 5}
+reference: {type: observed_history, description: "count in 1h window > 5x max of the principal's prior 1h windows (>=24 prior covered windows, prior events only)"}
+severity: medium
+base_confidence: medium
+contributes:
+  threat: {activity: Unusual volume of secret reads, suspicion: suspicious}
+  purpose: {observed_action: many secret reads, hypothesis: collection, stage: observed_success}
+evidence_family: secret_read_volume
+required_evidence: Secret read audit records for the principal, plus prior history
+explanation: "{count} secret reads by {group} in {window_s}s compared with its own prior history."
+alternatives: [new application release reading more secrets, cache flush]
+false_positives: [deployments, key rotation]
+resolving_data: [longer history window, deployment calendar]
+sources: ["Microsoft Security blog 2026-10-21 (bulk Key Vault secret reads)"]

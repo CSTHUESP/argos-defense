@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ e.etype }}: {{ e.display|redact }}{% if case.synthetic %} <span class="badge synth">DEMO/SYNTHETIC</span>{% endif %}</h1>
+<p class="small">key <span class="mono">{{ e.ekey }}</span> · strength <b>{{ e.strength }}</b> · {{ e.event_count }} events</p>
+<h2>Relationships</h2>
+<table><thead><tr><th>From</th><th>Relationship</th><th>To</th><th>Basis</th><th>Events</th></tr></thead><tbody>
+{% for r in rels %}<tr><td><a href="/entities/{{ r.src }}">{{ r.src_type }}: {{ r.src_display|redact }}</a></td><td>{{ r.rel }}</td><td><a href="/entities/{{ r.dst }}">{{ r.dst_type }}: {{ r.dst_display|redact }}</a></td>
+<td>{% if r.basis == 'observed' %}<span class="badge ok">observed</span>{% else %}<span class="badge warn">{{ r.basis }}</span>{% endif %}</td><td>{{ r.event_count }}</td></tr>
+{% else %}<tr><td colspan="5">none</td></tr>{% endfor %}</tbody></table>
+<h2>Events (first 100)</h2>
+<table><thead><tr><th>Time</th><th>Kind</th><th>Action</th><th>Outcome</th><th>Ref</th></tr></thead><tbody>
+{% for ev in events %}<tr><td class="small">{{ ev.event_time }}</td><td>{{ ev.event_kind }}</td><td>{{ ev.action or '' }}</td><td>{{ ev.outcome or '' }}</td><td><a href="/events/{{ ev.event_id }}">{{ ev.evidence_ref }}</a></td></tr>{% endfor %}</tbody></table>
+{% endblock %}

@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="csrf-token" content="{{ csrf }}">
+<title>{% block title %}ARGOS Defense{% endblock %}</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="/static/app.css">
+<script src="/static/app.js" defer></script>
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="/">ARGOS&nbsp;Defense</a>
+  <nav>
+    <a href="/">Overview</a>
+    <a href="/import">Import</a>
+    <a href="/alerts">Alert queue</a>
+    <a href="/entities">Entities</a>
+    <a href="/rules">Rule catalog</a>
+  </nav>
+  <span class="ver">v{{ version }} · local · batch analysis of supplied files</span>
+</header>
+{% block banner %}{% endblock %}
+<main>
+{% block content %}{% endblock %}
+</main>
+<footer>ARGOS supports investigation; it performs no blocking, isolation or other response. Heuristic scores are not probabilities. Real-world accuracy NOT MEASURED.</footer>
+</body>
+</html>

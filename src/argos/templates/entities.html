@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Entities{% if case %} — {{ case.name }}{% if case.synthetic %} <span class="badge synth">DEMO/SYNTHETIC</span>{% endif %}{% endif %}</h1>
+<form method="get" action="/entities" class="filters">
+<label>Case <select name="case">{% for c in cases %}<option value="{{ c.case_id }}" {{ 'selected' if case and c.case_id==case.case_id }}>{{ c.name }}</option>{% endfor %}</select></label>
+<label>Type <select name="type"><option value="">all</option>{% for t in ['account','service_principal','device','process','session','ip_address','domain','tenant','resource'] %}<option {{ 'selected' if q.type==t }}>{{ t }}</option>{% endfor %}</select></label>
+<button type="submit">Show</button></form>
+<p class="small">Entities are keyed by strong identifiers where available (tenant+identity, host+ProcessGuid, session id). <b>weak</b> keys (context-free usernames, host+pid) are labelled. IP addresses are infrastructure: accounts sharing an IP are never merged.</p>
+<table><thead><tr><th>Type</th><th>Entity</th><th>Key strength</th><th>Events</th><th>First → last</th></tr></thead><tbody>
+{% for e in ents %}<tr><td>{{ e.etype }}</td><td><a href="/entities/{{ e.entity_id }}">{{ e.display|redact }}</a></td><td><span class="badge str-{{ e.strength }}">{{ e.strength }}</span></td><td>{{ e.event_count }}</td><td class="small">{{ e.first_time }} → {{ e.last_time }}</td></tr>
+{% else %}<tr><td colspan="5">No entities (analyse the case first).</td></tr>{% endfor %}</tbody></table>
+{% endblock %}

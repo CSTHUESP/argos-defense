@@ -1,0 +1,33 @@
+{% extends "base.html" %}{% from "_m.html" import synth, sev, conf, lvl %}
+{% block content %}
+<h1>Alert queue</h1>
+<form method="get" action="/alerts" class="filters">
+<label>Case <select name="case"><option value="">all</option>{% for cid, c in cases.items() %}<option value="{{ cid }}" {{ 'selected' if q.case in (cid, c.name) }}>{{ c.name }}{{ ' (DEMO)' if c.synthetic }}</option>{% endfor %}</select></label>
+<label>From <input type="date" name="since" value="{{ q.since or '' }}"></label>
+<label>To <input type="date" name="until" value="{{ q.until or '' }}"></label>
+<label>Severity ≥ <select name="min_severity"><option value="">any</option>{% for s in severities %}<option {{ 'selected' if q.min_severity==s }}>{{ s }}</option>{% endfor %}</select></label>
+<label>Confidence <select name="confidence"><option value="">any</option>{% for s in confs %}<option {{ 'selected' if q.confidence==s }}>{{ s }}</option>{% endfor %}</select></label>
+<label>Activity <input name="activity" value="{{ q.activity or '' }}"></label>
+<label>Automation <select name="automation"><option value="">any</option>{% for s in ['unknown','consistent_with_automation','observed_automation','observed_manual_component','mixed'] %}<option {{ 'selected' if q.automation==s }}>{{ s }}</option>{% endfor %}</select></label>
+<label>LLM <select name="llm"><option value="">any</option>{% for s in ['unknown','possible','directly_observed'] %}<option {{ 'selected' if q.llm==s }}>{{ s }}</option>{% endfor %}</select></label>
+<label>Framework <select name="framework"><option value="">any</option>{% for s in ['unknown','consistent_with','corroborated_presence'] %}<option {{ 'selected' if q.framework==s }}>{{ s }}</option>{% endfor %}</select></label>
+<label>Status <select name="status"><option value="">any</option>{% for s in ['new','triaged','escalated','benign','false_positive','true_positive'] %}<option {{ 'selected' if q.status==s }}>{{ s }}</option>{% endfor %}</select></label>
+<label><input type="checkbox" name="show_authorized" value="1" {{ 'checked' if q.show_authorized }}> show authorized automation</label>
+<button type="submit">Filter</button>
+</form>
+<p class="small">{{ alerts|length }} alert(s). Severity and confidence are separate: a high-severity alert can have low confidence, and an unknown human/LLM origin does not lower severity.</p>
+<table>
+<thead><tr><th>Severity</th><th>Confidence</th><th>Alert</th><th>Case</th><th>When (event time)</th><th>Automation</th><th>LLM</th><th>Framework</th><th>Purpose</th><th>Status</th></tr></thead>
+<tbody>
+{% for a in alerts %}
+<tr class="{{ 'synthrow' if a.synthetic }}">
+<td>{{ sev(a.threat.severity) }}</td><td>{{ conf(a.confidence) }}{% if a.abstained %} <span class="badge">abstained</span>{% endif %}</td>
+<td><a href="/alerts/{{ a.alert_id }}">{{ a.rule_title }}</a><br><span class="small">{{ a.rule_id }}@{{ a.rule_version }} · {{ a.group|tojson }}</span>{% if a.disposition=='authorized_automation' %}<br><span class="badge ok">authorized automation</span>{% endif %}</td>
+<td>{{ cases[a.case_id].name if a.case_id in cases }} {{ synth(a.synthetic) }}</td>
+<td class="small">{{ a.first_time }}<br>{{ a.last_time }}</td>
+<td>{{ lvl('auto', a.automation.level) }}</td><td>{{ lvl('llm', a.llm.level) }}</td><td>{{ lvl('fw', a.framework.level) }}</td>
+<td class="small">{{ a.purpose.hypothesis }} ({{ a.purpose.stage }})</td><td>{{ a.analyst_status }}</td>
+</tr>
+{% else %}<tr><td colspan="10">No alerts match.</td></tr>{% endfor %}
+</tbody></table>
+{% endblock %}

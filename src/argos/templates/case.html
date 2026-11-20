@@ -1,0 +1,64 @@
+{% extends "base.html" %}{% from "_m.html" import synth, sev, lvl %}
+{% block banner %}{% if case.synthetic %}<div class="synthbanner">DEMO/SYNTHETIC CASE — data and all derived findings are synthetic</div>{% endif %}{% endblock %}
+{% block content %}
+<h1>Case {{ case.name }} {{ synth(case.synthetic) }}</h1>
+<p class="small">id {{ case.case_id }} · created {{ case.created_at }} · {{ event_count }} events · status <b>{{ case.status }}</b></p>
+<div class="actions">
+<form method="post" action="/cases/{{ case.case_id }}/analyze"><input type="hidden" name="csrf" value="{{ csrf }}"><button type="submit">Analyze / re-analyze</button></form>
+<a class="button" href="/alerts?case={{ case.case_id }}">Alert queue</a>
+<a class="button" href="/import?case={{ case.case_id }}">Import file</a>
+<a class="button" href="/entities?case={{ case.case_id }}">Entities</a>
+<a class="button" href="/cases/{{ case.case_id }}/export.json">Export JSON</a>
+<a class="button" href="/cases/{{ case.case_id }}/export.html">Export HTML</a>
+<a class="button" href="/cases/{{ case.case_id }}/export.csv">Alerts CSV</a>
+<form method="post" action="/cases/{{ case.case_id }}/status" class="inline"><input type="hidden" name="csrf" value="{{ csrf }}">
+<select name="status">{% for s in ['open','investigating','closed_benign','closed_true_positive','closed_inconclusive'] %}<option value="{{ s }}" {{ 'selected' if s==case.status }}>{{ s }}</option>{% endfor %}</select>
+<button type="submit">Set status</button></form>
+</div>
+{% if request.query_params.get('analyzed') %}<p class="ok">Analysis run {{ request.query_params.get('analyzed') }} completed.</p>{% endif %}
+{% if assessment %}{% set a = assessment %}
+<h2>Case assessment <span class="small">(run {{ a.run_id }})</span></h2>
+<div class="dims">
+<section class="dim"><h4>A · Threat activity</h4><p>max severity {{ sev(a.threat.max_severity) }}</p><p class="small">{{ a.threat.open_alerts }} open alerts · {{ a.threat.authorized_automation_alerts }} authorized automation · {{ a.threat.abstentions }} abstentions</p>
+<ul class="small">{% for x in a.threat.activities %}<li>{{ x }}</li>{% endfor %}</ul></section>
+<section class="dim"><h4>B · Automation</h4><p>{{ lvl('automation', a.automation.level) }}</p><p class="small">heuristic evidence score {{ a.automation.heuristic_evidence_score }} (distinct families: {{ a.automation.evidence_families|join(', ') }})</p></section>
+<section class="dim"><h4>C · LLM involvement</h4><p>{{ lvl('llm', a.llm.level) }}</p><p class="small">heuristic evidence score {{ a.llm.heuristic_evidence_score }} — {{ a.llm.note }}</p><p class="small">families: {{ a.llm.evidence_families|join(', ') or 'none' }}</p></section>
+<section class="dim"><h4>D · Framework</h4><p>{{ lvl('framework', a.framework.level) }}</p>
+{% for f in a.framework.candidates %}<p><b>{{ f.name }}</b>: {{ f.level }}; independent families {{ f.independent_families|join(', ') or 'none' }}{% if f.corroborated_on_hosts %}; corroborated on {{ f.corroborated_on_hosts|join(', ') }}{% endif %}</p><p class="small warn">Responsibility for activity: {{ f.responsibility_for_activity }}. {{ f.note }}</p>{% endfor %}</section>
+<section class="dim"><h4>E · Purpose (hypotheses)</h4><ul class="small">{% for p in a.purpose %}<li>{{ p.hypothesis }} — {{ p.alerts }} alert(s), stages {{ p.stages|join(', ') }}</li>{% endfor %}</ul></section>
+<section class="dim"><h4>F · Attribution</h4><ul class="small">{% for k, v in a.attribution.items() %}<li>{{ k }}: {{ v }}</li>{% endfor %}</ul></section>
+</div>
+<h3>Coverage by observation vantage</h3>
+<table><thead><tr><th>Vantage</th><th>Status</th><th>Events</th><th>Covered interval(s)</th><th>Event kinds</th><th>Rejected records in these inputs</th></tr></thead><tbody>
+{% for v, cv in a.coverage.items() %}<tr><td>{{ v }}</td><td><span class="badge {{ 'ok' if cv.event_count else 'miss' }}">{{ cv.status }}</span></td><td>{{ cv.event_count }}</td>
+<td class="small">{% for i in cv.intervals or [] %}{{ i.first }} → {{ i.last }} ({{ i.events }})<br>{% endfor %}</td><td class="small">{{ (cv.event_kinds or [])|join(', ') }}</td><td>{{ cv.rejected_records_in_inputs or 0 }}</td></tr>{% endfor %}
+</tbody></table>
+<h3>Limitations</h3><ul>{% for l in a.limitations %}<li>{{ l }}</li>{% endfor %}</ul>
+{% else %}<p>Not analysed yet.</p>{% endif %}
+
+<h2>Inputs (provenance)</h2>
+<table><thead><tr><th>Input</th><th>Format / parser</th><th>SHA-256</th><th>Records (ok / rejected)</th><th>Provenance trust</th><th>Change trust</th></tr></thead><tbody>
+{% for i in inputs %}<tr><td>{{ i.original_name }}<br><span class="small">{{ i.input_id }} · {{ i.imported_at }}</span></td><td>{{ i.format }}<br><span class="small">{{ i.parser_version }} {{ i.options }}</span></td>
+<td class="mono small">{{ i.sha256 }}</td><td>{{ i.records_accepted }} / {{ i.records_rejected }}</td>
+<td><span class="badge trust-{{ i.provenance_trust }}">{{ i.provenance_trust }}</span><br><span class="small">{{ i.provenance_note }}</span></td>
+<td><form method="post" action="/inputs/{{ i.input_id }}/attest"><input type="hidden" name="csrf" value="{{ csrf }}">
+<select name="trust"><option value="analyst_attested">analyst_attested</option><option value="unverified">unverified</option></select>
+<input name="note" placeholder="how provenance was verified (outside the file)" minlength="10" required><button type="submit">Save</button></form></td></tr>{% endfor %}
+</tbody></table>
+<p class="small">A hash establishes integrity, not authenticity. Fields inside an imported file never change its trust; only an analyst attestation recorded here does.</p>
+
+<h2>Data quality: rejected records</h2>
+{% if rejects %}<table><thead><tr><th>Input</th><th>Record</th><th>Reason</th><th>Excerpt</th></tr></thead><tbody>
+{% for r in rejects %}<tr><td class="small">{{ r.input_id }}</td><td>{{ r.record_no }}</td><td>{{ r.reason }}</td><td class="mono small">{{ (r.excerpt or '')|redact }}</td></tr>{% endfor %}
+</tbody></table>{% else %}<p>No rejected records.</p>{% endif %}
+
+<h2>Analysis runs</h2>
+<table><thead><tr><th>#</th><th>Run</th><th>Started</th><th>Versions</th><th>Stats</th></tr></thead><tbody>
+{% for r in runs %}<tr><td>{{ r.seq }}</td><td class="small">{{ r.run_id }}</td><td class="small">{{ r.started_at }}</td>
+<td class="small">engine {{ r.versions.engine }} · rules {{ r.versions.rules_hash }} · config {{ r.versions.config_hash }} · manifest {{ r.versions.manifest_hash }} · registry {{ r.versions.registry_hash }} · ioc {{ r.versions.ioc_hash }}</td>
+<td class="small">{{ r.stats }}</td></tr>{% endfor %}</tbody></table>
+
+<h2>Case notes</h2>
+<ul>{% for n in notes %}<li><span class="small">{{ n.created_at }}{% if n.alert_id %} · alert <a href="/alerts/{{ n.alert_id }}">{{ n.alert_id }}</a>{% endif %}</span><br>{{ n.text }}</li>{% else %}<li>No notes.</li>{% endfor %}</ul>
+<form method="post" action="/cases/{{ case.case_id }}/notes"><input type="hidden" name="csrf" value="{{ csrf }}"><textarea name="text" rows="3" required></textarea><br><button type="submit">Add note</button></form>
+{% endblock %}

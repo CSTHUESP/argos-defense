@@ -1,0 +1,7 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>ARGOS login</title><link rel="icon" href="data:,">
+<link rel="stylesheet" href="/static/app.css"></head>
+<body><main class="narrow"><h1>ARGOS Defense</h1>
+<p>Enter the local session token printed by <code>python -m argos serve</code> (also stored in <code>ARGOS_HOME/.session_token</code>).</p>
+{% if error %}<p class="error">{{ error }}</p>{% endif %}
+<form method="post" action="/login"><label>Token <input type="password" name="token" autocomplete="off" required></label> <button type="submit">Open</button></form>
+</main></body></html>

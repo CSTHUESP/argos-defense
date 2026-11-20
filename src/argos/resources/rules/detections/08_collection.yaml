@@ -1,0 +1,134 @@
+# Family 8 - collection sequences, potentially anomalous transfers, persistence.
+id: ARG-COLL-001
+version: 1
+title: Archive created then large outbound transfer from the same host
+description: |
+  An archive file was created and the same host then sent a large amount of data to
+  a public address. "Possible exfiltration" is a hypothesis: volume does not prove
+  data theft and the archive content is unknown.
+family: collection_exfil_persistence
+status: test
+validation_status: synthetic-scenario tests only
+observation_vantage: [managed_endpoint, victim_network]
+required_telemetry: [event_time, host]
+select: {field: event_kind, op: in, value: [file_create, network_connection]}
+group_by: [host]
+window_s: 1800
+aggregate:
+  type: sequence
+  steps:
+    - {name: archive_created, where: {all: [{field: event_kind, op: eq, value: file_create}, {field: file_ext, op: in, value: [.zip, .7z, .rar, .gz, .tgz, .tar]}]}}
+    - name: large_outbound
+      where: {all: [{field: event_kind, op: eq, value: network_connection}, {field: dst_is_private, op: eq, value: false}, {field: bytes_src_to_dst, op: gte, value: 50000000}]}
+reference: {type: explicit_threshold, description: ">=50MB sent (bytes_src_to_dst with declared direction) within 30 min after archive creation"}
+severity: high
+base_confidence: medium
+contributes:
+  threat: {activity: Staging and large outbound transfer, suspicion: suspicious}
+  purpose: {observed_action: archive written then large upload, hypothesis: possible_exfiltration, stage: indicator}
+evidence_family: archive_then_upload
+required_evidence: File creation + connection with direction-declared byte counters on same host
+explanation: "Archive then >=50MB outbound from {group} within {window_s}s. Data theft is NOT established."
+alternatives: [backup upload, software distribution, cloud sync]
+false_positives: [backups, developer artifact uploads]
+missing_visibility_hints: ["byte counts require a declared direction; records without bytes_basis are not used"]
+resolving_data: [destination ownership, DLP/proxy content logs, archive contents]
+sources: ["FBI FLASH-20261113-001 (staging and exfiltration, outbound structured data transfers)"]
+suppressible_by_registry: true
+---
+id: ARG-COLL-002
+version: 1
+title: Secret reads across several vaults in a short period
+description: One principal read secrets from at least 3 distinct vaults/resources within 10 minutes.
+family: collection_exfil_persistence
+status: test
+validation_status: synthetic-scenario tests only
+observation_vantage: [identity_cloud]
+required_telemetry: [event_time, tenant_id, resource]
+select: {all: [{field: event_kind, op: eq, value: cloud_operation}, {field: action, op: eq, value: secret_read}]}
+group_by: [tenant_id, app_id]
+window_s: 600
+aggregate: {type: threshold, min_count: 3, distinct_field: resource, min_distinct: 3}
+reference: {type: explicit_threshold, description: ">=3 distinct vaults within 600s"}
+severity: high
+base_confidence: medium
+contributes:
+  threat: {activity: Bulk secret reads across vaults, suspicion: suspicious}
+  purpose: {observed_action: secret reads across vaults, hypothesis: collection, stage: observed_success}
+evidence_family: multi_vault_reads
+required_evidence: Secret read audit records with resource
+explanation: "{group} read secrets from {distinct} vaults within {window_s}s."
+alternatives: [deployment pipeline, configuration management]
+false_positives: [CI/CD deployments]
+resolving_data: [deployment logs, app owner confirmation]
+sources: ["Microsoft Security blog 2026-10-21 (bulk Key Vault secret reads across multiple vaults)"]
+---
+id: ARG-PERS-001
+version: 1
+title: Persistence mechanism created (scheduled task / service / Run key / web shell file)
+description: |
+  Creation of a persistence mechanism. The stage distinguishes an attempt
+  (outcome failure/unknown) from an observed success; the rule reports both with
+  the outcome shown in evidence.
+family: collection_exfil_persistence
+status: test
+validation_status: synthetic-scenario tests only
+observation_vantage: [managed_endpoint]
+required_telemetry: [event_time, host]
+select:
+  any:
+    - {all: [{field: event_kind, op: eq, value: process_start}, {field: process_name, op: in, value: [schtasks.exe, sc.exe, reg.exe, crontab, systemctl]},
+             {field: process_command_line, op: regex, value: "(/create|create |\\\\CurrentVersion\\\\Run| -e|enable )"}]}
+    - {all: [{field: event_kind, op: eq, value: file_create}, {field: file_ext, op: in, value: [.aspx, .ashx, .jsp, .jspx, .php]},
+             {field: file_path, op: regex, value: "(inetpub|wwwroot|htdocs|webapps|/var/www)"}]}
+group_by: [host]
+window_s: 3600
+aggregate: {type: each}
+reference: {type: not_applicable, description: command/path patterns}
+severity: high
+base_confidence: medium
+contributes:
+  threat: {activity: Persistence mechanism created, suspicion: likely_malicious}
+  purpose: {observed_action: persistence artifact created, hypothesis: persistence, stage: attempt}
+evidence_family: persistence_artifact
+required_evidence: Process creation command lines or file creation paths
+explanation: "{count} persistence-related event(s) on {group}."
+alternatives: [software installation, admin-created scheduled task, web deployment]
+false_positives: [deployments writing .aspx/.jsp files]
+resolving_data: [deployment records, file hash and content review]
+sources: ["FBI FLASH-20261113-001 (web shells *.aspx/*.jsp in unexpected paths)"]
+recommendation: Compare the artifact against deployment records; preserve the file and logs before removal.
+---
+id: ARG-IOC-001
+version: 1
+title: Indicator list match (validity evaluated at event time)
+description: |
+  Destination/source matches a configured indicator. Validity is evaluated against
+  the event time. Expired indicators are historical context only - never an
+  attribution to a person or group and never an automatic block.
+family: ioc_context
+status: test
+validation_status: synthetic-scenario tests only
+observation_vantage: [victim_network, managed_endpoint, identity_cloud]
+required_telemetry: [event_time]
+select:
+  any:
+    - {field: src_ip, op: ioc_any}
+    - {field: dst_ip, op: ioc_any}
+    - {field: domain, op: ioc_any}
+group_by: [remote]
+window_s: 86400
+aggregate: {type: each}
+reference: {type: not_applicable, description: configured indicator list with validity intervals}
+severity: medium
+base_confidence: medium
+contributes:
+  threat: {activity: Indicator match, suspicion: suspicious}
+  purpose: {observed_action: contact with listed indicator, hypothesis: unknown, stage: indicator}
+evidence_family: ioc_match
+required_evidence: Records with IP/domain fields + IOC list entry
+explanation: "{count} record(s) matched configured indicators."
+alternatives: [infrastructure re-assigned to new owner, shared hosting, stale indicator]
+false_positives: [CDN/shared IPs]
+resolving_data: [current ownership of the infrastructure, indicator source update]
+sources: ["IOC list files in rules/iocs (each entry carries source and validity)"]

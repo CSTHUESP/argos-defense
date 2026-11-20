@@ -1,0 +1,424 @@
+[
+  {
+    "set": "tuning",
+    "rule": "ARG-AUTH-003 v1",
+    "unit": "identity sequence (one tenant+account scenario instance)",
+    "per_scenario": {
+      "B1_typo_then_success": {
+        "label": "benign",
+        "identity_sequences": 20,
+        "sequences_with_alert": 0,
+        "alerts": 0,
+        "alert_confidence": {},
+        "fraction_sequences_alerted": 0.0
+      },
+      "B2_many_typos_own_device": {
+        "label": "benign",
+        "identity_sequences": 20,
+        "sequences_with_alert": 20,
+        "alerts": 20,
+        "alert_confidence": {
+          "medium": 20
+        },
+        "fraction_sequences_alerted": 1.0
+      },
+      "B3_intermittent_multi_device": {
+        "label": "benign",
+        "identity_sequences": 20,
+        "sequences_with_alert": 5,
+        "alerts": 5,
+        "alert_confidence": {
+          "medium": 5
+        },
+        "fraction_sequences_alerted": 0.25
+      },
+      "B4_stale_password_device": {
+        "label": "benign",
+        "identity_sequences": 20,
+        "sequences_with_alert": 15,
+        "alerts": 18,
+        "alert_confidence": {
+          "medium": 18
+        },
+        "fraction_sequences_alerted": 0.75
+      },
+      "B5_shared_nat_users": {
+        "label": "benign",
+        "identity_sequences": 20,
+        "sequences_with_alert": 0,
+        "alerts": 0,
+        "alert_confidence": {},
+        "fraction_sequences_alerted": 0.0
+      },
+      "B6_cross_tenant_same_username": {
+        "label": "benign",
+        "identity_sequences": 20,
+        "sequences_with_alert": 0,
+        "alerts": 0,
+        "alert_confidence": {},
+        "fraction_sequences_alerted": 0.0
+      },
+      "M1_fast_guessing": {
+        "label": "malicious",
+        "identity_sequences": 20,
+        "sequences_with_alert": 20,
+        "alerts": 20,
+        "alert_confidence": {
+          "medium": 20
+        },
+        "fraction_sequences_alerted": 1.0
+      },
+      "M2_slow_guessing": {
+        "label": "malicious",
+        "identity_sequences": 20,
+        "sequences_with_alert": 20,
+        "alerts": 20,
+        "alert_confidence": {
+          "medium": 20
+        },
+        "fraction_sequences_alerted": 1.0
+      },
+      "M3_guessing_with_interleaved_legit_user": {
+        "label": "malicious",
+        "identity_sequences": 20,
+        "sequences_with_alert": 20,
+        "alerts": 20,
+        "alert_confidence": {
+          "medium": 20
+        },
+        "fraction_sequences_alerted": 1.0
+      },
+      "M4_rotating_source_per_attempt": {
+        "label": "malicious",
+        "identity_sequences": 20,
+        "sequences_with_alert": 20,
+        "alerts": 20,
+        "alert_confidence": {
+          "medium": 20
+        },
+        "fraction_sequences_alerted": 1.0
+      }
+    },
+    "benign_sequences": 120,
+    "benign_sequences_alerted": 40,
+    "malicious_sequences": 80,
+    "malicious_sequences_alerted": 80,
+    "alerts_not_mapped_to_a_labeled_sequence": 0
+  },
+  {
+    "set": "tuning",
+    "rule": "ARG-AUTH-003 v2 + ARG-AUTH-004 v1",
+    "unit": "identity sequence (one tenant+account scenario instance)",
+    "per_scenario": {
+      "B1_typo_then_success": {
+        "label": "benign",
+        "identity_sequences": 20,
+        "sequences_with_alert": 0,
+        "alerts": 0,
+        "alert_confidence": {},
+        "fraction_sequences_alerted": 0.0
+      },
+      "B2_many_typos_own_device": {
+        "label": "benign",
+        "identity_sequences": 20,
+        "sequences_with_alert": 20,
+        "alerts": 20,
+        "alert_confidence": {
+          "low": 20
+        },
+        "fraction_sequences_alerted": 1.0
+      },
+      "B3_intermittent_multi_device": {
+        "label": "benign",
+        "identity_sequences": 20,
+        "sequences_with_alert": 1,
+        "alerts": 1,
+        "alert_confidence": {
+          "medium": 1
+        },
+        "fraction_sequences_alerted": 0.05
+      },
+      "B4_stale_password_device": {
+        "label": "benign",
+        "identity_sequences": 20,
+        "sequences_with_alert": 0,
+        "alerts": 0,
+        "alert_confidence": {},
+        "fraction_sequences_alerted": 0.0
+      },
+      "B5_shared_nat_users": {
+        "label": "benign",
+        "identity_sequences": 20,
+        "sequences_with_alert": 0,
+        "alerts": 0,
+        "alert_confidence": {},
+        "fraction_sequences_alerted": 0.0
+      },
+      "B6_cross_tenant_same_username": {
+        "label": "benign",
+        "identity_sequences": 20,
+        "sequences_with_alert": 0,
+        "alerts": 0,
+        "alert_confidence": {},
+        "fraction_sequences_alerted": 0.0
+      },
+      "M1_fast_guessing": {
+        "label": "malicious",
+        "identity_sequences": 20,
+        "sequences_with_alert": 20,
+        "alerts": 20,
+        "alert_confidence": {
+          "medium": 20
+        },
+        "fraction_sequences_alerted": 1.0
+      },
+      "M2_slow_guessing": {
+        "label": "malicious",
+        "identity_sequences": 20,
+        "sequences_with_alert": 20,
+        "alerts": 20,
+        "alert_confidence": {
+          "medium": 20
+        },
+        "fraction_sequences_alerted": 1.0
+      },
+      "M3_guessing_with_interleaved_legit_user": {
+        "label": "malicious",
+        "identity_sequences": 20,
+        "sequences_with_alert": 20,
+        "alerts": 20,
+        "alert_confidence": {
+          "medium": 20
+        },
+        "fraction_sequences_alerted": 1.0
+      },
+      "M4_rotating_source_per_attempt": {
+        "label": "malicious",
+        "identity_sequences": 20,
+        "sequences_with_alert": 20,
+        "alerts": 20,
+        "alert_confidence": {
+          "medium": 20
+        },
+        "fraction_sequences_alerted": 1.0
+      }
+    },
+    "benign_sequences": 120,
+    "benign_sequences_alerted": 21,
+    "malicious_sequences": 80,
+    "malicious_sequences_alerted": 80,
+    "alerts_not_mapped_to_a_labeled_sequence": 0
+  },
+  {
+    "set": "heldout",
+    "rule": "ARG-AUTH-003 v1",
+    "unit": "identity sequence (one tenant+account scenario instance)",
+    "per_scenario": {
+      "B1_typo_then_success": {
+        "label": "benign",
+        "identity_sequences": 30,
+        "sequences_with_alert": 0,
+        "alerts": 0,
+        "alert_confidence": {},
+        "fraction_sequences_alerted": 0.0
+      },
+      "B2_many_typos_own_device": {
+        "label": "benign",
+        "identity_sequences": 30,
+        "sequences_with_alert": 30,
+        "alerts": 30,
+        "alert_confidence": {
+          "medium": 30
+        },
+        "fraction_sequences_alerted": 1.0
+      },
+      "B3_intermittent_multi_device": {
+        "label": "benign",
+        "identity_sequences": 30,
+        "sequences_with_alert": 21,
+        "alerts": 22,
+        "alert_confidence": {
+          "medium": 22
+        },
+        "fraction_sequences_alerted": 0.7
+      },
+      "B4_stale_password_device": {
+        "label": "benign",
+        "identity_sequences": 30,
+        "sequences_with_alert": 30,
+        "alerts": 41,
+        "alert_confidence": {
+          "medium": 41
+        },
+        "fraction_sequences_alerted": 1.0
+      },
+      "B5_shared_nat_users": {
+        "label": "benign",
+        "identity_sequences": 30,
+        "sequences_with_alert": 0,
+        "alerts": 0,
+        "alert_confidence": {},
+        "fraction_sequences_alerted": 0.0
+      },
+      "B6_cross_tenant_same_username": {
+        "label": "benign",
+        "identity_sequences": 30,
+        "sequences_with_alert": 0,
+        "alerts": 0,
+        "alert_confidence": {},
+        "fraction_sequences_alerted": 0.0
+      },
+      "M1_fast_guessing": {
+        "label": "malicious",
+        "identity_sequences": 30,
+        "sequences_with_alert": 30,
+        "alerts": 30,
+        "alert_confidence": {
+          "medium": 30
+        },
+        "fraction_sequences_alerted": 1.0
+      },
+      "M2_slow_guessing": {
+        "label": "malicious",
+        "identity_sequences": 30,
+        "sequences_with_alert": 30,
+        "alerts": 30,
+        "alert_confidence": {
+          "medium": 30
+        },
+        "fraction_sequences_alerted": 1.0
+      },
+      "M3_guessing_with_interleaved_legit_user": {
+        "label": "malicious",
+        "identity_sequences": 30,
+        "sequences_with_alert": 30,
+        "alerts": 32,
+        "alert_confidence": {
+          "medium": 32
+        },
+        "fraction_sequences_alerted": 1.0
+      },
+      "M4_rotating_source_per_attempt": {
+        "label": "malicious",
+        "identity_sequences": 30,
+        "sequences_with_alert": 30,
+        "alerts": 30,
+        "alert_confidence": {
+          "medium": 30
+        },
+        "fraction_sequences_alerted": 1.0
+      }
+    },
+    "benign_sequences": 180,
+    "benign_sequences_alerted": 81,
+    "malicious_sequences": 120,
+    "malicious_sequences_alerted": 120,
+    "alerts_not_mapped_to_a_labeled_sequence": 0
+  },
+  {
+    "set": "heldout",
+    "rule": "ARG-AUTH-003 v2 + ARG-AUTH-004 v1",
+    "unit": "identity sequence (one tenant+account scenario instance)",
+    "per_scenario": {
+      "B1_typo_then_success": {
+        "label": "benign",
+        "identity_sequences": 30,
+        "sequences_with_alert": 0,
+        "alerts": 0,
+        "alert_confidence": {},
+        "fraction_sequences_alerted": 0.0
+      },
+      "B2_many_typos_own_device": {
+        "label": "benign",
+        "identity_sequences": 30,
+        "sequences_with_alert": 30,
+        "alerts": 30,
+        "alert_confidence": {
+          "low": 30
+        },
+        "fraction_sequences_alerted": 1.0
+      },
+      "B3_intermittent_multi_device": {
+        "label": "benign",
+        "identity_sequences": 30,
+        "sequences_with_alert": 2,
+        "alerts": 2,
+        "alert_confidence": {
+          "medium": 2
+        },
+        "fraction_sequences_alerted": 0.067
+      },
+      "B4_stale_password_device": {
+        "label": "benign",
+        "identity_sequences": 30,
+        "sequences_with_alert": 9,
+        "alerts": 9,
+        "alert_confidence": {
+          "medium": 9
+        },
+        "fraction_sequences_alerted": 0.3
+      },
+      "B5_shared_nat_users": {
+        "label": "benign",
+        "identity_sequences": 30,
+        "sequences_with_alert": 0,
+        "alerts": 0,
+        "alert_confidence": {},
+        "fraction_sequences_alerted": 0.0
+      },
+      "B6_cross_tenant_same_username": {
+        "label": "benign",
+        "identity_sequences": 30,
+        "sequences_with_alert": 0,
+        "alerts": 0,
+        "alert_confidence": {},
+        "fraction_sequences_alerted": 0.0
+      },
+      "M1_fast_guessing": {
+        "label": "malicious",
+        "identity_sequences": 30,
+        "sequences_with_alert": 30,
+        "alerts": 30,
+        "alert_confidence": {
+          "medium": 30
+        },
+        "fraction_sequences_alerted": 1.0
+      },
+      "M2_slow_guessing": {
+        "label": "malicious",
+        "identity_sequences": 30,
+        "sequences_with_alert": 30,
+        "alerts": 30,
+        "alert_confidence": {
+          "medium": 30
+        },
+        "fraction_sequences_alerted": 1.0
+      },
+      "M3_guessing_with_interleaved_legit_user": {
+        "label": "malicious",
+        "identity_sequences": 30,
+        "sequences_with_alert": 30,
+        "alerts": 30,
+        "alert_confidence": {
+          "medium": 30
+        },
+        "fraction_sequences_alerted": 1.0
+      },
+      "M4_rotating_source_per_attempt": {
+        "label": "malicious",
+        "identity_sequences": 30,
+        "sequences_with_alert": 30,
+        "alerts": 30,
+        "alert_confidence": {
+          "medium": 30
+        },
+        "fraction_sequences_alerted": 1.0
+      }
+    },
+    "benign_sequences": 180,
+    "benign_sequences_alerted": 41,
+    "malicious_sequences": 120,
+    "malicious_sequences_alerted": 120,
+    "alerts_not_mapped_to_a_labeled_sequence": 0
+  }
+]

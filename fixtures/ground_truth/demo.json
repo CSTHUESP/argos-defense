@@ -1,0 +1,50 @@
+{
+  "_note": "SYNTHETIC ground truth. Never imported; never read by the detector. Used only by tests/validation.",
+  "scenarios": {
+    "authorized_scanner_198.51.100.10": {
+      "truth": "benign_authorized_automation"
+    },
+    "ci_healthchecks_198.51.100.20": {
+      "truth": "benign_authorized_automation"
+    },
+    "web_enumeration_203.0.113.50": {
+      "truth": "malicious_recon",
+      "operator_label": "unknown"
+    },
+    "password_spray_203.0.113.50": {
+      "truth": "malicious_credential_access"
+    },
+    "alice_slow_takeover": {
+      "truth": "malicious_privilege_escalation",
+      "operator_label": "human (slow)"
+    },
+    "bob_fail_then_success_no_access": {
+      "truth": "credential_success_without_observed_access"
+    },
+    "carol_shares_ip_with_bob": {
+      "truth": "distinct_identity"
+    },
+    "sp_app-1111_credential_add_and_vault_reads": {
+      "truth": "malicious_persistence_and_collection"
+    },
+    "web01_webshell": {
+      "truth": "malicious_execution_persistence"
+    },
+    "dev-ws-07_artex_agent": {
+      "truth": "framework_present_llm_driven",
+      "operator_label": "llm_agent"
+    },
+    "fileserver-02_archive_upload": {
+      "truth": "possible_exfiltration"
+    },
+    "backup-01_nightly": {
+      "truth": "benign_authorized_automation"
+    },
+    "developer_openai_dns": {
+      "truth": "benign_ai_use"
+    },
+    "artex_text_in_user_agent": {
+      "truth": "spoofed_text_no_framework"
+    }
+  }
+}

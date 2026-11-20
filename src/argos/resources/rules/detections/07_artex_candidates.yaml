@@ -1,0 +1,226 @@
+# Family 7 - ARTEX candidate fingerprints derived from STATIC source review of
+# BaaRai/ARTEX tag v0.6.0, commit a13c68cb7078d43b66fb398db3d610e513b6d77a.
+# All are EXPERIMENTAL. None is observable from victim-side traffic. Each is
+# bounded by observation vantage and version. Rules can only reach
+# 'consistent_with'; corroborated presence needs >=2 independent families on the
+# same host (computed at case level). Responsibility for an activity is never
+# inferred from presence.
+id: ARG-ARTEX-X01
+version: 1
+title: "[EXPERIMENTAL] ARTEX controller binary executed"
+description: |
+  Process image named 'artex' / 'artex.exe' started. Relevant only on a host that
+  RUNS the controller (e.g. an insider or compromised machine in your estate).
+family: framework_candidate
+status: experimental
+validation_status: source-derived candidate; not validated on real telemetry
+observation_vantage: [managed_endpoint]
+required_telemetry: [event_time, host, process_image]
+select: {all: [{field: event_kind, op: eq, value: process_start}, {field: process_name, op: in, value: [artex, artex.exe]}]}
+group_by: [host]
+window_s: 86400
+aggregate: {type: each}
+reference: {type: not_applicable, description: image name match}
+severity: medium
+base_confidence: low
+contributes:
+  threat: {activity: Possible agentic offensive framework controller started, suspicion: suspicious}
+  framework: {name: ARTEX, level: consistent_with, fingerprint_ids: [ARTEX-FP-001], independence_family: controller_process}
+  purpose: {observed_action: controller binary executed, hypothesis: unknown, stage: indicator}
+evidence_family: artex_controller_process
+required_evidence: Process creation with image path
+explanation: "Process image matching the ARTEX build output name on {group}."
+alternatives: [authorized penetration-testing team, unrelated binary with the same name]
+false_positives: [any file named artex]
+resolving_data: [binary hash compared with a build you produced from the reviewed commit, listening sockets 127.0.0.1:8787/8788, parent/user]
+sources: ["ARTEX v0.6.0 cmd/artex/main.go (binary name, -addr 127.0.0.1:8787, -proxy 127.0.0.1:8788) commit a13c68cb"]
+fingerprint:
+  id: ARTEX-FP-001
+  url: https://github.com/BaaRai/ARTEX/blob/a13c68cb7078d43b66fb398db3d610e513b6d77a/cmd/artex/main.go
+  commit: a13c68cb7078d43b66fb398db3d610e513b6d77a
+  file: cmd/artex/main.go
+  location: cmd/artex/main.go L53 (-addr), L55 (-proxy); binary name build.sh L207-208, install.sh L112-115 (overridable via ARTEX_OUTPUT, build.sh L210)
+  observed_pattern: binary built from cmd/artex (default name 'artex'); default listen 127.0.0.1:8787 and recording proxy 127.0.0.1:8788
+  required_vantage: managed_endpoint (controller host only)
+  required_telemetry: [process_image, host]
+  covered_versions: v0.6.0 reviewed; other forks unknown
+  spoofability: trivial (rename binary, change flags)
+  benign_overlap: authorized security testing; unrelated programs named artex
+  validation_status: experimental
+---
+id: ARG-ARTEX-X02
+version: 1
+title: "[EXPERIMENTAL] Child process of an 'artex' parent"
+description: |
+  A process whose parent image is 'artex'. ARTEX workers run tool commands as
+  subprocesses with HTTP(S)_PROXY/ALL_PROXY pointing to the recording proxy
+  (default 127.0.0.1:8788) and NODE_USE_ENV_PROXY=1. Environment variables are
+  rarely present in endpoint telemetry; the parent relationship is the observable part.
+family: framework_candidate
+status: experimental
+validation_status: source-derived candidate; not validated on real telemetry
+observation_vantage: [managed_endpoint]
+required_telemetry: [event_time, host, parent_image]
+select: {all: [{field: event_kind, op: eq, value: process_start}, {field: parent_name, op: in, value: [artex, artex.exe]}]}
+group_by: [host]
+window_s: 3600
+aggregate: {type: each}
+reference: {type: not_applicable, description: parent image name match}
+severity: medium
+base_confidence: low
+contributes:
+  threat: {activity: Tool execution under possible framework controller, suspicion: suspicious}
+  automation: consistent_with_automation
+  framework: {name: ARTEX, level: consistent_with, fingerprint_ids: [ARTEX-FP-002], independence_family: controller_process}
+  purpose: {observed_action: subprocesses of controller, hypothesis: execution, stage: indicator}
+evidence_family: artex_child_process
+required_evidence: Process creation with parent image
+explanation: "{count} child process(es) of an 'artex' parent on {group}."
+alternatives: [renamed unrelated parent]
+false_positives: [any parent named artex]
+resolving_data: [process environment (HTTP_PROXY=127.0.0.1:8788), listening sockets, binary hash]
+sources: ["ARTEX v0.6.0 agent/worker.go proxyEnv() commit a13c68cb"]
+fingerprint:
+  id: ARTEX-FP-002
+  url: https://github.com/BaaRai/ARTEX/blob/a13c68cb7078d43b66fb398db3d610e513b6d77a/agent/worker.go
+  commit: a13c68cb7078d43b66fb398db3d610e513b6d77a
+  file: agent/worker.go
+  location: func proxyEnv, agent/worker.go L215 onward
+  observed_pattern: subprocess env HTTP_PROXY/HTTPS_PROXY/ALL_PROXY=<recording proxy>, NODE_USE_ENV_PROXY=1, SSL_CERT_FILE/CURL_CA_BUNDLE/REQUESTS_CA_BUNDLE/GIT_SSL_CAINFO/NODE_EXTRA_CA_CERTS=<MITM CA>
+  required_vantage: managed_endpoint (controller host)
+  required_telemetry: [parent_image, host, (process environment - usually unavailable)]
+  covered_versions: v0.6.0 reviewed
+  spoofability: trivial
+  benign_overlap: any tool chain behind a local MITM proxy (mitmproxy, Burp)
+  validation_status: experimental
+---
+id: ARG-ARTEX-X03
+version: 2
+title: "[EXPERIMENTAL] Recording-proxy CA file created (mitmproxy naming)"
+description: |
+  File creation of '_ca/mitmproxy-ca-cert.pem'. ARTEX's traffic recorder stores its
+  MITM CA under <traffic dir>/_ca/mitmproxy-ca-cert.pem. The filename is the
+  standard mitmproxy name, so benign overlap is very high.
+family: framework_candidate
+status: experimental
+validation_status: source-derived candidate; not validated on real telemetry
+observation_vantage: [managed_endpoint]
+required_telemetry: [event_time, host, file_path]
+select: {all: [{field: event_kind, op: eq, value: file_create}, {field: file_path, op: regex, value: "[\\\\/]_ca[\\\\/]mitmproxy-ca-cert\\.pem$"}]}
+group_by: [host]
+window_s: 86400
+aggregate: {type: each}
+reference: {type: not_applicable, description: path pattern}
+severity: low
+base_confidence: low
+contributes:
+  threat: {activity: MITM proxy CA created, suspicion: informational}
+  # v2: weak indicator - the filename is mitmproxy's standard CA name (very high benign overlap), so it never corroborates.
+  framework: {name: ARTEX, level: consistent_with, fingerprint_ids: [ARTEX-FP-003], independence_family: null}
+  purpose: {observed_action: proxy CA file written, hypothesis: unknown, stage: indicator}
+evidence_family: artex_ca_file
+required_evidence: File creation record
+explanation: "CA file path consistent with ARTEX traffic recorder on {group}."
+alternatives: [mitmproxy or tools embedding go-mitmproxy used for debugging]
+false_positives: [developers using mitmproxy]
+resolving_data: [parent process of the file write]
+sources: ["ARTEX v0.6.0 traffic/traffic.go CACertPath() commit a13c68cb"]
+fingerprint:
+  id: ARTEX-FP-003
+  url: https://github.com/BaaRai/ARTEX/blob/a13c68cb7078d43b66fb398db3d610e513b6d77a/traffic/traffic.go
+  commit: a13c68cb7078d43b66fb398db3d610e513b6d77a
+  file: traffic/traffic.go
+  location: func (t *Traffic) CACertPath, traffic/traffic.go L354-355
+  observed_pattern: filepath.Join(dir, "_ca", "mitmproxy-ca-cert.pem")
+  required_vantage: managed_endpoint (controller host)
+  required_telemetry: [file_path, host]
+  covered_versions: v0.6.0 reviewed
+  spoofability: trivial
+  benign_overlap: very high (standard mitmproxy file name)
+  validation_status: experimental
+---
+id: ARG-ARTEX-X04
+version: 1
+title: "[EXPERIMENTAL] Model-gateway session ids in ARTEX format"
+description: |
+  Model audit/gateway records whose session id matches ARTEX's transcript session
+  naming (exp<N>-planner, exp<N>-main[-s<N>], exp<N>-worker-i<N>, exp<N>-goals,
+  exp<N>-compactor, exp<N>-btw-*). ARTEX sends the session id to the provider only
+  when a profile sets session_header_key (default empty), so this is visible only
+  to a gateway the controller's traffic passes through.
+family: framework_candidate
+status: experimental
+validation_status: source-derived candidate; not validated on real telemetry
+observation_vantage: [agent_or_model_audit]
+required_telemetry: [event_time, session_id]
+select:
+  all:
+    - {field: event_kind, op: eq, value: model_interaction}
+    - {field: session_id, op: regex, value: "^exp[0-9]+-(planner|main(-s[0-9]+)?|worker-i[0-9]+|goals|compactor|btw-.+)$"}
+group_by: [session_id]
+window_s: 86400
+aggregate: {type: each}
+reference: {type: not_applicable, description: session id naming pattern}
+severity: medium
+base_confidence: low
+contributes:
+  threat: {activity: Possible agentic framework model traffic, suspicion: suspicious}
+  automation: consistent_with_automation
+  llm: directly_observed
+  framework: {name: ARTEX, level: consistent_with, fingerprint_ids: [ARTEX-FP-004], independence_family: model_session_naming}
+  purpose: {observed_action: model calls with framework-like session ids, hypothesis: unknown, stage: indicator}
+evidence_family: artex_session_naming
+required_evidence: Model gateway records with session ids
+explanation: "Session {group} follows ARTEX session naming ({count} record(s))."
+alternatives: [other software using 'expN-' prefixes, deliberate imitation]
+false_positives: [experiment-tracking tools]
+resolving_data: [request bodies (worker system prompt template), source host of the calls, gateway authentication identity]
+sources: ["ARTEX v0.6.0 agent/worker.go:101, planner.go:519, mainagent.go:176-178, goals.go:124, compaction.go:96, server/side_questions.go:431; agent/provider.go:457-460 (session header) commit a13c68cb"]
+fingerprint:
+  id: ARTEX-FP-004
+  url: https://github.com/BaaRai/ARTEX/blob/a13c68cb7078d43b66fb398db3d610e513b6d77a/agent/worker.go#L101
+  commit: a13c68cb7078d43b66fb398db3d610e513b6d77a
+  file: agent/worker.go, agent/planner.go, agent/mainagent.go, agent/goals.go, agent/compaction.go, server/side_questions.go, agent/provider.go
+  location: worker.go L101, planner.go L519, mainagent.go L176/L178, goals.go L124, compaction.go L96, side_questions.go L431; provider.go L457 sets the header only if session_header_key != ""
+  observed_pattern: "^exp\\d+-(planner|main(-s\\d+)?|worker-i\\d+|goals|compactor|btw-.+)$"
+  required_vantage: agent_or_model_audit (gateway on controller egress path)
+  required_telemetry: [session_id]
+  covered_versions: v0.6.0 reviewed
+  spoofability: trivial
+  benign_overlap: low-moderate (generic prefix)
+  validation_status: experimental
+---
+id: ARG-ARTEX-W01
+version: 1
+title: "[WEAK] Text mentioning ARTEX in User-Agent, URL or file name"
+description: |
+  The string 'artex' appears in a User-Agent, URL or file path. Trivially spoofable;
+  the reviewed source does not set an ARTEX-identifying User-Agent (provider calls
+  keep Go's default UA unless a custom one is configured). Never strong attribution.
+family: framework_candidate
+status: experimental
+validation_status: weak text indicator by design
+observation_vantage: [victim_network, managed_endpoint]
+required_telemetry: [event_time]
+select:
+  any:
+    - {field: http_user_agent, op: contains, value: artex}
+    - {field: http_uri, op: contains, value: artex}
+    - {field: file_path, op: contains, value: artex}
+group_by: []
+window_s: 86400
+aggregate: {type: each}
+reference: {type: not_applicable, description: substring match}
+severity: informational
+base_confidence: low
+contributes:
+  threat: {activity: Text mention of a framework name, suspicion: informational}
+  framework: {name: ARTEX, level: consistent_with, fingerprint_ids: [], independence_family: null}
+  purpose: {observed_action: string present in telemetry, hypothesis: unknown, stage: indicator}
+evidence_family: framework_text_mention
+required_evidence: Any record containing the text
+explanation: "{count} record(s) contain the text 'artex'."
+alternatives: [spoofing, researchers, unrelated product named similarly]
+false_positives: [anything containing the substring]
+resolving_data: [any independent framework fingerprint]
+sources: ["ARTEX v0.6.0 agent/user_agent_test.go (default Go-http-client UA when unset) commit a13c68cb"]

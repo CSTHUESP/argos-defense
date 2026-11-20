@@ -1,0 +1,102 @@
+# Family 2 - broad enumeration and failure/strategy-change sequences.
+id: ARG-ENUM-001
+version: 1
+title: Broad HTTP path enumeration with mostly failing responses
+description: |
+  One source requested many distinct paths on one host, most of which failed
+  (4xx). Supports a reconnaissance hypothesis; the actor and tooling are unknown.
+family: enumeration_adaptation
+status: test
+validation_status: synthetic-scenario tests only; real-world accuracy NOT MEASURED
+observation_vantage: [victim_network]
+required_telemetry: [event_time, src_ip, http_uri, http_status]
+select: {field: event_kind, op: eq, value: http}
+group_by: [src_ip, http_host]
+window_s: 300
+aggregate:
+  type: threshold
+  min_count: 40
+  distinct_field: uri_path
+  min_distinct: 30
+  ratio_where: {field: http_status_class, op: eq, value: 4xx}
+  min_ratio: 0.6
+reference: {type: explicit_threshold, description: ">=30 distinct paths, >=40 requests, >=60% 4xx within 300s"}
+severity: low
+base_confidence: medium
+contributes:
+  threat: {activity: Web content/endpoint enumeration, suspicion: suspicious}
+  automation: consistent_with_automation
+  purpose: {observed_action: "many distinct paths requested; mostly failing", hypothesis: reconnaissance, stage: attempt}
+evidence_family: http_enumeration
+required_evidence: HTTP records with URI and status
+explanation: "{count} requests to {distinct} distinct paths from {group} within {window_s}s; 4xx ratio {ratio}."
+alternatives: [authorized scanner, broken client following stale links, SEO crawler]
+false_positives: [link checkers, misconfigured health checks]
+resolving_data: [authorized scanner inventory, WAF decision logs]
+sources: ["CERT-EU blog 2026-11-05 (automated scanning patterns)", "FBI FLASH-20261113-001 accessed 2026-11-20"]
+suppressible_by_registry: true
+---
+id: ARG-ENUM-002
+version: 1
+title: Repeated failures followed by success on a new path (adaptation hypothesis)
+description: |
+  A source produced repeated failing requests and then a successful request to the
+  same host within the window. This supports - but does not prove - an
+  exploration/adaptation hypothesis. What changed between attempts is shown in the
+  evidence; intent is not observed.
+family: enumeration_adaptation
+status: test
+validation_status: synthetic-scenario tests only
+observation_vantage: [victim_network]
+required_telemetry: [event_time, src_ip, http_status]
+select: {field: event_kind, op: eq, value: http}
+group_by: [src_ip, http_host]
+window_s: 900
+aggregate:
+  type: sequence
+  steps:
+    - {name: failures, where: {field: http_status, op: in, value: [400, 401, 403, 404, 405, 422, 500]}, min_count: 15, distinct_field: uri_path, min_distinct: 5}
+    - {name: success, where: {field: http_status_class, op: eq, value: 2xx}, min_count: 1}
+reference: {type: explicit_threshold, description: ">=15 failures over >=5 paths, then a 2xx, within 900s"}
+severity: low
+base_confidence: low
+contributes:
+  threat: {activity: Failure sequence followed by success, suspicion: suspicious}
+  purpose: {observed_action: failures then a successful response, hypothesis: initial_access, stage: attempt}
+evidence_family: http_failure_then_success
+required_evidence: Ordered HTTP records for the same source and host
+explanation: "Failures then success from {group} within {window_s}s. Observed: response codes. Not observed: the requester's intent or decision process."
+alternatives: [user correcting a typo, client retry logic, scanner reaching a valid page]
+false_positives: [API clients with retries]
+resolving_data: [request bodies/parameters, application logs for the successful request]
+sources: ["ARTEX v0.6.0 agent/worker.go worker prompt (walks bypass means after setbacks) commit a13c68cb"]
+suppressible_by_registry: true
+---
+id: ARG-ENUM-003
+version: 1
+title: Port sweep from one source
+description: One source contacted many distinct destination ports within a minute (network connection logs).
+family: enumeration_adaptation
+status: test
+validation_status: synthetic-scenario tests only
+observation_vantage: [victim_network]
+required_telemetry: [event_time, src_ip, dst_port]
+select: {field: event_kind, op: eq, value: network_connection}
+group_by: [src_ip]
+window_s: 60
+aggregate: {type: threshold, min_count: 20, distinct_field: dst_port, min_distinct: 20}
+reference: {type: explicit_threshold, description: ">=20 distinct destination ports within 60s"}
+severity: low
+base_confidence: medium
+contributes:
+  threat: {activity: Port sweep, suspicion: suspicious}
+  automation: consistent_with_automation
+  purpose: {observed_action: many destination ports contacted, hypothesis: reconnaissance, stage: attempt}
+evidence_family: port_sweep
+required_evidence: Connection records with destination port
+explanation: "{distinct} distinct destination ports contacted by {group} within {window_s}s."
+alternatives: [authorized vulnerability scan, service discovery, P2P application]
+false_positives: [network monitoring, asset discovery tools]
+resolving_data: [authorized scanner inventory]
+sources: ["MITRE-referenced 'Active Scanning' in CERT-EU 2026-11-05 and Microsoft 2026-10-21 posts"]
+suppressible_by_registry: true

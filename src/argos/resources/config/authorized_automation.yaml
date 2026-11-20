@@ -1,0 +1,19 @@
+# Authorized-automation registry. An entry covers an alert only when EVERY evidence
+# event matches (match fields), is inside scope (event_kinds / rule_families),
+# inside the schedule, and before expiry. Entries never cover credential,
+# permission or persistence rules (those rules are not suppressible).
+# 'owner' is descriptive text, not an identity assertion.
+- id: AA-001
+  description: Weekly authorized vulnerability scan (synthetic example)
+  owner: Security engineering (descriptive)
+  match: {src_ip: ["198.51.100.10/32"]}
+  scope: {event_kinds: [http, network_connection], rule_families: [automation_burst, enumeration_adaptation]}
+  schedule: {days: [mon, tue, wed, thu, fri, sat, sun], hours_utc: [0, 24]}
+  expires: "2027-06-30T00:00:00Z"
+- id: AA-002
+  description: CI/CD runner health checks and backup job (synthetic example)
+  owner: Platform team (descriptive)
+  match: {src_ip: ["198.51.100.20/32", "198.51.100.21/32"], host: ["ci-runner-01", "backup-01"]}
+  scope: {event_kinds: [http, process_start, network_connection, file_create], rule_families: [automation_burst, collection_exfil_persistence]}
+  schedule: {days: [mon, tue, wed, thu, fri, sat, sun], hours_utc: [0, 24]}
+  expires: "2027-06-30T00:00:00Z"

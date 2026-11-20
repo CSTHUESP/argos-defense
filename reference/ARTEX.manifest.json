@@ -1,0 +1,13 @@
+{
+  "name": "ARTEX",
+  "purpose": "static research reference for ARGOS fingerprint review; never built, executed, bundled or imported",
+  "repository": "https://github.com/BaaRai/ARTEX",
+  "tag": "v0.6.0",
+  "tag_object": "1a7c664f14f882d76f7bcc9722eb85731c855df2",
+  "commit": "a13c68cb7078d43b66fb398db3d610e513b6d77a",
+  "commit_date": "2026-11-12T00:17:29+01:00",
+  "license": "AGPL-3.0 (reference/ARTEX/LICENSE in the retrieved checkout)",
+  "retrieve": "scripts/fetch_artex_reference.sh",
+  "reviewed": "2026-11-20",
+  "review_document": "docs/ARTEX_SOURCE_REVIEW.md"
+}

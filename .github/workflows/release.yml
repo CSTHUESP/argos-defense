@@ -1,0 +1,161 @@
+name: Release
+
+# Builds natively on each target, smoke-tests the EXTRACTED archives, then assembles a DRAFT
+# GitHub release for an existing tag. Publication of the draft is a separate, explicit step
+# taken only after the draft's assets are re-verified.
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to build (e.g. v0.2.0)"
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.event.inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  TAG: ${{ github.event.inputs.tag || github.ref_name }}
+
+jobs:
+  native:
+    name: native ${{ matrix.target }} (${{ matrix.runner }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {target: windows-x86_64, runner: windows-2022, arch: X64}
+          - {target: linux-x86_64, runner: ubuntu-22.04, arch: X64}
+          - {target: macos-arm64, runner: macos-15, arch: ARM64}
+          - {target: macos-x86_64, runner: macos-15-intel, arch: X64}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.TAG }}
+          persist-credentials: false
+      - name: Verify runner architecture matches target
+        shell: bash
+        run: |
+          echo "runner.arch=${{ runner.arch }} expected=${{ matrix.arch }} uname=$(uname -m)"
+          test "${{ runner.arch }}" = "${{ matrix.arch }}"
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+          architecture: ${{ matrix.arch == 'ARM64' && 'arm64' || 'x64' }}
+      - name: Install pinned dependencies
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.lock -r requirements-dev.lock -r requirements-build.lock
+          python -m pip install --no-deps -e .
+      - name: Source tests on this platform
+        shell: bash
+        run: python -m pytest -q
+      - name: Build native onedir package
+        shell: bash
+        run: python packaging/build_native.py --out dist-native --commit "$(git rev-parse HEAD)"
+      - name: Install headless Chromium for the smoke test harness
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = "Linux" ]; then python -m playwright install --with-deps chromium; else python -m playwright install chromium; fi
+      - name: Smoke-test the extracted native package
+        shell: bash
+        run: |
+          ARCHIVE=$(ls dist-native/ARGOS-Defense-*-${{ matrix.target }}.* | head -n1)
+          cd "$RUNNER_TEMP"
+          python "$GITHUB_WORKSPACE/packaging/smoke_test.py" --archive "$GITHUB_WORKSPACE/$ARCHIVE" --out "$GITHUB_WORKSPACE/smoke-results"
+      - name: SBOM
+        shell: bash
+        run: python packaging/sbom.py dist-native/build-info-${{ matrix.target }}.json dist-native/sbom-${{ matrix.target }}.cdx.json
+      - name: Upload package and evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: native-${{ matrix.target }}
+          retention-days: 14
+          if-no-files-found: error
+          path: |
+            dist-native/ARGOS-Defense-*
+            dist-native/build-info-*.json
+            dist-native/sbom-*.cdx.json
+            smoke-results/smoke-*.json
+            smoke-results/smoke-*.log
+
+  python-dist:
+    name: wheel + sdist
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.TAG }}
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - name: Build and install-test
+        run: |
+          python -m pip install -r requirements-build.lock
+          python -m build --outdir pydist .
+          python -m venv "$RUNNER_TEMP/v" && "$RUNNER_TEMP/v/bin/pip" install -r requirements.lock && "$RUNNER_TEMP/v/bin/pip" install --no-deps pydist/*.whl
+          cd "$RUNNER_TEMP" && "$RUNNER_TEMP/v/bin/argos-defense" --data-dir "w é" doctor && "$RUNNER_TEMP/v/bin/argos-defense" --data-dir "w é" demo
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: python-dist
+          retention-days: 14
+          if-no-files-found: error
+          path: pydist/*
+
+  draft-release:
+    name: assemble + verify draft release
+    needs: [native, python-dist]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.TAG }}
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          path: collected
+      - name: Gather assets
+        run: |
+          mkdir release-assets
+          find collected -type f \( -name 'ARGOS-Defense-*' -o -name 'build-info-*.json' -o -name 'sbom-*.cdx.json' -o -name 'smoke-*.json' -o -name 'smoke-*.log' -o -name '*.whl' -o -name '*.tar.gz' \) -exec cp {} release-assets/ \;
+          cp LICENSE THIRD_PARTY_NOTICES.md release-assets/
+          ls -la release-assets
+      - name: Release gate (all 4 targets present, smoke-tested on the exact bytes, same commit)
+        run: |
+          python packaging/release_manifest.py --assets release-assets --version "${TAG#v}" --tag "$TAG" \
+            --commit "$(git rev-parse HEAD)" --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+      - name: Create draft release for the existing tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NOTES="docs/release-notes/${TAG}.md"
+          test -f "$NOTES"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "A release for $TAG already exists - refusing to modify it"; exit 1
+          fi
+          gh release create "$TAG" --verify-tag --draft --title "ARGOS Defense ${TAG#v} (experimental detection)" --notes-file "$NOTES" release-assets/*
+      - name: Verify draft assets (names, sizes, hashes of downloaded bytes)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$TAG" --json isDraft,tagName,assets --jq '{isDraft, tagName, assets: [.assets[] | {name, size}]}' | tee draft.json
+          mkdir verify && gh release download "$TAG" --dir verify
+          cd verify && sha256sum -c SHA256SUMS
+          for f in ../release-assets/*; do test -f "$(basename "$f")" || { echo "missing $(basename "$f")"; exit 1; }; done

@@ -1,0 +1,5 @@
+# Threshold overrides: rule_id -> {dotted.path: value}. Included in the analysis config hash.
+# Example:
+# ARG-AUTO-001:
+#   aggregate.min_count: 200
+{}

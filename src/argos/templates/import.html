@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Import telemetry file</h1>
+<p class="small">Imports are batch file analysis — not a live sensor or product integration. Each import records SHA-256, parser version, options and rejected records. Imported provenance starts as <b>unverified</b>.</p>
+{% if result %}
+  {% if result.status == 'error' %}<div class="error">Import failed: {{ result.error }}</div>
+  {% else %}<div class="{{ 'ok' if result.status=='imported' else 'warnbox' }}">
+    <b>{{ result.status }}</b> — accepted {{ result.accepted }}, rejected {{ result.rejected }} of {{ result.total }} records; new events {{ result.new_events }}; sha256 <span class="mono">{{ result.sha256 }}</span>
+    {% if result.error %}<br>Error: {{ result.error }}{% endif %}
+    <br><a href="/cases/{{ result.case_id }}">Open case</a></div>
+    {% if result.rejects_sample %}<h3>Rejected records (actual errors)</h3><table><thead><tr><th>Record</th><th>Reason</th></tr></thead><tbody>
+    {% for r in result.rejects_sample %}<tr><td>{{ r.record_no }}</td><td>{{ r.reason }}</td></tr>{% endfor %}</tbody></table>{% endif %}
+  {% endif %}
+{% endif %}
+<form method="post" action="/import" enctype="multipart/form-data" class="stack">
+<input type="hidden" name="csrf" value="{{ csrf }}">
+<label>Case <select name="case" required>{% for c in cases %}<option value="{{ c.case_id }}" {{ 'selected' if preselect in (c.case_id, c.name) }}>{{ c.name }}{{ ' (DEMO/SYNTHETIC)' if c.synthetic }}</option>{% endfor %}</select></label>
+<label>Adapter <select name="format" id="fmt" required>{% for k, v in formats.items() %}<option value="{{ k }}">{{ k }} — {{ v }}</option>{% endfor %}</select></label>
+<label class="opt opt-splunk_json opt-splunk_csv">Mapping profile <select name="profile"><option value="">(none)</option>{% for p in profiles %}<option value="{{ p }}">{{ p }}</option>{% endfor %}</select></label>
+<label class="opt opt-splunk_json opt-splunk_csv">Custom column mapping (YAML; overrides profile)
+<textarea name="mapping_yaml" rows="7" placeholder="time: _time
+fields:
+  src_ip: c_ip
+  http_uri: cs_uri
+  bytes_src_to_dst: cs_bytes
+bytes_basis: 'declare the direction of each byte counter'
+constants: {event_kind: http, observation_vantage: victim_network}"></textarea></label>
+<label class="opt opt-zeek_jsonl">Zeek log type <select name="zeek_log"><option value="">auto-detect</option><option>conn</option><option>http</option><option>dns</option></select></label>
+<label>Assume time zone for zone-less timestamps (explicit option; leave empty to reject them) <input name="assume_tz" placeholder="e.g. UTC or Europe/Budapest or +01:00"></label>
+<label>File <input type="file" name="file" required></label>
+<button type="submit">Import</button>
+</form>
+<h2>Built-in mapping profiles</h2>
+<pre class="small">{{ profiles|tojson_pretty }}</pre>
+{% endblock %}

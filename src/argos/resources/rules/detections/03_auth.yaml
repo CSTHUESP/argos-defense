@@ -1,0 +1,180 @@
+# Family 3 - authentication failures, subsequent success and sensitive actions.
+id: ARG-AUTH-001
+version: 1
+title: Password spray pattern (many accounts, one source)
+description: Failed authentications against many distinct accounts from one source IP.
+family: auth_sequence
+status: test
+validation_status: synthetic-scenario tests only
+observation_vantage: [identity_cloud]
+required_telemetry: [event_time, src_ip, user, outcome]
+select:
+  all:
+    - {field: event_kind, op: eq, value: authentication}
+    - {field: outcome, op: eq, value: failure}
+group_by: [src_ip]
+window_s: 3600
+aggregate: {type: threshold, min_count: 10, distinct_field: user, min_distinct: 10}
+reference: {type: explicit_threshold, description: ">=10 distinct accounts failing from one source within 1h"}
+severity: medium
+base_confidence: medium
+contributes:
+  threat: {activity: Password spraying, suspicion: suspicious}
+  automation: consistent_with_automation
+  purpose: {observed_action: failed sign-ins across many accounts, hypothesis: credential_access, stage: attempt}
+evidence_family: auth_failure_spread
+required_evidence: Failed authentication records with account and source IP
+explanation: "{distinct} distinct accounts failed authentication from {group} within {window_s}s."
+alternatives: [misconfigured service with stale credentials, shared NAT egress for many users, SSO outage]
+false_positives: [password-expiry waves behind a shared proxy]
+resolving_data: [successful sign-ins from the same source, conditional access results]
+sources: ["Microsoft Security blog 2026-10-21 Storm-0940 (cross-tenant password spray) accessed 2026-11-20"]
+suppressible_by_registry: false
+---
+id: ARG-AUTH-002
+version: 1
+title: Failures, then success, then sensitive action by the same identity
+description: |
+  The same tenant+account had failed sign-ins, then a successful sign-in, then a
+  sensitive action (role assignment, credential addition, secret read). Failed and
+  successful outcomes are listed separately in the evidence. Timing does not
+  matter: slow sequences alert too.
+family: auth_sequence
+status: test
+validation_status: synthetic-scenario tests only
+observation_vantage: [identity_cloud]
+required_telemetry: [event_time, tenant_id, user]
+select:
+  any:
+    - {field: event_kind, op: eq, value: authentication}
+    - {field: event_kind, op: eq, value: cloud_operation}
+group_by: [tenant_id, user]
+window_s: 86400
+aggregate:
+  type: sequence
+  steps:
+    - name: failed_signins
+      where: {all: [{field: event_kind, op: eq, value: authentication}, {field: outcome, op: eq, value: failure}]}
+      min_count: 3
+    - name: successful_signin
+      where: {all: [{field: event_kind, op: eq, value: authentication}, {field: outcome, op: eq, value: success}]}
+    - name: sensitive_action
+      where:
+        all:
+          - {field: event_kind, op: eq, value: cloud_operation}
+          - {field: action, op: in, value: [role_assignment, add_role_member, credential_add, add_service_principal_credentials, secret_read, consent_grant, mfa_method_change]}
+reference: {type: not_applicable, description: ordered sequence within 24h; no anomaly claim}
+severity: high
+base_confidence: high
+contributes:
+  threat: {activity: Possible account compromise followed by sensitive action, suspicion: likely_malicious}
+  purpose: {observed_action: "sign-in failures; a success; then a sensitive operation", hypothesis: privilege_escalation, stage: observed_success}
+evidence_family: auth_compromise_chain
+required_evidence: Authentication and audit records for the same tenant and account
+explanation: "Ordered sequence for {group}: failed sign-ins, success, then sensitive action within {window_s}s."
+alternatives: [legitimate user who mistyped and then performed planned admin work, helpdesk password reset followed by setup]
+false_positives: [admins with typos]
+missing_visibility_hints: ["who controls the account is not established by account ownership"]
+resolving_data: [MFA/conditional access details, device of successful sign-in, change ticket for the action]
+sources: ["Microsoft Security blog 2026-10-21 (self-assignment of Global Administrator, application credential additions)"]
+recommendation: Review the sensitive action and the successful sign-in context with the account owner before any change; preserve logs first.
+---
+id: ARG-AUTH-003
+version: 2
+title: Uninterrupted failed sign-ins from one source, then success from that source
+description: |
+  The same tenant+account had an uninterrupted run of failed sign-ins from one
+  source address (no success from that source in between), followed by a successful
+  sign-in from the same source. v2 (2026-11-20): v1 counted failures that were
+  interleaved with successes and spread across unrelated sources, which alerted on
+  ordinary intermittent failures (see docs/AUTH_RULE_EVALUATION.md). Speed is not
+  required: slow guessing still matches. Successful authentication is NOT evidence of
+  data access or exfiltration; the follow-up check reports whether data access was
+  observed within coverage.
+family: auth_sequence
+status: test
+validation_status: synthetic labeled tuning + held-out sequences only (docs/AUTH_RULE_EVALUATION.md); real-world accuracy NOT MEASURED
+observation_vantage: [identity_cloud]
+required_telemetry: [event_time, tenant_id, user, outcome, src_ip]
+select: {field: event_kind, op: eq, value: authentication}
+group_by: [tenant_id, user, src_ip]
+window_s: 86400
+aggregate:
+  type: sequence
+  steps:
+    - name: failed_signins
+      where: {field: outcome, op: eq, value: failure}
+      min_count: 5
+      reset_where: {field: outcome, op: eq, value: success}
+    - {name: successful_signin, where: {field: outcome, op: eq, value: success}}
+reference: {type: explicit_threshold, description: ">=5 consecutive failures from one source for one tenant+account, then success from that source, within 24h"}
+severity: medium
+base_confidence: medium
+contributes:
+  threat: {activity: Possible credential guessing success, suspicion: suspicious}
+  purpose: {observed_action: uninterrupted failures then successful authentication from the same source, hypothesis: credential_access, stage: observed_success}
+evidence_family: auth_fail_then_success
+required_evidence: Authentication records with tenant, account, outcome and source address
+explanation: "{group}: uninterrupted failures then a success from the same source within {window_s}s. No claim of data access is made."
+alternatives: [user mistyping repeatedly on their own device, device with a stale saved password that is later updated, password manager sync delay]
+false_positives: [repeated typos from the user's own device (labeled benign scenario B2 still alerts)]
+missing_visibility_hints: ["attacks rotating source addresses for every attempt are not matched by this rule (known gap, see AUTH_RULE_EVALUATION.md)"]
+resolving_data: [whether the source previously authenticated successfully for this account, device/MFA details of the success, resource access logs after the success]
+sources: ["Microsoft Security blog 2026-10-21: a successful authentication does not by itself show data access or exfiltration"]
+source_history:
+  field: src_ip
+  where: {all: [{field: event_kind, op: eq, value: authentication}, {field: outcome, op: eq, value: success}]}
+  join_fields: [tenant_id, user]
+absence_check:
+  where: {any: [{field: action, op: in, value: [secret_read, file_read, mailbox_read, blob_read, data_download, graph_read]}]}
+  within_s: 7200
+  label: data access by the same identity (any source) after the successful sign-in
+  vantage: identity_cloud
+  join_fields: [tenant_id, user]
+---
+id: ARG-AUTH-004
+version: 1
+title: Uninterrupted failed sign-ins from several sources, then success
+description: |
+  The same tenant+account had an uninterrupted run (no success in between, from any
+  source) of failed sign-ins coming from at least three distinct source addresses,
+  followed by a success. Complements ARG-AUTH-003 v2 for guessing that rotates the
+  source address on every attempt. Added 2026-11-20 from the labeled tuning set
+  (scenario M4); see docs/AUTH_RULE_EVALUATION.md.
+family: auth_sequence
+status: test
+validation_status: synthetic labeled tuning + held-out sequences only; held-out M4 not blind (see evaluation doc); real-world accuracy NOT MEASURED
+observation_vantage: [identity_cloud]
+required_telemetry: [event_time, tenant_id, user, outcome, src_ip]
+select: {field: event_kind, op: eq, value: authentication}
+group_by: [tenant_id, user]
+window_s: 86400
+aggregate:
+  type: sequence
+  steps:
+    - name: failed_signins_multi_source
+      where: {field: outcome, op: eq, value: failure}
+      min_count: 5
+      distinct_field: src_ip
+      min_distinct: 3
+      reset_where: {field: outcome, op: eq, value: success}
+    - {name: successful_signin, where: {field: outcome, op: eq, value: success}}
+reference: {type: explicit_threshold, description: ">=5 consecutive failures from >=3 sources for one tenant+account, then success, within 24h"}
+severity: medium
+base_confidence: medium
+contributes:
+  threat: {activity: Possible distributed credential guessing success, suspicion: suspicious}
+  automation: consistent_with_automation
+  purpose: {observed_action: failures from several sources then a successful authentication, hypothesis: credential_access, stage: observed_success}
+evidence_family: auth_distributed_fail_then_success
+required_evidence: Authentication records with tenant, account, outcome and source address
+explanation: "{group}: uninterrupted failures from several sources then a success within {window_s}s."
+alternatives: [roaming mobile user with a wrong saved password on several networks, VPN or proxy egress changing per request]
+false_positives: [clients behind rotating egress addresses]
+missing_visibility_hints: ["attacks that interleave with the real user's successful sign-ins and rotate sources are not matched by AUTH-003 or AUTH-004"]
+resolving_data: [whether the success source previously authenticated for this account, device/MFA details]
+sources: ["Microsoft Security blog 2026-10-21 (password spray / sign-in attempts at scale)"]
+source_history:
+  field: src_ip
+  where: {all: [{field: event_kind, op: eq, value: authentication}, {field: outcome, op: eq, value: success}]}
+  join_fields: [tenant_id, user]

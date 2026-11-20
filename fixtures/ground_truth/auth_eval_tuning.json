@@ -1,0 +1,885 @@
+{
+ "_note": "SYNTHETIC labels; never imported",
+ "labels": {
+  "tenant-eval|b1-tuning-0@eval.example": {
+   "label": "benign",
+   "scenario": "B1_typo_then_success"
+  },
+  "tenant-eval|b1-tuning-10@eval.example": {
+   "label": "benign",
+   "scenario": "B1_typo_then_success"
+  },
+  "tenant-eval|b1-tuning-11@eval.example": {
+   "label": "benign",
+   "scenario": "B1_typo_then_success"
+  },
+  "tenant-eval|b1-tuning-12@eval.example": {
+   "label": "benign",
+   "scenario": "B1_typo_then_success"
+  },
+  "tenant-eval|b1-tuning-13@eval.example": {
+   "label": "benign",
+   "scenario": "B1_typo_then_success"
+  },
+  "tenant-eval|b1-tuning-14@eval.example": {
+   "label": "benign",
+   "scenario": "B1_typo_then_success"
+  },
+  "tenant-eval|b1-tuning-15@eval.example": {
+   "label": "benign",
+   "scenario": "B1_typo_then_success"
+  },
+  "tenant-eval|b1-tuning-16@eval.example": {
+   "label": "benign",
+   "scenario": "B1_typo_then_success"
+  },
+  "tenant-eval|b1-tuning-17@eval.example": {
+   "label": "benign",
+   "scenario": "B1_typo_then_success"
+  },
+  "tenant-eval|b1-tuning-18@eval.example": {
+   "label": "benign",
+   "scenario": "B1_typo_then_success"
+  },
+  "tenant-eval|b1-tuning-19@eval.example": {
+   "label": "benign",
+   "scenario": "B1_typo_then_success"
+  },
+  "tenant-eval|b1-tuning-1@eval.example": {
+   "label": "benign",
+   "scenario": "B1_typo_then_success"
+  },
+  "tenant-eval|b1-tuning-2@eval.example": {
+   "label": "benign",
+   "scenario": "B1_typo_then_success"
+  },
+  "tenant-eval|b1-tuning-3@eval.example": {
+   "label": "benign",
+   "scenario": "B1_typo_then_success"
+  },
+  "tenant-eval|b1-tuning-4@eval.example": {
+   "label": "benign",
+   "scenario": "B1_typo_then_success"
+  },
+  "tenant-eval|b1-tuning-5@eval.example": {
+   "label": "benign",
+   "scenario": "B1_typo_then_success"
+  },
+  "tenant-eval|b1-tuning-6@eval.example": {
+   "label": "benign",
+   "scenario": "B1_typo_then_success"
+  },
+  "tenant-eval|b1-tuning-7@eval.example": {
+   "label": "benign",
+   "scenario": "B1_typo_then_success"
+  },
+  "tenant-eval|b1-tuning-8@eval.example": {
+   "label": "benign",
+   "scenario": "B1_typo_then_success"
+  },
+  "tenant-eval|b1-tuning-9@eval.example": {
+   "label": "benign",
+   "scenario": "B1_typo_then_success"
+  },
+  "tenant-eval|b2-tuning-0@eval.example": {
+   "label": "benign",
+   "scenario": "B2_many_typos_own_device"
+  },
+  "tenant-eval|b2-tuning-10@eval.example": {
+   "label": "benign",
+   "scenario": "B2_many_typos_own_device"
+  },
+  "tenant-eval|b2-tuning-11@eval.example": {
+   "label": "benign",
+   "scenario": "B2_many_typos_own_device"
+  },
+  "tenant-eval|b2-tuning-12@eval.example": {
+   "label": "benign",
+   "scenario": "B2_many_typos_own_device"
+  },
+  "tenant-eval|b2-tuning-13@eval.example": {
+   "label": "benign",
+   "scenario": "B2_many_typos_own_device"
+  },
+  "tenant-eval|b2-tuning-14@eval.example": {
+   "label": "benign",
+   "scenario": "B2_many_typos_own_device"
+  },
+  "tenant-eval|b2-tuning-15@eval.example": {
+   "label": "benign",
+   "scenario": "B2_many_typos_own_device"
+  },
+  "tenant-eval|b2-tuning-16@eval.example": {
+   "label": "benign",
+   "scenario": "B2_many_typos_own_device"
+  },
+  "tenant-eval|b2-tuning-17@eval.example": {
+   "label": "benign",
+   "scenario": "B2_many_typos_own_device"
+  },
+  "tenant-eval|b2-tuning-18@eval.example": {
+   "label": "benign",
+   "scenario": "B2_many_typos_own_device"
+  },
+  "tenant-eval|b2-tuning-19@eval.example": {
+   "label": "benign",
+   "scenario": "B2_many_typos_own_device"
+  },
+  "tenant-eval|b2-tuning-1@eval.example": {
+   "label": "benign",
+   "scenario": "B2_many_typos_own_device"
+  },
+  "tenant-eval|b2-tuning-2@eval.example": {
+   "label": "benign",
+   "scenario": "B2_many_typos_own_device"
+  },
+  "tenant-eval|b2-tuning-3@eval.example": {
+   "label": "benign",
+   "scenario": "B2_many_typos_own_device"
+  },
+  "tenant-eval|b2-tuning-4@eval.example": {
+   "label": "benign",
+   "scenario": "B2_many_typos_own_device"
+  },
+  "tenant-eval|b2-tuning-5@eval.example": {
+   "label": "benign",
+   "scenario": "B2_many_typos_own_device"
+  },
+  "tenant-eval|b2-tuning-6@eval.example": {
+   "label": "benign",
+   "scenario": "B2_many_typos_own_device"
+  },
+  "tenant-eval|b2-tuning-7@eval.example": {
+   "label": "benign",
+   "scenario": "B2_many_typos_own_device"
+  },
+  "tenant-eval|b2-tuning-8@eval.example": {
+   "label": "benign",
+   "scenario": "B2_many_typos_own_device"
+  },
+  "tenant-eval|b2-tuning-9@eval.example": {
+   "label": "benign",
+   "scenario": "B2_many_typos_own_device"
+  },
+  "tenant-eval|b3-tuning-0@eval.example": {
+   "label": "benign",
+   "scenario": "B3_intermittent_multi_device"
+  },
+  "tenant-eval|b3-tuning-10@eval.example": {
+   "label": "benign",
+   "scenario": "B3_intermittent_multi_device"
+  },
+  "tenant-eval|b3-tuning-11@eval.example": {
+   "label": "benign",
+   "scenario": "B3_intermittent_multi_device"
+  },
+  "tenant-eval|b3-tuning-12@eval.example": {
+   "label": "benign",
+   "scenario": "B3_intermittent_multi_device"
+  },
+  "tenant-eval|b3-tuning-13@eval.example": {
+   "label": "benign",
+   "scenario": "B3_intermittent_multi_device"
+  },
+  "tenant-eval|b3-tuning-14@eval.example": {
+   "label": "benign",
+   "scenario": "B3_intermittent_multi_device"
+  },
+  "tenant-eval|b3-tuning-15@eval.example": {
+   "label": "benign",
+   "scenario": "B3_intermittent_multi_device"
+  },
+  "tenant-eval|b3-tuning-16@eval.example": {
+   "label": "benign",
+   "scenario": "B3_intermittent_multi_device"
+  },
+  "tenant-eval|b3-tuning-17@eval.example": {
+   "label": "benign",
+   "scenario": "B3_intermittent_multi_device"
+  },
+  "tenant-eval|b3-tuning-18@eval.example": {
+   "label": "benign",
+   "scenario": "B3_intermittent_multi_device"
+  },
+  "tenant-eval|b3-tuning-19@eval.example": {
+   "label": "benign",
+   "scenario": "B3_intermittent_multi_device"
+  },
+  "tenant-eval|b3-tuning-1@eval.example": {
+   "label": "benign",
+   "scenario": "B3_intermittent_multi_device"
+  },
+  "tenant-eval|b3-tuning-2@eval.example": {
+   "label": "benign",
+   "scenario": "B3_intermittent_multi_device"
+  },
+  "tenant-eval|b3-tuning-3@eval.example": {
+   "label": "benign",
+   "scenario": "B3_intermittent_multi_device"
+  },
+  "tenant-eval|b3-tuning-4@eval.example": {
+   "label": "benign",
+   "scenario": "B3_intermittent_multi_device"
+  },
+  "tenant-eval|b3-tuning-5@eval.example": {
+   "label": "benign",
+   "scenario": "B3_intermittent_multi_device"
+  },
+  "tenant-eval|b3-tuning-6@eval.example": {
+   "label": "benign",
+   "scenario": "B3_intermittent_multi_device"
+  },
+  "tenant-eval|b3-tuning-7@eval.example": {
+   "label": "benign",
+   "scenario": "B3_intermittent_multi_device"
+  },
+  "tenant-eval|b3-tuning-8@eval.example": {
+   "label": "benign",
+   "scenario": "B3_intermittent_multi_device"
+  },
+  "tenant-eval|b3-tuning-9@eval.example": {
+   "label": "benign",
+   "scenario": "B3_intermittent_multi_device"
+  },
+  "tenant-eval|b4-tuning-0@eval.example": {
+   "label": "benign",
+   "scenario": "B4_stale_password_device"
+  },
+  "tenant-eval|b4-tuning-10@eval.example": {
+   "label": "benign",
+   "scenario": "B4_stale_password_device"
+  },
+  "tenant-eval|b4-tuning-11@eval.example": {
+   "label": "benign",
+   "scenario": "B4_stale_password_device"
+  },
+  "tenant-eval|b4-tuning-12@eval.example": {
+   "label": "benign",
+   "scenario": "B4_stale_password_device"
+  },
+  "tenant-eval|b4-tuning-13@eval.example": {
+   "label": "benign",
+   "scenario": "B4_stale_password_device"
+  },
+  "tenant-eval|b4-tuning-14@eval.example": {
+   "label": "benign",
+   "scenario": "B4_stale_password_device"
+  },
+  "tenant-eval|b4-tuning-15@eval.example": {
+   "label": "benign",
+   "scenario": "B4_stale_password_device"
+  },
+  "tenant-eval|b4-tuning-16@eval.example": {
+   "label": "benign",
+   "scenario": "B4_stale_password_device"
+  },
+  "tenant-eval|b4-tuning-17@eval.example": {
+   "label": "benign",
+   "scenario": "B4_stale_password_device"
+  },
+  "tenant-eval|b4-tuning-18@eval.example": {
+   "label": "benign",
+   "scenario": "B4_stale_password_device"
+  },
+  "tenant-eval|b4-tuning-19@eval.example": {
+   "label": "benign",
+   "scenario": "B4_stale_password_device"
+  },
+  "tenant-eval|b4-tuning-1@eval.example": {
+   "label": "benign",
+   "scenario": "B4_stale_password_device"
+  },
+  "tenant-eval|b4-tuning-2@eval.example": {
+   "label": "benign",
+   "scenario": "B4_stale_password_device"
+  },
+  "tenant-eval|b4-tuning-3@eval.example": {
+   "label": "benign",
+   "scenario": "B4_stale_password_device"
+  },
+  "tenant-eval|b4-tuning-4@eval.example": {
+   "label": "benign",
+   "scenario": "B4_stale_password_device"
+  },
+  "tenant-eval|b4-tuning-5@eval.example": {
+   "label": "benign",
+   "scenario": "B4_stale_password_device"
+  },
+  "tenant-eval|b4-tuning-6@eval.example": {
+   "label": "benign",
+   "scenario": "B4_stale_password_device"
+  },
+  "tenant-eval|b4-tuning-7@eval.example": {
+   "label": "benign",
+   "scenario": "B4_stale_password_device"
+  },
+  "tenant-eval|b4-tuning-8@eval.example": {
+   "label": "benign",
+   "scenario": "B4_stale_password_device"
+  },
+  "tenant-eval|b4-tuning-9@eval.example": {
+   "label": "benign",
+   "scenario": "B4_stale_password_device"
+  },
+  "tenant-eval|b5-tuning-0@eval.example": {
+   "label": "benign",
+   "scenario": "B5_shared_nat_users"
+  },
+  "tenant-eval|b5-tuning-10@eval.example": {
+   "label": "benign",
+   "scenario": "B5_shared_nat_users"
+  },
+  "tenant-eval|b5-tuning-11@eval.example": {
+   "label": "benign",
+   "scenario": "B5_shared_nat_users"
+  },
+  "tenant-eval|b5-tuning-12@eval.example": {
+   "label": "benign",
+   "scenario": "B5_shared_nat_users"
+  },
+  "tenant-eval|b5-tuning-13@eval.example": {
+   "label": "benign",
+   "scenario": "B5_shared_nat_users"
+  },
+  "tenant-eval|b5-tuning-14@eval.example": {
+   "label": "benign",
+   "scenario": "B5_shared_nat_users"
+  },
+  "tenant-eval|b5-tuning-15@eval.example": {
+   "label": "benign",
+   "scenario": "B5_shared_nat_users"
+  },
+  "tenant-eval|b5-tuning-16@eval.example": {
+   "label": "benign",
+   "scenario": "B5_shared_nat_users"
+  },
+  "tenant-eval|b5-tuning-17@eval.example": {
+   "label": "benign",
+   "scenario": "B5_shared_nat_users"
+  },
+  "tenant-eval|b5-tuning-18@eval.example": {
+   "label": "benign",
+   "scenario": "B5_shared_nat_users"
+  },
+  "tenant-eval|b5-tuning-19@eval.example": {
+   "label": "benign",
+   "scenario": "B5_shared_nat_users"
+  },
+  "tenant-eval|b5-tuning-1@eval.example": {
+   "label": "benign",
+   "scenario": "B5_shared_nat_users"
+  },
+  "tenant-eval|b5-tuning-2@eval.example": {
+   "label": "benign",
+   "scenario": "B5_shared_nat_users"
+  },
+  "tenant-eval|b5-tuning-3@eval.example": {
+   "label": "benign",
+   "scenario": "B5_shared_nat_users"
+  },
+  "tenant-eval|b5-tuning-4@eval.example": {
+   "label": "benign",
+   "scenario": "B5_shared_nat_users"
+  },
+  "tenant-eval|b5-tuning-5@eval.example": {
+   "label": "benign",
+   "scenario": "B5_shared_nat_users"
+  },
+  "tenant-eval|b5-tuning-6@eval.example": {
+   "label": "benign",
+   "scenario": "B5_shared_nat_users"
+  },
+  "tenant-eval|b5-tuning-7@eval.example": {
+   "label": "benign",
+   "scenario": "B5_shared_nat_users"
+  },
+  "tenant-eval|b5-tuning-8@eval.example": {
+   "label": "benign",
+   "scenario": "B5_shared_nat_users"
+  },
+  "tenant-eval|b5-tuning-9@eval.example": {
+   "label": "benign",
+   "scenario": "B5_shared_nat_users"
+  },
+  "tenant-eval|b6-tuning-0@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-eval|b6-tuning-10@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-eval|b6-tuning-11@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-eval|b6-tuning-12@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-eval|b6-tuning-13@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-eval|b6-tuning-14@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-eval|b6-tuning-15@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-eval|b6-tuning-16@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-eval|b6-tuning-17@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-eval|b6-tuning-18@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-eval|b6-tuning-19@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-eval|b6-tuning-1@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-eval|b6-tuning-2@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-eval|b6-tuning-3@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-eval|b6-tuning-4@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-eval|b6-tuning-5@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-eval|b6-tuning-6@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-eval|b6-tuning-7@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-eval|b6-tuning-8@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-eval|b6-tuning-9@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-eval|m1-tuning-0@eval.example": {
+   "label": "malicious",
+   "scenario": "M1_fast_guessing"
+  },
+  "tenant-eval|m1-tuning-10@eval.example": {
+   "label": "malicious",
+   "scenario": "M1_fast_guessing"
+  },
+  "tenant-eval|m1-tuning-11@eval.example": {
+   "label": "malicious",
+   "scenario": "M1_fast_guessing"
+  },
+  "tenant-eval|m1-tuning-12@eval.example": {
+   "label": "malicious",
+   "scenario": "M1_fast_guessing"
+  },
+  "tenant-eval|m1-tuning-13@eval.example": {
+   "label": "malicious",
+   "scenario": "M1_fast_guessing"
+  },
+  "tenant-eval|m1-tuning-14@eval.example": {
+   "label": "malicious",
+   "scenario": "M1_fast_guessing"
+  },
+  "tenant-eval|m1-tuning-15@eval.example": {
+   "label": "malicious",
+   "scenario": "M1_fast_guessing"
+  },
+  "tenant-eval|m1-tuning-16@eval.example": {
+   "label": "malicious",
+   "scenario": "M1_fast_guessing"
+  },
+  "tenant-eval|m1-tuning-17@eval.example": {
+   "label": "malicious",
+   "scenario": "M1_fast_guessing"
+  },
+  "tenant-eval|m1-tuning-18@eval.example": {
+   "label": "malicious",
+   "scenario": "M1_fast_guessing"
+  },
+  "tenant-eval|m1-tuning-19@eval.example": {
+   "label": "malicious",
+   "scenario": "M1_fast_guessing"
+  },
+  "tenant-eval|m1-tuning-1@eval.example": {
+   "label": "malicious",
+   "scenario": "M1_fast_guessing"
+  },
+  "tenant-eval|m1-tuning-2@eval.example": {
+   "label": "malicious",
+   "scenario": "M1_fast_guessing"
+  },
+  "tenant-eval|m1-tuning-3@eval.example": {
+   "label": "malicious",
+   "scenario": "M1_fast_guessing"
+  },
+  "tenant-eval|m1-tuning-4@eval.example": {
+   "label": "malicious",
+   "scenario": "M1_fast_guessing"
+  },
+  "tenant-eval|m1-tuning-5@eval.example": {
+   "label": "malicious",
+   "scenario": "M1_fast_guessing"
+  },
+  "tenant-eval|m1-tuning-6@eval.example": {
+   "label": "malicious",
+   "scenario": "M1_fast_guessing"
+  },
+  "tenant-eval|m1-tuning-7@eval.example": {
+   "label": "malicious",
+   "scenario": "M1_fast_guessing"
+  },
+  "tenant-eval|m1-tuning-8@eval.example": {
+   "label": "malicious",
+   "scenario": "M1_fast_guessing"
+  },
+  "tenant-eval|m1-tuning-9@eval.example": {
+   "label": "malicious",
+   "scenario": "M1_fast_guessing"
+  },
+  "tenant-eval|m2-tuning-0@eval.example": {
+   "label": "malicious",
+   "scenario": "M2_slow_guessing"
+  },
+  "tenant-eval|m2-tuning-10@eval.example": {
+   "label": "malicious",
+   "scenario": "M2_slow_guessing"
+  },
+  "tenant-eval|m2-tuning-11@eval.example": {
+   "label": "malicious",
+   "scenario": "M2_slow_guessing"
+  },
+  "tenant-eval|m2-tuning-12@eval.example": {
+   "label": "malicious",
+   "scenario": "M2_slow_guessing"
+  },
+  "tenant-eval|m2-tuning-13@eval.example": {
+   "label": "malicious",
+   "scenario": "M2_slow_guessing"
+  },
+  "tenant-eval|m2-tuning-14@eval.example": {
+   "label": "malicious",
+   "scenario": "M2_slow_guessing"
+  },
+  "tenant-eval|m2-tuning-15@eval.example": {
+   "label": "malicious",
+   "scenario": "M2_slow_guessing"
+  },
+  "tenant-eval|m2-tuning-16@eval.example": {
+   "label": "malicious",
+   "scenario": "M2_slow_guessing"
+  },
+  "tenant-eval|m2-tuning-17@eval.example": {
+   "label": "malicious",
+   "scenario": "M2_slow_guessing"
+  },
+  "tenant-eval|m2-tuning-18@eval.example": {
+   "label": "malicious",
+   "scenario": "M2_slow_guessing"
+  },
+  "tenant-eval|m2-tuning-19@eval.example": {
+   "label": "malicious",
+   "scenario": "M2_slow_guessing"
+  },
+  "tenant-eval|m2-tuning-1@eval.example": {
+   "label": "malicious",
+   "scenario": "M2_slow_guessing"
+  },
+  "tenant-eval|m2-tuning-2@eval.example": {
+   "label": "malicious",
+   "scenario": "M2_slow_guessing"
+  },
+  "tenant-eval|m2-tuning-3@eval.example": {
+   "label": "malicious",
+   "scenario": "M2_slow_guessing"
+  },
+  "tenant-eval|m2-tuning-4@eval.example": {
+   "label": "malicious",
+   "scenario": "M2_slow_guessing"
+  },
+  "tenant-eval|m2-tuning-5@eval.example": {
+   "label": "malicious",
+   "scenario": "M2_slow_guessing"
+  },
+  "tenant-eval|m2-tuning-6@eval.example": {
+   "label": "malicious",
+   "scenario": "M2_slow_guessing"
+  },
+  "tenant-eval|m2-tuning-7@eval.example": {
+   "label": "malicious",
+   "scenario": "M2_slow_guessing"
+  },
+  "tenant-eval|m2-tuning-8@eval.example": {
+   "label": "malicious",
+   "scenario": "M2_slow_guessing"
+  },
+  "tenant-eval|m2-tuning-9@eval.example": {
+   "label": "malicious",
+   "scenario": "M2_slow_guessing"
+  },
+  "tenant-eval|m3-tuning-0@eval.example": {
+   "label": "malicious",
+   "scenario": "M3_guessing_with_interleaved_legit_user"
+  },
+  "tenant-eval|m3-tuning-10@eval.example": {
+   "label": "malicious",
+   "scenario": "M3_guessing_with_interleaved_legit_user"
+  },
+  "tenant-eval|m3-tuning-11@eval.example": {
+   "label": "malicious",
+   "scenario": "M3_guessing_with_interleaved_legit_user"
+  },
+  "tenant-eval|m3-tuning-12@eval.example": {
+   "label": "malicious",
+   "scenario": "M3_guessing_with_interleaved_legit_user"
+  },
+  "tenant-eval|m3-tuning-13@eval.example": {
+   "label": "malicious",
+   "scenario": "M3_guessing_with_interleaved_legit_user"
+  },
+  "tenant-eval|m3-tuning-14@eval.example": {
+   "label": "malicious",
+   "scenario": "M3_guessing_with_interleaved_legit_user"
+  },
+  "tenant-eval|m3-tuning-15@eval.example": {
+   "label": "malicious",
+   "scenario": "M3_guessing_with_interleaved_legit_user"
+  },
+  "tenant-eval|m3-tuning-16@eval.example": {
+   "label": "malicious",
+   "scenario": "M3_guessing_with_interleaved_legit_user"
+  },
+  "tenant-eval|m3-tuning-17@eval.example": {
+   "label": "malicious",
+   "scenario": "M3_guessing_with_interleaved_legit_user"
+  },
+  "tenant-eval|m3-tuning-18@eval.example": {
+   "label": "malicious",
+   "scenario": "M3_guessing_with_interleaved_legit_user"
+  },
+  "tenant-eval|m3-tuning-19@eval.example": {
+   "label": "malicious",
+   "scenario": "M3_guessing_with_interleaved_legit_user"
+  },
+  "tenant-eval|m3-tuning-1@eval.example": {
+   "label": "malicious",
+   "scenario": "M3_guessing_with_interleaved_legit_user"
+  },
+  "tenant-eval|m3-tuning-2@eval.example": {
+   "label": "malicious",
+   "scenario": "M3_guessing_with_interleaved_legit_user"
+  },
+  "tenant-eval|m3-tuning-3@eval.example": {
+   "label": "malicious",
+   "scenario": "M3_guessing_with_interleaved_legit_user"
+  },
+  "tenant-eval|m3-tuning-4@eval.example": {
+   "label": "malicious",
+   "scenario": "M3_guessing_with_interleaved_legit_user"
+  },
+  "tenant-eval|m3-tuning-5@eval.example": {
+   "label": "malicious",
+   "scenario": "M3_guessing_with_interleaved_legit_user"
+  },
+  "tenant-eval|m3-tuning-6@eval.example": {
+   "label": "malicious",
+   "scenario": "M3_guessing_with_interleaved_legit_user"
+  },
+  "tenant-eval|m3-tuning-7@eval.example": {
+   "label": "malicious",
+   "scenario": "M3_guessing_with_interleaved_legit_user"
+  },
+  "tenant-eval|m3-tuning-8@eval.example": {
+   "label": "malicious",
+   "scenario": "M3_guessing_with_interleaved_legit_user"
+  },
+  "tenant-eval|m3-tuning-9@eval.example": {
+   "label": "malicious",
+   "scenario": "M3_guessing_with_interleaved_legit_user"
+  },
+  "tenant-eval|m4-tuning-0@eval.example": {
+   "label": "malicious",
+   "scenario": "M4_rotating_source_per_attempt"
+  },
+  "tenant-eval|m4-tuning-10@eval.example": {
+   "label": "malicious",
+   "scenario": "M4_rotating_source_per_attempt"
+  },
+  "tenant-eval|m4-tuning-11@eval.example": {
+   "label": "malicious",
+   "scenario": "M4_rotating_source_per_attempt"
+  },
+  "tenant-eval|m4-tuning-12@eval.example": {
+   "label": "malicious",
+   "scenario": "M4_rotating_source_per_attempt"
+  },
+  "tenant-eval|m4-tuning-13@eval.example": {
+   "label": "malicious",
+   "scenario": "M4_rotating_source_per_attempt"
+  },
+  "tenant-eval|m4-tuning-14@eval.example": {
+   "label": "malicious",
+   "scenario": "M4_rotating_source_per_attempt"
+  },
+  "tenant-eval|m4-tuning-15@eval.example": {
+   "label": "malicious",
+   "scenario": "M4_rotating_source_per_attempt"
+  },
+  "tenant-eval|m4-tuning-16@eval.example": {
+   "label": "malicious",
+   "scenario": "M4_rotating_source_per_attempt"
+  },
+  "tenant-eval|m4-tuning-17@eval.example": {
+   "label": "malicious",
+   "scenario": "M4_rotating_source_per_attempt"
+  },
+  "tenant-eval|m4-tuning-18@eval.example": {
+   "label": "malicious",
+   "scenario": "M4_rotating_source_per_attempt"
+  },
+  "tenant-eval|m4-tuning-19@eval.example": {
+   "label": "malicious",
+   "scenario": "M4_rotating_source_per_attempt"
+  },
+  "tenant-eval|m4-tuning-1@eval.example": {
+   "label": "malicious",
+   "scenario": "M4_rotating_source_per_attempt"
+  },
+  "tenant-eval|m4-tuning-2@eval.example": {
+   "label": "malicious",
+   "scenario": "M4_rotating_source_per_attempt"
+  },
+  "tenant-eval|m4-tuning-3@eval.example": {
+   "label": "malicious",
+   "scenario": "M4_rotating_source_per_attempt"
+  },
+  "tenant-eval|m4-tuning-4@eval.example": {
+   "label": "malicious",
+   "scenario": "M4_rotating_source_per_attempt"
+  },
+  "tenant-eval|m4-tuning-5@eval.example": {
+   "label": "malicious",
+   "scenario": "M4_rotating_source_per_attempt"
+  },
+  "tenant-eval|m4-tuning-6@eval.example": {
+   "label": "malicious",
+   "scenario": "M4_rotating_source_per_attempt"
+  },
+  "tenant-eval|m4-tuning-7@eval.example": {
+   "label": "malicious",
+   "scenario": "M4_rotating_source_per_attempt"
+  },
+  "tenant-eval|m4-tuning-8@eval.example": {
+   "label": "malicious",
+   "scenario": "M4_rotating_source_per_attempt"
+  },
+  "tenant-eval|m4-tuning-9@eval.example": {
+   "label": "malicious",
+   "scenario": "M4_rotating_source_per_attempt"
+  },
+  "tenant-other|b6-tuning-0@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-other|b6-tuning-10@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-other|b6-tuning-11@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-other|b6-tuning-12@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-other|b6-tuning-13@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-other|b6-tuning-14@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-other|b6-tuning-15@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-other|b6-tuning-16@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-other|b6-tuning-17@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-other|b6-tuning-18@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-other|b6-tuning-19@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-other|b6-tuning-1@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-other|b6-tuning-2@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-other|b6-tuning-3@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-other|b6-tuning-4@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-other|b6-tuning-5@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-other|b6-tuning-6@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-other|b6-tuning-7@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-other|b6-tuning-8@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  },
+  "tenant-other|b6-tuning-9@eval.example": {
+   "label": "benign",
+   "scenario": "B6_cross_tenant_same_username"
+  }
+ }
+}

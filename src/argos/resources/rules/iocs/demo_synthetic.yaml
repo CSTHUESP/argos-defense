@@ -1,0 +1,7 @@
+# Synthetic indicator set for the demo/tests (documentation address ranges, RFC 5737).
+# Real indicator sets must carry their source, observation date and validity interval.
+# A historical/expired indicator is contextual evidence only: not attribution, not a block list.
+enabled: true
+iocs:
+  - {value: "203.0.113.66", type: ip, source: "SYNTHETIC demo feed", observed_date: "2026-11-01", valid_from: "2026-11-01T00:00:00Z", valid_until: "2027-02-01T00:00:00Z", context: "synthetic C2 example"}
+  - {value: "203.0.113.99", type: ip, source: "SYNTHETIC demo feed", observed_date: "2025-01-10", valid_from: "2025-01-10T00:00:00Z", valid_until: "2025-04-10T00:00:00Z", context: "synthetic historical (expired) example"}

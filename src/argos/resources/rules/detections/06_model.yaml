@@ -1,0 +1,136 @@
+# Family 6 - model interactions linked to tool execution.
+# An AI-provider connection alone is insufficient for LLM-driven execution.
+id: ARG-LLM-001
+version: 1
+title: Connection to an AI model provider
+description: |
+  A host or source contacted a known AI model API domain. This establishes only that
+  the connection was observed. It is not evidence of malicious activity nor of
+  model-driven actions.
+family: model_tool_linkage
+status: test
+validation_status: synthetic-scenario tests only
+observation_vantage: [victim_network, managed_endpoint]
+required_telemetry: [event_time, domain]
+select:
+  all:
+    - {field: event_kind, op: in, value: [dns, http, network_connection]}
+    - {field: domain, op: endswith, value: [api.openai.com, api.anthropic.com, generativelanguage.googleapis.com, api.deepseek.com, api.mistral.ai, open.bigmodel.cn, api.x.ai, openrouter.ai, api.groq.com, api.together.xyz]}
+group_by: [domain]
+window_s: 3600
+aggregate: {type: each}
+reference: {type: not_applicable, description: domain list match}
+severity: informational
+base_confidence: medium
+contributes:
+  threat: {activity: AI provider connection observed, suspicion: informational}
+  llm: possible
+  purpose: {observed_action: connection to AI API, hypothesis: unknown, stage: indicator}
+evidence_family: ai_provider_connection
+required_evidence: DNS/HTTP/connection records naming the provider domain
+explanation: "{count} connection record(s) to {group}. Observation of a connection only."
+alternatives: [sanctioned AI assistant use, developer tooling, browser extensions]
+false_positives: [all legitimate AI usage]
+resolving_data: [model gateway/audit records linking requests to actions, endpoint process making the connection]
+sources: ["FBI FLASH-20261113-001: outbound API destinations to investigate in context"]
+---
+id: ARG-LLM-002
+version: 1
+title: Model tool-call followed by agent tool execution in the same session
+description: |
+  Agent/model audit records show a model response requesting a tool call, followed by
+  a recorded tool execution in the same session. Supports directly observed LLM
+  involvement in that session, according to the supplied audit records.
+family: model_tool_linkage
+status: test
+validation_status: synthetic-scenario tests only
+observation_vantage: [agent_or_model_audit]
+required_telemetry: [event_time, session_id]
+select: {field: event_kind, op: in, value: [model_interaction, tool_execution]}
+group_by: [session_id]
+window_s: 600
+aggregate:
+  type: sequence
+  steps:
+    - {name: model_tool_call, where: {all: [{field: event_kind, op: eq, value: model_interaction}, {field: model_tool_name, op: exists}]}}
+    - {name: tool_execution, where: {field: event_kind, op: eq, value: tool_execution}}
+reference: {type: not_applicable, description: ordered linkage in one session}
+severity: informational
+base_confidence: high
+contributes:
+  threat: {activity: Model-directed tool execution recorded, suspicion: informational}
+  automation: observed_automation
+  llm: directly_observed
+  purpose: {observed_action: model requested tool and agent executed it, hypothesis: unknown, stage: observed_success}
+evidence_family: model_audit_tool_chain
+required_evidence: model_interaction with tool call + tool_execution, same session_id
+explanation: "Session {group}: model tool call followed by tool execution within {window_s}s."
+alternatives: [sanctioned internal agent, developer testing an agent]
+false_positives: [authorized AI agents]
+resolving_data: [authenticity of the audit source (gateway signing, collection path), process telemetry for the executed tool]
+sources: ["ARTEX v0.6.0 llmrec/llmrec.go + db/commands.go llm_records (per-call request/response with session_id) commit a13c68cb"]
+suppressible_by_registry: true
+---
+id: ARG-LLM-003
+version: 1
+title: Model tool-call linked to an endpoint process (same ProcessGuid)
+description: |
+  An audit record names the endpoint process (linked_process_guid) started for a model
+  tool call, and endpoint telemetry shows that process starting on the same host.
+  This verifiable process linkage ties model involvement to an observed execution.
+family: model_tool_linkage
+status: test
+validation_status: synthetic-scenario tests only
+observation_vantage: [agent_or_model_audit, managed_endpoint]
+required_telemetry: [event_time, host, proc_link]
+select: {field: event_kind, op: in, value: [model_interaction, tool_execution, process_start]}
+group_by: [host, proc_link]
+window_s: 600
+aggregate:
+  type: sequence
+  steps:
+    - {name: audit_record, where: {field: event_kind, op: in, value: [model_interaction, tool_execution]}}
+    - {name: endpoint_process, where: {field: event_kind, op: eq, value: process_start}}
+reference: {type: not_applicable, description: identifier linkage}
+severity: low
+base_confidence: high
+contributes:
+  threat: {activity: Model-linked process execution on endpoint, suspicion: suspicious}
+  automation: observed_automation
+  llm: directly_observed
+  purpose: {observed_action: process started for model tool call, hypothesis: execution, stage: observed_success}
+evidence_family: model_audit_process_link
+required_evidence: audit record with linked_process_guid + endpoint process_start with that ProcessGuid on same host
+explanation: "Audit record and endpoint process share {group} within {window_s}s."
+alternatives: [authorized AI coding assistant running commands]
+false_positives: [developer agents]
+resolving_data: [what the process did next (file/network events), who started the agent]
+sources: ["ARTEX v0.6.0 agent/worker.go (bash subprocess per tool call) commit a13c68cb"]
+---
+id: ARG-LLM-004
+version: 1
+title: Human approval recorded in agent audit
+description: An agent audit record shows a human approval/denial decision for a tool call (human-in-the-loop). Evidence of a manual component.
+family: model_tool_linkage
+status: test
+validation_status: synthetic-scenario tests only
+observation_vantage: [agent_or_model_audit]
+required_telemetry: [event_time, session_id]
+select: {field: event_kind, op: eq, value: human_approval}
+group_by: [session_id]
+window_s: 3600
+aggregate: {type: each}
+reference: {type: not_applicable, description: record presence}
+severity: informational
+base_confidence: high
+contributes:
+  threat: {activity: Human approval in agent workflow, suspicion: informational}
+  automation: observed_manual_component
+  purpose: {observed_action: human decision on agent tool call, hypothesis: unknown, stage: observed_success}
+evidence_family: human_approval_record
+required_evidence: human_approval audit records
+explanation: "{count} human decision record(s) in session {group}."
+alternatives: [automated approver mislabelled as human]
+false_positives: []
+resolving_data: [identity of approver, approval UI logs]
+sources: ["ARTEX v0.6.0 intercept/intercept.go + db/intercept.go (ask/approve, decided_by) commit a13c68cb"]

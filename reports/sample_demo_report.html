@@ -1,0 +1,862 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:">
+<title>ARGOS case report — demo-synthetic</title>
+<style>
+body{font:14px/1.45 system-ui,-apple-system,Segoe UI,sans-serif;margin:24px;color:#1b1f24;max-width:1300px}
+h1{font-size:22px}h2{font-size:18px;border-bottom:1px solid #ccd;padding-bottom:4px;margin-top:28px}h3{font-size:15px}
+table{border-collapse:collapse;width:100%;margin:8px 0}th,td{border:1px solid #d8dbe0;padding:4px 6px;text-align:left;vertical-align:top}
+th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-monospace,Consolas,monospace;word-break:break-all}
+.banner{background:#7a1f9a;color:#fff;padding:8px 12px;font-weight:700;letter-spacing:.04em}
+.badge{display:inline-block;padding:1px 6px;border-radius:9px;background:#e6e8ec;font-size:12px}
+.sev-high,.sev-critical{background:#c62828;color:#fff}.sev-medium{background:#ef8f00;color:#fff}.sev-low{background:#fbc02d}
+.dims{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.dim{border:1px solid #d8dbe0;padding:8px;border-radius:6px}
+</style></head><body>
+<div class="banner">DEMO/SYNTHETIC — data and all derived findings are synthetic</div>
+<h1>ARGOS Defense case report: demo-synthetic</h1>
+<p class="small">DEMO/SYNTHETIC DATA - not real activity · generated 2026-11-20T09:04:50.193470Z · case case-6c9050d48534 · status open</p>
+<p class="small">Versions: argos 0.1.0, argos-engine/0.1.0, schema argos-event/1, rules hash 48ac7ba2f8ccef22, manifest 7c527753a49898d7, config ff6f50dfd02d6882, registry 4f0f6e2064ef6c50, ioc 425a70690680e296.</p>
+<h2>Limitations</h2><ul><li>Batch analysis of supplied files; not a real-time sensor or EDR.</li><li>Heuristic evidence scores are not calibrated probabilities.</li><li>Real-world detection accuracy NOT MEASURED; validation is synthetic only.</li><li>SHA-256 values support local integrity checks; they are not a certified chain of custody.</li><li>Secrets are redacted in this export; originals are retained locally.</li><li>1 input records were rejected (see data quality); they were not analysed</li><li>synthetic or prototype validation only; real-world detection accuracy NOT MEASURED</li></ul>
+
+<h2>Case assessment</h2>
+<div class="dims">
+<div class="dim"><h3>A · Threat activity</h3>max severity <b>high</b>; 25 open alerts; 4 authorized automation; 0 abstentions</div>
+<div class="dim"><h3>B · Automation</h3><b>mixed</b><br><span class="small">heuristic evidence score 4.4</span></div>
+<div class="dim"><h3>C · LLM involvement</h3><b>directly_observed</b><br><span class="small">heuristic evidence score 1.7; heuristic evidence score = sum over DISTINCT evidence families (duplicates count once); not a probability</span></div>
+<div class="dim"><h3>D · Framework</h3><b>corroborated_presence</b><br>ARTEX: corroborated_presence (controller_process, model_session_naming, recording_proxy_ca); responsibility: not established (presence is not responsibility)</div>
+<div class="dim"><h3>E · Purpose hypotheses</h3>collection (observed_success) ×1<br>command_and_control (indicator) ×1<br>credential_access (attempt/observed_success) ×2<br>execution (indicator/observed_success) ×3<br>initial_access (attempt) ×1<br>persistence (observed_success) ×2<br>possible_exfiltration (indicator) ×1<br>privilege_escalation (observed_success) ×1<br>reconnaissance (attempt/indicator) ×3<br>unknown (indicator/observed_success) ×10<br></div>
+<div class="dim"><h3>F · Attribution</h3>model: not assessed unless verifiable model-audit records name it; declared names are labelled as declared<br>person: not assessed (out of scope: telemetry does not identify persons)<br>threat_group: not assessed (no attribution from IPs, language, speed or style)<br></div>
+</div>
+<h3>Coverage</h3><table><tr><th>Vantage</th><th>Status</th><th>Events</th><th>Interval</th></tr>
+<tr><td>agent_or_model_audit</td><td>present</td><td>3</td><td>2026-11-03T10:13:20.000000Z → 2026-11-03T10:15:00.000000Z</td></tr><tr><td>identity_cloud</td><td>present</td><td>33</td><td>2026-11-03T08:50:00.000000Z → 2026-11-03T16:53:20.000000Z</td></tr><tr><td>managed_endpoint</td><td>present</td><td>12</td><td>2026-11-03T09:56:40.000000Z → 2026-11-03T19:25:00.000000Z</td></tr><tr><td>victim_network</td><td>present</td><td>377</td><td>2026-11-03T08:01:40.000000Z → 2026-11-03T09:41:40.000000Z</td></tr></table>
+
+<h2>Alerts</h2>
+
+<h3>HTTP request burst from one source <span class="badge sev-informational">informational</span> <span class="badge">confidence medium</span> <span class="badge">authorized_automation</span></h3>
+<p class="small">al-944f57fcd7d9753bdccb · ARG-AUTO-001@1 · 2026-11-03T08:01:40.000000Z → 2026-11-03T08:02:09.800000Z · analyst status new</p>
+<p><b>Why:</b> 150 HTTP requests from src_ip=198.51.100.10 within 60s window; timing is consistent with automation.</p>
+<p class="small">automation: observed_automation · LLM: unknown · framework: unknown  · purpose: unknown (indicator)</p>
+<p class="small"><b>Confidence rationale:</b> rule base confidence &#39;medium&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39; | all 150 events match authorized automation entry AA-001 within scope/schedule</p>
+<p class="small"><b>Alternatives:</b> authorized vulnerability scanner; CI/CD health checks; search crawler; NAT gateway aggregating many users; load test · <b>Missing visibility:</b> process/agent telemetry of the client is not visible from the victim network</p>
+
+<p class="small mono">evidence: ev:afbd7b7bcb4ab772:10 ev:afbd7b7bcb4ab772:96 ev:afbd7b7bcb4ab772:165 ev:afbd7b7bcb4ab772:95 ev:afbd7b7bcb4ab772:76 ev:afbd7b7bcb4ab772:234 ev:afbd7b7bcb4ab772:65 ev:afbd7b7bcb4ab772:245 ev:afbd7b7bcb4ab772:259 ev:afbd7b7bcb4ab772:328 ev:afbd7b7bcb4ab772:138 ev:afbd7b7bcb4ab772:43 ev:afbd7b7bcb4ab772:194 ev:afbd7b7bcb4ab772:317 ev:afbd7b7bcb4ab772:86 ev:afbd7b7bcb4ab772:302 ev:afbd7b7bcb4ab772:168 ev:afbd7b7bcb4ab772:333 ev:afbd7b7bcb4ab772:267 ev:afbd7b7bcb4ab772:30 ev:afbd7b7bcb4ab772:327 ev:afbd7b7bcb4ab772:133 ev:afbd7b7bcb4ab772:114 ev:afbd7b7bcb4ab772:205 ev:afbd7b7bcb4ab772:243 ev:afbd7b7bcb4ab772:155 ev:afbd7b7bcb4ab772:264 ev:afbd7b7bcb4ab772:343 ev:afbd7b7bcb4ab772:101 ev:afbd7b7bcb4ab772:73 …</p>
+
+<h3>Broad HTTP path enumeration with mostly failing responses <span class="badge sev-low">low</span> <span class="badge">confidence medium</span> <span class="badge">authorized_automation</span></h3>
+<p class="small">al-6d07b26552ebef2ca2b0 · ARG-ENUM-001@1 · 2026-11-03T08:01:40.000000Z → 2026-11-03T08:02:09.800000Z · analyst status new</p>
+<p><b>Why:</b> 150 requests to 150 distinct paths from src_ip=198.51.100.10, http_host=portal.demo.example within 300s; 4xx ratio 1.0.</p>
+<p class="small">automation: observed_automation · LLM: unknown · framework: unknown  · purpose: reconnaissance (attempt)</p>
+<p class="small"><b>Confidence rationale:</b> rule base confidence &#39;medium&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39; | all 150 events match authorized automation entry AA-001 within scope/schedule</p>
+<p class="small"><b>Alternatives:</b> authorized scanner; broken client following stale links; SEO crawler · <b>Missing visibility:</b> </p>
+
+<p class="small mono">evidence: ev:afbd7b7bcb4ab772:10 ev:afbd7b7bcb4ab772:96 ev:afbd7b7bcb4ab772:165 ev:afbd7b7bcb4ab772:95 ev:afbd7b7bcb4ab772:76 ev:afbd7b7bcb4ab772:234 ev:afbd7b7bcb4ab772:65 ev:afbd7b7bcb4ab772:245 ev:afbd7b7bcb4ab772:259 ev:afbd7b7bcb4ab772:328 ev:afbd7b7bcb4ab772:138 ev:afbd7b7bcb4ab772:43 ev:afbd7b7bcb4ab772:194 ev:afbd7b7bcb4ab772:317 ev:afbd7b7bcb4ab772:86 ev:afbd7b7bcb4ab772:302 ev:afbd7b7bcb4ab772:168 ev:afbd7b7bcb4ab772:333 ev:afbd7b7bcb4ab772:267 ev:afbd7b7bcb4ab772:30 ev:afbd7b7bcb4ab772:327 ev:afbd7b7bcb4ab772:133 ev:afbd7b7bcb4ab772:114 ev:afbd7b7bcb4ab772:205 ev:afbd7b7bcb4ab772:243 ev:afbd7b7bcb4ab772:155 ev:afbd7b7bcb4ab772:264 ev:afbd7b7bcb4ab772:343 ev:afbd7b7bcb4ab772:101 ev:afbd7b7bcb4ab772:73 …</p>
+
+<h3>HTTP request burst from one source <span class="badge sev-informational">informational</span> <span class="badge">confidence medium</span> <span class="badge">authorized_automation</span></h3>
+<p class="small">al-10ca49a6edf092e72f0c · ARG-AUTO-001@1 · 2026-11-03T08:06:40.000000Z → 2026-11-03T08:07:18.700000Z · analyst status new</p>
+<p><b>Why:</b> 130 HTTP requests from src_ip=198.51.100.20 within 60s window; timing is consistent with automation.</p>
+<p class="small">automation: observed_automation · LLM: unknown · framework: unknown  · purpose: unknown (indicator)</p>
+<p class="small"><b>Confidence rationale:</b> rule base confidence &#39;medium&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39; | all 130 events match authorized automation entry AA-002 within scope/schedule</p>
+<p class="small"><b>Alternatives:</b> authorized vulnerability scanner; CI/CD health checks; search crawler; NAT gateway aggregating many users; load test · <b>Missing visibility:</b> process/agent telemetry of the client is not visible from the victim network</p>
+
+<p class="small mono">evidence: ev:afbd7b7bcb4ab772:4 ev:afbd7b7bcb4ab772:177 ev:afbd7b7bcb4ab772:268 ev:afbd7b7bcb4ab772:338 ev:afbd7b7bcb4ab772:142 ev:afbd7b7bcb4ab772:23 ev:afbd7b7bcb4ab772:299 ev:afbd7b7bcb4ab772:154 ev:afbd7b7bcb4ab772:16 ev:afbd7b7bcb4ab772:334 ev:afbd7b7bcb4ab772:70 ev:afbd7b7bcb4ab772:261 ev:afbd7b7bcb4ab772:308 ev:afbd7b7bcb4ab772:104 ev:afbd7b7bcb4ab772:294 ev:afbd7b7bcb4ab772:190 ev:afbd7b7bcb4ab772:45 ev:afbd7b7bcb4ab772:145 ev:afbd7b7bcb4ab772:192 ev:afbd7b7bcb4ab772:220 ev:afbd7b7bcb4ab772:38 ev:afbd7b7bcb4ab772:3 ev:afbd7b7bcb4ab772:160 ev:afbd7b7bcb4ab772:275 ev:afbd7b7bcb4ab772:9 ev:afbd7b7bcb4ab772:68 ev:afbd7b7bcb4ab772:179 ev:afbd7b7bcb4ab772:331 ev:afbd7b7bcb4ab772:346 ev:afbd7b7bcb4ab772:201 …</p>
+
+<h3>Broad HTTP path enumeration with mostly failing responses <span class="badge sev-low">low</span> <span class="badge">confidence medium</span> <span class="badge">open</span></h3>
+<p class="small">al-2f1d7ad46bf12d122a99 · ARG-ENUM-001@1 · 2026-11-03T08:33:20.000000Z → 2026-11-03T08:35:46.617981Z · analyst status new</p>
+<p><b>Why:</b> 61 requests to 33 distinct paths from src_ip=203.0.113.50, http_host=portal.demo.example within 300s; 4xx ratio 0.984.</p>
+<p class="small">automation: consistent_with_automation · LLM: unknown · framework: unknown  · purpose: reconnaissance (attempt)</p>
+<p class="small"><b>Confidence rationale:</b> rule base confidence &#39;medium&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
+<p class="small"><b>Alternatives:</b> authorized scanner; broken client following stale links; SEO crawler · <b>Missing visibility:</b> </p>
+
+<p class="small mono">evidence: ev:afbd7b7bcb4ab772:309 ev:afbd7b7bcb4ab772:157 ev:afbd7b7bcb4ab772:221 ev:afbd7b7bcb4ab772:269 ev:afbd7b7bcb4ab772:107 ev:afbd7b7bcb4ab772:332 ev:afbd7b7bcb4ab772:203 ev:afbd7b7bcb4ab772:150 ev:afbd7b7bcb4ab772:130 ev:afbd7b7bcb4ab772:217 ev:afbd7b7bcb4ab772:33 ev:afbd7b7bcb4ab772:71 ev:afbd7b7bcb4ab772:260 ev:afbd7b7bcb4ab772:188 ev:afbd7b7bcb4ab772:19 ev:afbd7b7bcb4ab772:254 ev:afbd7b7bcb4ab772:199 ev:afbd7b7bcb4ab772:49 ev:afbd7b7bcb4ab772:117 ev:afbd7b7bcb4ab772:176 ev:afbd7b7bcb4ab772:35 ev:afbd7b7bcb4ab772:44 ev:afbd7b7bcb4ab772:11 ev:afbd7b7bcb4ab772:91 ev:afbd7b7bcb4ab772:144 ev:afbd7b7bcb4ab772:262 ev:afbd7b7bcb4ab772:241 ev:afbd7b7bcb4ab772:14 ev:afbd7b7bcb4ab772:272 ev:afbd7b7bcb4ab772:306 …</p>
+
+<h3>Repeated failures followed by success on a new path (adaptation hypothesis) <span class="badge sev-low">low</span> <span class="badge">confidence low</span> <span class="badge">open</span></h3>
+<p class="small">al-386b6e0ee9162385a537 · ARG-ENUM-002@1 · 2026-11-03T08:33:20.000000Z → 2026-11-03T08:35:46.617981Z · analyst status new</p>
+<p><b>Why:</b> Failures then success from src_ip=203.0.113.50, http_host=portal.demo.example within 900s. Observed: response codes. Not observed: the requester&#39;s intent or decision process.</p>
+<p class="small">automation: unknown · LLM: unknown · framework: unknown  · purpose: initial_access (attempt)</p>
+<p class="small"><b>Confidence rationale:</b> rule base confidence &#39;low&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
+<p class="small"><b>Alternatives:</b> user correcting a typo; client retry logic; scanner reaching a valid page · <b>Missing visibility:</b> </p>
+
+<p class="small mono">evidence: ev:afbd7b7bcb4ab772:309 ev:afbd7b7bcb4ab772:157 ev:afbd7b7bcb4ab772:221 ev:afbd7b7bcb4ab772:269 ev:afbd7b7bcb4ab772:107 ev:afbd7b7bcb4ab772:332 ev:afbd7b7bcb4ab772:203 ev:afbd7b7bcb4ab772:150 ev:afbd7b7bcb4ab772:130 ev:afbd7b7bcb4ab772:217 ev:afbd7b7bcb4ab772:33 ev:afbd7b7bcb4ab772:71 ev:afbd7b7bcb4ab772:260 ev:afbd7b7bcb4ab772:188 ev:afbd7b7bcb4ab772:19 ev:afbd7b7bcb4ab772:216</p>
+
+<h3>Password spray pattern (many accounts, one source) <span class="badge sev-medium">medium</span> <span class="badge">confidence medium</span> <span class="badge">open</span></h3>
+<p class="small">al-aa253d930f5ccbda5d32 · ARG-AUTH-001@1 · 2026-11-03T08:50:00.000000Z → 2026-11-03T08:53:40.000000Z · analyst status new</p>
+<p><b>Why:</b> 12 distinct accounts failed authentication from src_ip=203.0.113.50 within 3600s.</p>
+<p class="small">automation: consistent_with_automation · LLM: unknown · framework: unknown  · purpose: credential_access (attempt)</p>
+<p class="small"><b>Confidence rationale:</b> rule base confidence &#39;medium&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
+<p class="small"><b>Alternatives:</b> misconfigured service with stale credentials; shared NAT egress for many users; SSO outage · <b>Missing visibility:</b> </p>
+
+<p class="small mono">evidence: ev:fb385fb1e59fb9f0:1 ev:fb385fb1e59fb9f0:2 ev:fb385fb1e59fb9f0:3 ev:fb385fb1e59fb9f0:4 ev:fb385fb1e59fb9f0:5 ev:fb385fb1e59fb9f0:6 ev:fb385fb1e59fb9f0:7 ev:fb385fb1e59fb9f0:8 ev:fb385fb1e59fb9f0:9 ev:fb385fb1e59fb9f0:10 ev:fb385fb1e59fb9f0:11 ev:fb385fb1e59fb9f0:12</p>
+
+<h3>Port sweep from one source <span class="badge sev-low">low</span> <span class="badge">confidence medium</span> <span class="badge">open</span></h3>
+<p class="small">al-20adfc9fc3b2a4ae2221 · ARG-ENUM-003@1 · 2026-11-03T09:06:40.000000Z → 2026-11-03T09:06:54.500000Z · analyst status new</p>
+<p><b>Why:</b> 30 distinct destination ports contacted by src_ip=203.0.113.50 within 60s.</p>
+<p class="small">automation: consistent_with_automation · LLM: unknown · framework: unknown  · purpose: reconnaissance (attempt)</p>
+<p class="small"><b>Confidence rationale:</b> rule base confidence &#39;medium&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
+<p class="small"><b>Alternatives:</b> authorized vulnerability scan; service discovery; P2P application · <b>Missing visibility:</b> </p>
+
+<p class="small mono">evidence: ev:1de0b46ccb704f34:1 ev:1de0b46ccb704f34:2 ev:1de0b46ccb704f34:3 ev:1de0b46ccb704f34:4 ev:1de0b46ccb704f34:5 ev:1de0b46ccb704f34:6 ev:1de0b46ccb704f34:7 ev:1de0b46ccb704f34:8 ev:1de0b46ccb704f34:9 ev:1de0b46ccb704f34:10 ev:1de0b46ccb704f34:11 ev:1de0b46ccb704f34:12 ev:1de0b46ccb704f34:13 ev:1de0b46ccb704f34:14 ev:1de0b46ccb704f34:15 ev:1de0b46ccb704f34:16 ev:1de0b46ccb704f34:17 ev:1de0b46ccb704f34:18 ev:1de0b46ccb704f34:19 ev:1de0b46ccb704f34:20 ev:1de0b46ccb704f34:21 ev:1de0b46ccb704f34:22 ev:1de0b46ccb704f34:23 ev:1de0b46ccb704f34:24 ev:1de0b46ccb704f34:25 ev:1de0b46ccb704f34:26 ev:1de0b46ccb704f34:27 ev:1de0b46ccb704f34:28 ev:1de0b46ccb704f34:29 ev:1de0b46ccb704f34:30</p>
+
+<h3>Connection to an AI model provider <span class="badge sev-informational">informational</span> <span class="badge">confidence medium</span> <span class="badge">open</span></h3>
+<p class="small">al-5a0c88a9028b015148f8 · ARG-LLM-001@1 · 2026-11-03T09:15:00.000000Z → 2026-11-03T09:15:00.000000Z · analyst status new</p>
+<p><b>Why:</b> 1 connection record(s) to domain=api.openai.com. Observation of a connection only.</p>
+<p class="small">automation: unknown · LLM: possible · framework: unknown  · purpose: unknown (indicator)</p>
+<p class="small"><b>Confidence rationale:</b> rule base confidence &#39;medium&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
+<p class="small"><b>Alternatives:</b> sanctioned AI assistant use; developer tooling; browser extensions · <b>Missing visibility:</b> </p>
+
+<p class="small mono">evidence: ev:6b383f67e9d8dcf0:1</p>
+
+<h3>[WEAK] Text mentioning ARTEX in User-Agent, URL or file name <span class="badge sev-informational">informational</span> <span class="badge">confidence low</span> <span class="badge">open</span></h3>
+<p class="small">al-2efb0a275c2838cd1b4c · ARG-ARTEX-W01@1 · 2026-11-03T09:23:20.000000Z → 2026-11-03T10:13:15.000000Z · analyst status new</p>
+<p><b>Why:</b> 2 record(s) contain the text &#39;artex&#39;.</p>
+<p class="small">automation: unknown · LLM: unknown · framework: consistent_with ARTEX · purpose: unknown (indicator)</p>
+<p class="small"><b>Confidence rationale:</b> rule base confidence &#39;low&#39; (rule status experimental) | experimental rule: confidence capped at &#39;low&#39; until validated | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
+<p class="small"><b>Alternatives:</b> spoofing; researchers; unrelated product named similarly · <b>Missing visibility:</b> </p>
+
+<p class="small mono">evidence: ev:afbd7b7bcb4ab772:5 ev:4802ec220c58dfa3:7</p>
+
+<h3>Indicator list match (validity evaluated at event time) <span class="badge sev-medium">medium</span> <span class="badge">confidence medium</span> <span class="badge">open</span></h3>
+<p class="small">al-46be26abc7fc7bde9834 · ARG-IOC-001@1 · 2026-11-03T09:40:00.000000Z → 2026-11-03T09:56:50.000000Z · analyst status new</p>
+<p><b>Why:</b> 2 record(s) matched configured indicators.</p>
+<p class="small">automation: unknown · LLM: unknown · framework: unknown  · purpose: unknown (indicator)</p>
+<p class="small"><b>Confidence rationale:</b> rule base confidence &#39;medium&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
+<p class="small"><b>Alternatives:</b> infrastructure re-assigned to new owner; shared hosting; stale indicator · <b>Missing visibility:</b> </p>
+
+<p class="small mono">evidence: ev:afbd7b7bcb4ab772:292 ev:4802ec220c58dfa3:2</p>
+
+<h3>Indicator list match (validity evaluated at event time) <span class="badge sev-informational">informational</span> <span class="badge">confidence low</span> <span class="badge">open</span></h3>
+<p class="small">al-f30c5a67aed1bb07d094 · ARG-IOC-001@1 · 2026-11-03T09:41:40.000000Z → 2026-11-03T09:41:40.000000Z · analyst status new</p>
+<p><b>Why:</b> 1 record(s) matched configured indicators.</p>
+<p class="small">automation: unknown · LLM: unknown · framework: unknown  · purpose: unknown (indicator)</p>
+<p class="small"><b>Confidence rationale:</b> rule base confidence &#39;medium&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39; | only expired/out-of-validity IOC matches: historical context, not attribution or a blocking instruction</p>
+<p class="small"><b>Alternatives:</b> infrastructure re-assigned to new owner; shared hosting; stale indicator · <b>Missing visibility:</b> </p>
+
+<p class="small mono">evidence: ev:afbd7b7bcb4ab772:223</p>
+
+<h3>Server or office process spawned a command shell <span class="badge sev-high">high</span> <span class="badge">confidence medium</span> <span class="badge">open</span></h3>
+<p class="small">al-1b4d70770bdbbfa3a437 · ARG-EP-001@1 · 2026-11-03T09:56:40.000000Z → 2026-11-03T09:56:40.000000Z · analyst status new</p>
+<p><b>Why:</b> Shell started under host=web-01.demo.example, parent_process_guid={aaaa0001-0000-0000-0000-0000000000aa} (1 event(s)).</p>
+<p class="small">automation: unknown · LLM: unknown · framework: unknown  · purpose: execution (observed_success)</p>
+<p class="small"><b>Confidence rationale:</b> rule base confidence &#39;medium&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
+<p class="small"><b>Alternatives:</b> administrative scripts run by application; legitimate CGI scripts; Java app invoking shell utilities · <b>Missing visibility:</b> </p>
+
+<p class="small mono">evidence: ev:4802ec220c58dfa3:1</p>
+
+<h3>Shell child process followed by external connection from the same process <span class="badge sev-medium">medium</span> <span class="badge">confidence medium</span> <span class="badge">open</span></h3>
+<p class="small">al-6f4d173bf19606cf939c · ARG-EP-002@1 · 2026-11-03T09:56:40.000000Z → 2026-11-03T09:56:50.000000Z · analyst status new</p>
+<p><b>Why:</b> Process host=web-01.demo.example, process_guid={aaaa0001-0000-0000-0000-000000000001} started then connected to a public address within 300s.</p>
+<p class="small">automation: unknown · LLM: unknown · framework: unknown  · purpose: command_and_control (indicator)</p>
+<p class="small"><b>Confidence rationale:</b> rule base confidence &#39;medium&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
+<p class="small"><b>Alternatives:</b> package download; software update; admin troubleshooting · <b>Missing visibility:</b> </p>
+
+<p class="small mono">evidence: ev:4802ec220c58dfa3:1 ev:4802ec220c58dfa3:2</p>
+
+<h3>Persistence mechanism created (scheduled task / service / Run key / web shell file) <span class="badge sev-high">high</span> <span class="badge">confidence medium</span> <span class="badge">open</span></h3>
+<p class="small">al-afb02c0d7f8e4c1916c8 · ARG-P[REDACTED]@1 · 2026-11-03T09:57:00.000000Z → 2026-11-03T09:57:00.000000Z · analyst status new</p>
+<p><b>Why:</b> 1 persistence-related event(s) on host=web-01.demo.example.</p>
+<p class="small">automation: unknown · LLM: unknown · framework: unknown  · purpose: persistence (observed_success)</p>
+<p class="small"><b>Confidence rationale:</b> rule base confidence &#39;medium&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
+<p class="small"><b>Alternatives:</b> software installation; admin-created scheduled task; web deployment · <b>Missing visibility:</b> </p>
+
+<p class="small mono">evidence: ev:4802ec220c58dfa3:3</p>
+
+<h3>[EXPERIMENTAL] ARTEX controller binary executed <span class="badge sev-medium">medium</span> <span class="badge">confidence low</span> <span class="badge">open</span></h3>
+<p class="small">al-4d21733b50c243028e1f · ARG-ARTEX-X01@1 · 2026-11-03T10:13:10.000000Z → 2026-11-03T10:13:10.000000Z · analyst status new</p>
+<p><b>Why:</b> Process image matching the ARTEX build output name on host=dev-ws-07.demo.example.</p>
+<p class="small">automation: unknown · LLM: unknown · framework: consistent_with ARTEX · purpose: unknown (indicator)</p>
+<p class="small"><b>Confidence rationale:</b> rule base confidence &#39;low&#39; (rule status experimental) | experimental rule: confidence capped at &#39;low&#39; until validated | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
+<p class="small"><b>Alternatives:</b> authorized penetration-testing team; unrelated binary with the same name · <b>Missing visibility:</b> </p>
+
+<p class="small mono">evidence: ev:4802ec220c58dfa3:5</p>
+
+<h3>[EXPERIMENTAL] Recording-p[REDACTED] CA file created (mitmproxy naming) <span class="badge sev-low">low</span> <span class="badge">confidence low</span> <span class="badge">open</span></h3>
+<p class="small">al-30309747b8bdc1d7dcde · ARG-ARTEX-X03@1 · 2026-11-03T10:13:15.000000Z → 2026-11-03T10:13:15.000000Z · analyst status new</p>
+<p><b>Why:</b> CA file path consistent with ARTEX traffic recorder on host=dev-ws-07.demo.example.</p>
+<p class="small">automation: unknown · LLM: unknown · framework: consistent_with ARTEX · purpose: unknown (indicator)</p>
+<p class="small"><b>Confidence rationale:</b> rule base confidence &#39;low&#39; (rule status experimental) | experimental rule: confidence capped at &#39;low&#39; until validated | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
+<p class="small"><b>Alternatives:</b> mitmproxy or tools embedding go-mitmproxy used for debugging · <b>Missing visibility:</b> </p>
+
+<p class="small mono">evidence: ev:4802ec220c58dfa3:7</p>
+
+<h3>Connection to an AI model provider <span class="badge sev-informational">informational</span> <span class="badge">confidence medium</span> <span class="badge">open</span></h3>
+<p class="small">al-3d77b63b3d03468ae527 · ARG-LLM-001@1 · 2026-11-03T10:13:19.000000Z → 2026-11-03T10:13:19.000000Z · analyst status new</p>
+<p><b>Why:</b> 1 connection record(s) to domain=api.deepseek.com. Observation of a connection only.</p>
+<p class="small">automation: unknown · LLM: possible · framework: unknown  · purpose: unknown (indicator)</p>
+<p class="small"><b>Confidence rationale:</b> rule base confidence &#39;medium&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
+<p class="small"><b>Alternatives:</b> sanctioned AI assistant use; developer tooling; browser extensions · <b>Missing visibility:</b> </p>
+
+<p class="small mono">evidence: ev:4802ec220c58dfa3:8</p>
+
+<h3>Model tool-call followed by agent tool execution in the same session <span class="badge sev-informational">informational</span> <span class="badge">confidence medium</span> <span class="badge">open</span></h3>
+<p class="small">al-07c35ac7e721d167d871 · ARG-LLM-002@1 · 2026-11-03T10:13:20.000000Z → 2026-11-03T10:13:24.000000Z · analyst status new</p>
+<p><b>Why:</b> Session session_id=exp12-worker-i3: model tool call followed by tool execution within 600s.</p>
+<p class="small">automation: observed_automation · LLM: directly_observed · framework: unknown  · purpose: unknown (observed_success)</p>
+<p class="small"><b>Confidence rationale:</b> rule base confidence &#39;high&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
+<p class="small"><b>Alternatives:</b> sanctioned internal agent; developer testing an agent · <b>Missing visibility:</b> </p>
+
+<p class="small mono">evidence: ev:9c99a8dd7a056c98:1 ev:9c99a8dd7a056c98:2</p>
+
+<h3>Model tool-call linked to an endpoint process (same ProcessGuid) <span class="badge sev-low">low</span> <span class="badge">confidence medium</span> <span class="badge">open</span></h3>
+<p class="small">al-08c7a6d3c24afcfd3ee8 · ARG-LLM-003@1 · 2026-11-03T10:13:20.000000Z → 2026-11-03T10:13:25.000000Z · analyst status new</p>
+<p><b>Why:</b> Audit record and endpoint process share host=dev-ws-07.demo.example, proc_link={bbbb0002-0000-0000-0000-000000000077} within 600s.</p>
+<p class="small">automation: observed_automation · LLM: directly_observed · framework: unknown  · purpose: execution (observed_success)</p>
+<p class="small"><b>Confidence rationale:</b> rule base confidence &#39;high&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
+<p class="small"><b>Alternatives:</b> authorized AI coding assistant running commands · <b>Missing visibility:</b> </p>
+
+<p class="small mono">evidence: ev:9c99a8dd7a056c98:1 ev:4802ec220c58dfa3:4</p>
+
+<h3>[EXPERIMENTAL] Model-gateway session ids in ARTEX format <span class="badge sev-medium">medium</span> <span class="badge">confidence low</span> <span class="badge">open</span></h3>
+<p class="small">al-27d703984e6923721dbf · ARG-ARTEX-X04@1 · 2026-11-03T10:13:20.000000Z → 2026-11-03T10:13:20.000000Z · analyst status new</p>
+<p><b>Why:</b> Session session_id=exp12-worker-i3 follows ARTEX session naming (1 record(s)).</p>
+<p class="small">automation: consistent_with_automation · LLM: directly_observed · framework: consistent_with ARTEX · purpose: unknown (indicator)</p>
+<p class="small"><b>Confidence rationale:</b> rule base confidence &#39;low&#39; (rule status experimental) | experimental rule: confidence capped at &#39;low&#39; until validated | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
+<p class="small"><b>Alternatives:</b> other software using &#39;expN-&#39; prefixes; deliberate imitation · <b>Missing visibility:</b> </p>
+
+<p class="small mono">evidence: ev:9c99a8dd7a056c98:1</p>
+
+<h3>[EXPERIMENTAL] Child process of an &#39;artex&#39; parent <span class="badge sev-medium">medium</span> <span class="badge">confidence low</span> <span class="badge">open</span></h3>
+<p class="small">al-1d59395e0521407cd36a · ARG-ARTEX-X02@1 · 2026-11-03T10:13:25.000000Z → 2026-11-03T10:13:25.000000Z · analyst status new</p>
+<p><b>Why:</b> 1 child process(es) of an &#39;artex&#39; parent on host=dev-ws-07.demo.example.</p>
+<p class="small">automation: consistent_with_automation · LLM: unknown · framework: consistent_with ARTEX · purpose: execution (indicator)</p>
+<p class="small"><b>Confidence rationale:</b> rule base confidence &#39;low&#39; (rule status experimental) | experimental rule: confidence capped at &#39;low&#39; until validated | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
+<p class="small"><b>Alternatives:</b> renamed unrelated parent · <b>Missing visibility:</b> </p>
+
+<p class="small mono">evidence: ev:4802ec220c58dfa3:4</p>
+
+<h3>Dual-use offensive tool executed <span class="badge sev-medium">medium</span> <span class="badge">confidence low</span> <span class="badge">open</span></h3>
+<p class="small">al-ec51120271632b158a5d · ARG-EP-003@1 · 2026-11-03T10:13:26.000000Z → 2026-11-03T10:13:26.000000Z · analyst status new</p>
+<p><b>Why:</b> 1 dual-use tool execution(s) on host=dev-ws-07.demo.example.</p>
+<p class="small">automation: unknown · LLM: unknown · framework: unknown  · purpose: reconnaissance (indicator)</p>
+<p class="small"><b>Confidence rationale:</b> rule base confidence &#39;low&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
+<p class="small"><b>Alternatives:</b> authorized penetration test; IT administration; security team tooling · <b>Missing visibility:</b> </p>
+
+<p class="small mono">evidence: ev:4802ec220c58dfa3:6</p>
+
+<h3>Human approval recorded in agent audit <span class="badge sev-informational">informational</span> <span class="badge">confidence medium</span> <span class="badge">open</span></h3>
+<p class="small">al-b3931982426f32c20670 · ARG-LLM-004@1 · 2026-11-03T10:15:00.000000Z → 2026-11-03T10:15:00.000000Z · analyst status new</p>
+<p><b>Why:</b> 1 human decision record(s) in session session_id=exp12-worker-i3.</p>
+<p class="small">automation: observed_manual_component · LLM: unknown · framework: unknown  · purpose: unknown (observed_success)</p>
+<p class="small"><b>Confidence rationale:</b> rule base confidence &#39;high&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
+<p class="small"><b>Alternatives:</b> automated approver mislabelled as human · <b>Missing visibility:</b> </p>
+
+<p class="small mono">evidence: ev:9c99a8dd7a056c98:3</p>
+
+<h3>Failures, then success, then sensitive action by the same identity <span class="badge sev-high">high</span> <span class="badge">confidence medium</span> <span class="badge">open</span></h3>
+<p class="small">al-019d8d0c1ceb2f284ea7 · ARG-AUTH-002@1 · 2026-11-03T10:46:40.000000Z → 2026-11-03T15:46:40.000000Z · analyst status new</p>
+<p><b>Why:</b> Ordered sequence for tenant_id=tenant-contoso-demo, user=alice@demo.example: failed sign-ins, success, then sensitive action within 86400s.</p>
+<p class="small">automation: unknown · LLM: unknown · framework: unknown  · purpose: privilege_escalation (observed_success)</p>
+<p class="small"><b>Confidence rationale:</b> rule base confidence &#39;high&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
+<p class="small"><b>Alternatives:</b> legitimate user who mistyped and then performed planned admin work; helpdesk password reset followed by setup · <b>Missing visibility:</b> who controls the account is not established by account ownership</p>
+
+<p class="small mono">evidence: ev:fb385fb1e59fb9f0:13 ev:fb385fb1e59fb9f0:14 ev:fb385fb1e59fb9f0:15 ev:fb385fb1e59fb9f0:17 ev:fb385fb1e59fb9f0:18</p>
+
+<h3>Failed sign-ins followed by a successful sign-in <span class="badge sev-medium">medium</span> <span class="badge">confidence medium</span> <span class="badge">open</span></h3>
+<p class="small">al-a04b3e02bff6a3de568e · ARG-AUTH-003@1 · 2026-11-03T13:33:20.000000Z → 2026-11-03T13:38:20.000000Z · analyst status new</p>
+<p><b>Why:</b> tenant_id=tenant-contoso-demo, user=bob@demo.example: failures followed by a success within 86400s. No claim of data access is made.</p>
+<p class="small">automation: unknown · LLM: unknown · framework: unknown  · purpose: credential_access (observed_success)</p>
+<p class="small"><b>Confidence rationale:</b> rule base confidence &#39;medium&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
+<p class="small"><b>Alternatives:</b> user forgot password then succeeded; password manager sync delay · <b>Missing visibility:</b> </p>
+<p class="small"><b>Follow-up:</b> data access by the same identity after the successful sign-in — absent_within_demonstrated_coverage no matching identity_cloud records within 7200s after 2026-11-03T13:38:20.000000Z (coverage 2026-11-03T08:50:00.000000Z..2026-11-03T16:53:20.000000Z)</p>
+<p class="small mono">evidence: ev:fb385fb1e59fb9f0:19 ev:fb385fb1e59fb9f0:20 ev:fb385fb1e59fb9f0:21 ev:fb385fb1e59fb9f0:22 ev:fb385fb1e59fb9f0:23 ev:fb385fb1e59fb9f0:25</p>
+
+<h3>Service principal sign-in followed by credential or permission change <span class="badge sev-high">high</span> <span class="badge">confidence medium</span> <span class="badge">open</span></h3>
+<p class="small">al-10d949d8394882c5f358 · ARG-SP-001@1 · 2026-11-03T16:20:00.000000Z → 2026-11-03T16:30:00.000000Z · analyst status new</p>
+<p><b>Why:</b> Service principal tenant_id=tenant-contoso-demo, app_id=app-1111-demo signed in then changed credentials/permissions within 7200s.</p>
+<p class="small">automation: unknown · LLM: unknown · framework: unknown  · purpose: persistence (observed_success)</p>
+<p class="small"><b>Confidence rationale:</b> rule base confidence &#39;high&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
+<p class="small"><b>Alternatives:</b> automated secret rotation pipeline; IaC deployment · <b>Missing visibility:</b> </p>
+
+<p class="small mono">evidence: ev:fb385fb1e59fb9f0:27 ev:fb385fb1e59fb9f0:28</p>
+
+<h3>Secret reads across several vaults in a short period <span class="badge sev-high">high</span> <span class="badge">confidence medium</span> <span class="badge">open</span></h3>
+<p class="small">al-811b16304612cd8b175c · ARG-COLL-002@1 · 2026-11-03T16:36:40.000000Z → 2026-11-03T16:39:40.000000Z · analyst status new</p>
+<p><b>Why:</b> tenant_id=tenant-contoso-demo, app_id=app-1111-demo read secrets from 3 vaults within 600s.</p>
+<p class="small">automation: unknown · LLM: unknown · framework: unknown  · purpose: collection (observed_success)</p>
+<p class="small"><b>Confidence rationale:</b> rule base confidence &#39;medium&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
+<p class="small"><b>Alternatives:</b> deployment pipeline; configuration management · <b>Missing visibility:</b> </p>
+
+<p class="small mono">evidence: ev:fb385fb1e59fb9f0:29 ev:fb385fb1e59fb9f0:30 ev:fb385fb1e59fb9f0:31 ev:fb385fb1e59fb9f0:32</p>
+
+<h3>Archive created then large outbound transfer from the same host <span class="badge sev-high">high</span> <span class="badge">confidence medium</span> <span class="badge">open</span></h3>
+<p class="small">al-6570c9afcf85790e28ad · ARG-COLL-001@1 · 2026-11-03T19:06:40.000000Z → 2026-11-03T19:16:40.000000Z · analyst status new</p>
+<p><b>Why:</b> Archive then &gt;=50MB outbound from host=fileserver-02.demo.example within 1800s. Data theft is NOT established.</p>
+<p class="small">automation: unknown · LLM: unknown · framework: unknown  · purpose: possible_exfiltration (indicator)</p>
+<p class="small"><b>Confidence rationale:</b> rule base confidence &#39;medium&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
+<p class="small"><b>Alternatives:</b> backup upload; software distribution; cloud sync · <b>Missing visibility:</b> byte counts require a declared direction; records without bytes_basis are not used</p>
+
+<p class="small mono">evidence: ev:6ba2323d7cba5c9b:1 ev:6ba2323d7cba5c9b:2</p>
+
+<h3>Archive created then large outbound transfer from the same host <span class="badge sev-high">high</span> <span class="badge">confidence medium</span> <span class="badge">authorized_automation</span></h3>
+<p class="small">al-99e8bd7f71bb13d416ad · ARG-COLL-001@1 · 2026-11-03T19:23:20.000000Z → 2026-11-03T19:25:00.000000Z · analyst status new</p>
+<p><b>Why:</b> Archive then &gt;=50MB outbound from host=backup-01 within 1800s. Data theft is NOT established.</p>
+<p class="small">automation: observed_automation · LLM: unknown · framework: unknown  · purpose: possible_exfiltration (indicator)</p>
+<p class="small"><b>Confidence rationale:</b> rule base confidence &#39;medium&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39; | all 2 events match authorized automation entry AA-002 within scope/schedule</p>
+<p class="small"><b>Alternatives:</b> backup upload; software distribution; cloud sync · <b>Missing visibility:</b> byte counts require a declared direction; records without bytes_basis are not used</p>
+
+<p class="small mono">evidence: ev:6ba2323d7cba5c9b:3 ev:6ba2323d7cba5c9b:4</p>
+
+<h2>Timeline (evidence events)</h2>
+<table><tr><th>Event time</th><th>Kind</th><th>Vantage</th><th>Outcome</th><th>Actor</th><th>Detail</th><th>Ref</th></tr>
+<tr><td class="small">2026-11-03T08:01:40.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/0</td><td class="small mono">ev:afbd7b7bcb4ab772:10</td></tr><tr><td class="small">2026-11-03T08:01:40.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/1</td><td class="small mono">ev:afbd7b7bcb4ab772:96</td></tr><tr><td class="small">2026-11-03T08:01:40.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/2</td><td class="small mono">ev:afbd7b7bcb4ab772:165</td></tr><tr><td class="small">2026-11-03T08:01:40.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/3</td><td class="small mono">ev:afbd7b7bcb4ab772:95</td></tr><tr><td class="small">2026-11-03T08:01:40.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/4</td><td class="small mono">ev:afbd7b7bcb4ab772:76</td></tr><tr><td class="small">2026-11-03T08:01:41.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/5</td><td class="small mono">ev:afbd7b7bcb4ab772:234</td></tr><tr><td class="small">2026-11-03T08:01:41.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/6</td><td class="small mono">ev:afbd7b7bcb4ab772:65</td></tr><tr><td class="small">2026-11-03T08:01:41.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/7</td><td class="small mono">ev:afbd7b7bcb4ab772:245</td></tr><tr><td class="small">2026-11-03T08:01:41.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/8</td><td class="small mono">ev:afbd7b7bcb4ab772:259</td></tr><tr><td class="small">2026-11-03T08:01:41.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/9</td><td class="small mono">ev:afbd7b7bcb4ab772:328</td></tr><tr><td class="small">2026-11-03T08:01:42.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/10</td><td class="small mono">ev:afbd7b7bcb4ab772:138</td></tr><tr><td class="small">2026-11-03T08:01:42.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/11</td><td class="small mono">ev:afbd7b7bcb4ab772:43</td></tr><tr><td class="small">2026-11-03T08:01:42.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/12</td><td class="small mono">ev:afbd7b7bcb4ab772:194</td></tr><tr><td class="small">2026-11-03T08:01:42.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/13</td><td class="small mono">ev:afbd7b7bcb4ab772:317</td></tr><tr><td class="small">2026-11-03T08:01:42.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/14</td><td class="small mono">ev:afbd7b7bcb4ab772:86</td></tr><tr><td class="small">2026-11-03T08:01:43.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/15</td><td class="small mono">ev:afbd7b7bcb4ab772:302</td></tr><tr><td class="small">2026-11-03T08:01:43.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/16</td><td class="small mono">ev:afbd7b7bcb4ab772:168</td></tr><tr><td class="small">2026-11-03T08:01:43.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/17</td><td class="small mono">ev:afbd7b7bcb4ab772:333</td></tr><tr><td class="small">2026-11-03T08:01:43.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/18</td><td class="small mono">ev:afbd7b7bcb4ab772:267</td></tr><tr><td class="small">2026-11-03T08:01:43.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/19</td><td class="small mono">ev:afbd7b7bcb4ab772:30</td></tr><tr><td class="small">2026-11-03T08:01:44.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/20</td><td class="small mono">ev:afbd7b7bcb4ab772:327</td></tr><tr><td class="small">2026-11-03T08:01:44.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/21</td><td class="small mono">ev:afbd7b7bcb4ab772:133</td></tr><tr><td class="small">2026-11-03T08:01:44.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/22</td><td class="small mono">ev:afbd7b7bcb4ab772:114</td></tr><tr><td class="small">2026-11-03T08:01:44.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/23</td><td class="small mono">ev:afbd7b7bcb4ab772:205</td></tr><tr><td class="small">2026-11-03T08:01:44.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/24</td><td class="small mono">ev:afbd7b7bcb4ab772:243</td></tr><tr><td class="small">2026-11-03T08:01:45.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/25</td><td class="small mono">ev:afbd7b7bcb4ab772:155</td></tr><tr><td class="small">2026-11-03T08:01:45.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/26</td><td class="small mono">ev:afbd7b7bcb4ab772:264</td></tr><tr><td class="small">2026-11-03T08:01:45.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/27</td><td class="small mono">ev:afbd7b7bcb4ab772:343</td></tr><tr><td class="small">2026-11-03T08:01:45.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/28</td><td class="small mono">ev:afbd7b7bcb4ab772:101</td></tr><tr><td class="small">2026-11-03T08:01:45.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/29</td><td class="small mono">ev:afbd7b7bcb4ab772:73</td></tr><tr><td class="small">2026-11-03T08:01:46.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/30</td><td class="small mono">ev:afbd7b7bcb4ab772:116</td></tr><tr><td class="small">2026-11-03T08:01:46.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/31</td><td class="small mono">ev:afbd7b7bcb4ab772:278</td></tr><tr><td class="small">2026-11-03T08:01:46.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/32</td><td class="small mono">ev:afbd7b7bcb4ab772:222</td></tr><tr><td class="small">2026-11-03T08:01:46.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/33</td><td class="small mono">ev:afbd7b7bcb4ab772:285</td></tr><tr><td class="small">2026-11-03T08:01:46.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/34</td><td class="small mono">ev:afbd7b7bcb4ab772:12</td></tr><tr><td class="small">2026-11-03T08:01:47.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/35</td><td class="small mono">ev:afbd7b7bcb4ab772:219</td></tr><tr><td class="small">2026-11-03T08:01:47.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/36</td><td class="small mono">ev:afbd7b7bcb4ab772:252</td></tr><tr><td class="small">2026-11-03T08:01:47.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/37</td><td class="small mono">ev:afbd7b7bcb4ab772:100</td></tr><tr><td class="small">2026-11-03T08:01:47.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/38</td><td class="small mono">ev:afbd7b7bcb4ab772:20</td></tr><tr><td class="small">2026-11-03T08:01:47.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/39</td><td class="small mono">ev:afbd7b7bcb4ab772:17</td></tr><tr><td class="small">2026-11-03T08:01:48.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/40</td><td class="small mono">ev:afbd7b7bcb4ab772:228</td></tr><tr><td class="small">2026-11-03T08:01:48.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/41</td><td class="small mono">ev:afbd7b7bcb4ab772:280</td></tr><tr><td class="small">2026-11-03T08:01:48.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/42</td><td class="small mono">ev:afbd7b7bcb4ab772:310</td></tr><tr><td class="small">2026-11-03T08:01:48.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/43</td><td class="small mono">ev:afbd7b7bcb4ab772:164</td></tr><tr><td class="small">2026-11-03T08:01:48.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/44</td><td class="small mono">ev:afbd7b7bcb4ab772:26</td></tr><tr><td class="small">2026-11-03T08:01:49.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/45</td><td class="small mono">ev:afbd7b7bcb4ab772:210</td></tr><tr><td class="small">2026-11-03T08:01:49.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/46</td><td class="small mono">ev:afbd7b7bcb4ab772:98</td></tr><tr><td class="small">2026-11-03T08:01:49.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/47</td><td class="small mono">ev:afbd7b7bcb4ab772:42</td></tr><tr><td class="small">2026-11-03T08:01:49.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/48</td><td class="small mono">ev:afbd7b7bcb4ab772:125</td></tr><tr><td class="small">2026-11-03T08:01:49.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/49</td><td class="small mono">ev:afbd7b7bcb4ab772:27</td></tr><tr><td class="small">2026-11-03T08:01:50.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/50</td><td class="small mono">ev:afbd7b7bcb4ab772:304</td></tr><tr><td class="small">2026-11-03T08:01:50.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/51</td><td class="small mono">ev:afbd7b7bcb4ab772:224</td></tr><tr><td class="small">2026-11-03T08:01:50.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/52</td><td class="small mono">ev:afbd7b7bcb4ab772:253</td></tr><tr><td class="small">2026-11-03T08:01:50.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/53</td><td class="small mono">ev:afbd7b7bcb4ab772:122</td></tr><tr><td class="small">2026-11-03T08:01:50.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/54</td><td class="small mono">ev:afbd7b7bcb4ab772:170</td></tr><tr><td class="small">2026-11-03T08:01:51.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/55</td><td class="small mono">ev:afbd7b7bcb4ab772:22</td></tr><tr><td class="small">2026-11-03T08:01:51.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/56</td><td class="small mono">ev:afbd7b7bcb4ab772:282</td></tr><tr><td class="small">2026-11-03T08:01:51.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/57</td><td class="small mono">ev:afbd7b7bcb4ab772:58</td></tr><tr><td class="small">2026-11-03T08:01:51.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/58</td><td class="small mono">ev:afbd7b7bcb4ab772:137</td></tr><tr><td class="small">2026-11-03T08:01:51.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/59</td><td class="small mono">ev:afbd7b7bcb4ab772:249</td></tr><tr><td class="small">2026-11-03T08:01:52.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/60</td><td class="small mono">ev:afbd7b7bcb4ab772:167</td></tr><tr><td class="small">2026-11-03T08:01:52.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/61</td><td class="small mono">ev:afbd7b7bcb4ab772:152</td></tr><tr><td class="small">2026-11-03T08:01:52.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/62</td><td class="small mono">ev:afbd7b7bcb4ab772:311</td></tr><tr><td class="small">2026-11-03T08:01:52.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/63</td><td class="small mono">ev:afbd7b7bcb4ab772:139</td></tr><tr><td class="small">2026-11-03T08:01:52.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/64</td><td class="small mono">ev:afbd7b7bcb4ab772:69</td></tr><tr><td class="small">2026-11-03T08:01:53.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/65</td><td class="small mono">ev:afbd7b7bcb4ab772:140</td></tr><tr><td class="small">2026-11-03T08:01:53.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/66</td><td class="small mono">ev:afbd7b7bcb4ab772:297</td></tr><tr><td class="small">2026-11-03T08:01:53.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/67</td><td class="small mono">ev:afbd7b7bcb4ab772:158</td></tr><tr><td class="small">2026-11-03T08:01:53.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/68</td><td class="small mono">ev:afbd7b7bcb4ab772:148</td></tr><tr><td class="small">2026-11-03T08:01:53.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/69</td><td class="small mono">ev:afbd7b7bcb4ab772:225</td></tr><tr><td class="small">2026-11-03T08:01:54.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/70</td><td class="small mono">ev:afbd7b7bcb4ab772:175</td></tr><tr><td class="small">2026-11-03T08:01:54.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/71</td><td class="small mono">ev:afbd7b7bcb4ab772:202</td></tr><tr><td class="small">2026-11-03T08:01:54.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/72</td><td class="small mono">ev:afbd7b7bcb4ab772:108</td></tr><tr><td class="small">2026-11-03T08:01:54.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/73</td><td class="small mono">ev:afbd7b7bcb4ab772:103</td></tr><tr><td class="small">2026-11-03T08:01:54.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/74</td><td class="small mono">ev:afbd7b7bcb4ab772:284</td></tr><tr><td class="small">2026-11-03T08:01:55.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/75</td><td class="small mono">ev:afbd7b7bcb4ab772:287</td></tr><tr><td class="small">2026-11-03T08:01:55.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/76</td><td class="small mono">ev:afbd7b7bcb4ab772:79</td></tr><tr><td class="small">2026-11-03T08:01:55.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/77</td><td class="small mono">ev:afbd7b7bcb4ab772:231</td></tr><tr><td class="small">2026-11-03T08:01:55.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/78</td><td class="small mono">ev:afbd7b7bcb4ab772:90</td></tr><tr><td class="small">2026-11-03T08:01:55.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/79</td><td class="small mono">ev:afbd7b7bcb4ab772:289</td></tr><tr><td class="small">2026-11-03T08:01:56.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/80</td><td class="small mono">ev:afbd7b7bcb4ab772:169</td></tr><tr><td class="small">2026-11-03T08:01:56.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/81</td><td class="small mono">ev:afbd7b7bcb4ab772:161</td></tr><tr><td class="small">2026-11-03T08:01:56.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/82</td><td class="small mono">ev:afbd7b7bcb4ab772:82</td></tr><tr><td class="small">2026-11-03T08:01:56.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/83</td><td class="small mono">ev:afbd7b7bcb4ab772:6</td></tr><tr><td class="small">2026-11-03T08:01:56.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/84</td><td class="small mono">ev:afbd7b7bcb4ab772:277</td></tr><tr><td class="small">2026-11-03T08:01:57.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/85</td><td class="small mono">ev:afbd7b7bcb4ab772:239</td></tr><tr><td class="small">2026-11-03T08:01:57.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/86</td><td class="small mono">ev:afbd7b7bcb4ab772:329</td></tr><tr><td class="small">2026-11-03T08:01:57.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/87</td><td class="small mono">ev:afbd7b7bcb4ab772:193</td></tr><tr><td class="small">2026-11-03T08:01:57.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/88</td><td class="small mono">ev:afbd7b7bcb4ab772:286</td></tr><tr><td class="small">2026-11-03T08:01:57.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/89</td><td class="small mono">ev:afbd7b7bcb4ab772:40</td></tr><tr><td class="small">2026-11-03T08:01:58.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/90</td><td class="small mono">ev:afbd7b7bcb4ab772:301</td></tr><tr><td class="small">2026-11-03T08:01:58.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/91</td><td class="small mono">ev:afbd7b7bcb4ab772:336</td></tr><tr><td class="small">2026-11-03T08:01:58.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/92</td><td class="small mono">ev:afbd7b7bcb4ab772:56</td></tr><tr><td class="small">2026-11-03T08:01:58.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/93</td><td class="small mono">ev:afbd7b7bcb4ab772:320</td></tr><tr><td class="small">2026-11-03T08:01:58.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/94</td><td class="small mono">ev:afbd7b7bcb4ab772:186</td></tr><tr><td class="small">2026-11-03T08:01:59.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/95</td><td class="small mono">ev:afbd7b7bcb4ab772:315</td></tr><tr><td class="small">2026-11-03T08:01:59.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/96</td><td class="small mono">ev:afbd7b7bcb4ab772:2</td></tr><tr><td class="small">2026-11-03T08:01:59.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/97</td><td class="small mono">ev:afbd7b7bcb4ab772:236</td></tr><tr><td class="small">2026-11-03T08:01:59.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/98</td><td class="small mono">ev:afbd7b7bcb4ab772:64</td></tr><tr><td class="small">2026-11-03T08:01:59.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/99</td><td class="small mono">ev:afbd7b7bcb4ab772:171</td></tr><tr><td class="small">2026-11-03T08:02:00.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/100</td><td class="small mono">ev:afbd7b7bcb4ab772:213</td></tr><tr><td class="small">2026-11-03T08:02:00.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/101</td><td class="small mono">ev:afbd7b7bcb4ab772:265</td></tr><tr><td class="small">2026-11-03T08:02:00.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/102</td><td class="small mono">ev:afbd7b7bcb4ab772:156</td></tr><tr><td class="small">2026-11-03T08:02:00.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/103</td><td class="small mono">ev:afbd7b7bcb4ab772:118</td></tr><tr><td class="small">2026-11-03T08:02:00.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/104</td><td class="small mono">ev:afbd7b7bcb4ab772:78</td></tr><tr><td class="small">2026-11-03T08:02:01.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/105</td><td class="small mono">ev:afbd7b7bcb4ab772:162</td></tr><tr><td class="small">2026-11-03T08:02:01.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/106</td><td class="small mono">ev:afbd7b7bcb4ab772:174</td></tr><tr><td class="small">2026-11-03T08:02:01.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/107</td><td class="small mono">ev:afbd7b7bcb4ab772:196</td></tr><tr><td class="small">2026-11-03T08:02:01.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/108</td><td class="small mono">ev:afbd7b7bcb4ab772:153</td></tr><tr><td class="small">2026-11-03T08:02:01.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/109</td><td class="small mono">ev:afbd7b7bcb4ab772:85</td></tr><tr><td class="small">2026-11-03T08:02:02.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/110</td><td class="small mono">ev:afbd7b7bcb4ab772:324</td></tr><tr><td class="small">2026-11-03T08:02:02.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/111</td><td class="small mono">ev:afbd7b7bcb4ab772:283</td></tr><tr><td class="small">2026-11-03T08:02:02.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/112</td><td class="small mono">ev:afbd7b7bcb4ab772:178</td></tr><tr><td class="small">2026-11-03T08:02:02.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/113</td><td class="small mono">ev:afbd7b7bcb4ab772:55</td></tr><tr><td class="small">2026-11-03T08:02:02.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/114</td><td class="small mono">ev:afbd7b7bcb4ab772:255</td></tr><tr><td class="small">2026-11-03T08:02:03.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/115</td><td class="small mono">ev:afbd7b7bcb4ab772:47</td></tr><tr><td class="small">2026-11-03T08:02:03.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/116</td><td class="small mono">ev:afbd7b7bcb4ab772:197</td></tr><tr><td class="small">2026-11-03T08:02:03.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/117</td><td class="small mono">ev:afbd7b7bcb4ab772:94</td></tr><tr><td class="small">2026-11-03T08:02:03.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/118</td><td class="small mono">ev:afbd7b7bcb4ab772:314</td></tr><tr><td class="small">2026-11-03T08:02:03.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/119</td><td class="small mono">ev:afbd7b7bcb4ab772:295</td></tr><tr><td class="small">2026-11-03T08:02:04.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/120</td><td class="small mono">ev:afbd7b7bcb4ab772:115</td></tr><tr><td class="small">2026-11-03T08:02:04.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/121</td><td class="small mono">ev:afbd7b7bcb4ab772:335</td></tr><tr><td class="small">2026-11-03T08:02:04.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/122</td><td class="small mono">ev:afbd7b7bcb4ab772:189</td></tr><tr><td class="small">2026-11-03T08:02:04.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/123</td><td class="small mono">ev:afbd7b7bcb4ab772:212</td></tr><tr><td class="small">2026-11-03T08:02:04.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/124</td><td class="small mono">ev:afbd7b7bcb4ab772:211</td></tr><tr><td class="small">2026-11-03T08:02:05.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/125</td><td class="small mono">ev:afbd7b7bcb4ab772:323</td></tr><tr><td class="small">2026-11-03T08:02:05.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/126</td><td class="small mono">ev:afbd7b7bcb4ab772:31</td></tr><tr><td class="small">2026-11-03T08:02:05.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/127</td><td class="small mono">ev:afbd7b7bcb4ab772:195</td></tr><tr><td class="small">2026-11-03T08:02:05.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/128</td><td class="small mono">ev:afbd7b7bcb4ab772:62</td></tr><tr><td class="small">2026-11-03T08:02:05.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/129</td><td class="small mono">ev:afbd7b7bcb4ab772:215</td></tr><tr><td class="small">2026-11-03T08:02:06.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/130</td><td class="small mono">ev:afbd7b7bcb4ab772:112</td></tr><tr><td class="small">2026-11-03T08:02:06.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/131</td><td class="small mono">ev:afbd7b7bcb4ab772:121</td></tr><tr><td class="small">2026-11-03T08:02:06.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/132</td><td class="small mono">ev:afbd7b7bcb4ab772:143</td></tr><tr><td class="small">2026-11-03T08:02:06.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/133</td><td class="small mono">ev:afbd7b7bcb4ab772:21</td></tr><tr><td class="small">2026-11-03T08:02:06.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/134</td><td class="small mono">ev:afbd7b7bcb4ab772:52</td></tr><tr><td class="small">2026-11-03T08:02:07.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/135</td><td class="small mono">ev:afbd7b7bcb4ab772:238</td></tr><tr><td class="small">2026-11-03T08:02:07.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/136</td><td class="small mono">ev:afbd7b7bcb4ab772:61</td></tr><tr><td class="small">2026-11-03T08:02:07.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/137</td><td class="small mono">ev:afbd7b7bcb4ab772:136</td></tr><tr><td class="small">2026-11-03T08:02:07.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/138</td><td class="small mono">ev:afbd7b7bcb4ab772:208</td></tr><tr><td class="small">2026-11-03T08:02:07.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/139</td><td class="small mono">ev:afbd7b7bcb4ab772:321</td></tr><tr><td class="small">2026-11-03T08:02:08.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/140</td><td class="small mono">ev:afbd7b7bcb4ab772:248</td></tr><tr><td class="small">2026-11-03T08:02:08.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/141</td><td class="small mono">ev:afbd7b7bcb4ab772:80</td></tr><tr><td class="small">2026-11-03T08:02:08.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/142</td><td class="small mono">ev:afbd7b7bcb4ab772:7</td></tr><tr><td class="small">2026-11-03T08:02:08.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/143</td><td class="small mono">ev:afbd7b7bcb4ab772:345</td></tr><tr><td class="small">2026-11-03T08:02:08.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/144</td><td class="small mono">ev:afbd7b7bcb4ab772:184</td></tr><tr><td class="small">2026-11-03T08:02:09.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/145</td><td class="small mono">ev:afbd7b7bcb4ab772:305</td></tr><tr><td class="small">2026-11-03T08:02:09.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/146</td><td class="small mono">ev:afbd7b7bcb4ab772:226</td></tr><tr><td class="small">2026-11-03T08:02:09.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/147</td><td class="small mono">ev:afbd7b7bcb4ab772:89</td></tr><tr><td class="small">2026-11-03T08:02:09.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/148</td><td class="small mono">ev:afbd7b7bcb4ab772:214</td></tr><tr><td class="small">2026-11-03T08:02:09.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.10 </td><td class="small mono">/check/149</td><td class="small mono">ev:afbd7b7bcb4ab772:218</td></tr><tr><td class="small">2026-11-03T08:06:40.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:4</td></tr><tr><td class="small">2026-11-03T08:06:40.300000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:177</td></tr><tr><td class="small">2026-11-03T08:06:40.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:268</td></tr><tr><td class="small">2026-11-03T08:06:40.900000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:338</td></tr><tr><td class="small">2026-11-03T08:06:41.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:142</td></tr><tr><td class="small">2026-11-03T08:06:41.500000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:23</td></tr><tr><td class="small">2026-11-03T08:06:41.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:299</td></tr><tr><td class="small">2026-11-03T08:06:42.100000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:154</td></tr><tr><td class="small">2026-11-03T08:06:42.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:16</td></tr><tr><td class="small">2026-11-03T08:06:42.700000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:334</td></tr><tr><td class="small">2026-11-03T08:06:43.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:70</td></tr><tr><td class="small">2026-11-03T08:06:43.300000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:261</td></tr><tr><td class="small">2026-11-03T08:06:43.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:308</td></tr><tr><td class="small">2026-11-03T08:06:43.900000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:104</td></tr><tr><td class="small">2026-11-03T08:06:44.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:294</td></tr><tr><td class="small">2026-11-03T08:06:44.500000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:190</td></tr><tr><td class="small">2026-11-03T08:06:44.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:45</td></tr><tr><td class="small">2026-11-03T08:06:45.100000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:145</td></tr><tr><td class="small">2026-11-03T08:06:45.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:192</td></tr><tr><td class="small">2026-11-03T08:06:45.700000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:220</td></tr><tr><td class="small">2026-11-03T08:06:46.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:38</td></tr><tr><td class="small">2026-11-03T08:06:46.300000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:3</td></tr><tr><td class="small">2026-11-03T08:06:46.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:160</td></tr><tr><td class="small">2026-11-03T08:06:46.900000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:275</td></tr><tr><td class="small">2026-11-03T08:06:47.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:9</td></tr><tr><td class="small">2026-11-03T08:06:47.500000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:68</td></tr><tr><td class="small">2026-11-03T08:06:47.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:179</td></tr><tr><td class="small">2026-11-03T08:06:48.100000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:331</td></tr><tr><td class="small">2026-11-03T08:06:48.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:346</td></tr><tr><td class="small">2026-11-03T08:06:48.700000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:201</td></tr><tr><td class="small">2026-11-03T08:06:49.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:209</td></tr><tr><td class="small">2026-11-03T08:06:49.300000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:32</td></tr><tr><td class="small">2026-11-03T08:06:49.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:88</td></tr><tr><td class="small">2026-11-03T08:06:49.900000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:60</td></tr><tr><td class="small">2026-11-03T08:06:50.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:93</td></tr><tr><td class="small">2026-11-03T08:06:50.500000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:46</td></tr><tr><td class="small">2026-11-03T08:06:50.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:247</td></tr><tr><td class="small">2026-11-03T08:06:51.100000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:67</td></tr><tr><td class="small">2026-11-03T08:06:51.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:242</td></tr><tr><td class="small">2026-11-03T08:06:51.700000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:244</td></tr><tr><td class="small">2026-11-03T08:06:52.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:126</td></tr><tr><td class="small">2026-11-03T08:06:52.300000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:185</td></tr><tr><td class="small">2026-11-03T08:06:52.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:105</td></tr><tr><td class="small">2026-11-03T08:06:52.900000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:110</td></tr><tr><td class="small">2026-11-03T08:06:53.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:293</td></tr><tr><td class="small">2026-11-03T08:06:53.500000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:13</td></tr><tr><td class="small">2026-11-03T08:06:53.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:99</td></tr><tr><td class="small">2026-11-03T08:06:54.100000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:72</td></tr><tr><td class="small">2026-11-03T08:06:54.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:183</td></tr><tr><td class="small">2026-11-03T08:06:54.700000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:59</td></tr><tr><td class="small">2026-11-03T08:06:55.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:232</td></tr><tr><td class="small">2026-11-03T08:06:55.300000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:50</td></tr><tr><td class="small">2026-11-03T08:06:55.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:312</td></tr><tr><td class="small">2026-11-03T08:06:55.900000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:39</td></tr><tr><td class="small">2026-11-03T08:06:56.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:34</td></tr><tr><td class="small">2026-11-03T08:06:56.500000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:36</td></tr><tr><td class="small">2026-11-03T08:06:56.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:227</td></tr><tr><td class="small">2026-11-03T08:06:57.100000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:187</td></tr><tr><td class="small">2026-11-03T08:06:57.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:296</td></tr><tr><td class="small">2026-11-03T08:06:57.700000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:246</td></tr><tr><td class="small">2026-11-03T08:06:58.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:106</td></tr><tr><td class="small">2026-11-03T08:06:58.300000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:337</td></tr><tr><td class="small">2026-11-03T08:06:58.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:151</td></tr><tr><td class="small">2026-11-03T08:06:58.900000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:318</td></tr><tr><td class="small">2026-11-03T08:06:59.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:258</td></tr><tr><td class="small">2026-11-03T08:06:59.500000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:127</td></tr><tr><td class="small">2026-11-03T08:06:59.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:325</td></tr><tr><td class="small">2026-11-03T08:07:00.100000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:146</td></tr><tr><td class="small">2026-11-03T08:07:00.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:77</td></tr><tr><td class="small">2026-11-03T08:07:00.700000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:141</td></tr><tr><td class="small">2026-11-03T08:07:01.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:339</td></tr><tr><td class="small">2026-11-03T08:07:01.300000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:204</td></tr><tr><td class="small">2026-11-03T08:07:01.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:123</td></tr><tr><td class="small">2026-11-03T08:07:01.900000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:340</td></tr><tr><td class="small">2026-11-03T08:07:02.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:129</td></tr><tr><td class="small">2026-11-03T08:07:02.500000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:29</td></tr><tr><td class="small">2026-11-03T08:07:02.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:124</td></tr><tr><td class="small">2026-11-03T08:07:03.100000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:166</td></tr><tr><td class="small">2026-11-03T08:07:03.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:87</td></tr><tr><td class="small">2026-11-03T08:07:03.700000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:273</td></tr><tr><td class="small">2026-11-03T08:07:04.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:229</td></tr><tr><td class="small">2026-11-03T08:07:04.300000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:257</td></tr><tr><td class="small">2026-11-03T08:07:04.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:120</td></tr><tr><td class="small">2026-11-03T08:07:04.900000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:256</td></tr><tr><td class="small">2026-11-03T08:07:05.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:113</td></tr><tr><td class="small">2026-11-03T08:07:05.500000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:276</td></tr><tr><td class="small">2026-11-03T08:07:05.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:41</td></tr><tr><td class="small">2026-11-03T08:07:06.100000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:344</td></tr><tr><td class="small">2026-11-03T08:07:06.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:131</td></tr><tr><td class="small">2026-11-03T08:07:06.700000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:15</td></tr><tr><td class="small">2026-11-03T08:07:07.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:18</td></tr><tr><td class="small">2026-11-03T08:07:07.300000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:37</td></tr><tr><td class="small">2026-11-03T08:07:07.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:182</td></tr><tr><td class="small">2026-11-03T08:07:07.900000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:51</td></tr><tr><td class="small">2026-11-03T08:07:08.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:206</td></tr><tr><td class="small">2026-11-03T08:07:08.500000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:279</td></tr><tr><td class="small">2026-11-03T08:07:08.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:74</td></tr><tr><td class="small">2026-11-03T08:07:09.100000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:84</td></tr><tr><td class="small">2026-11-03T08:07:09.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:181</td></tr><tr><td class="small">2026-11-03T08:07:09.700000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:198</td></tr><tr><td class="small">2026-11-03T08:07:10.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:307</td></tr><tr><td class="small">2026-11-03T08:07:10.300000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:66</td></tr><tr><td class="small">2026-11-03T08:07:10.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:298</td></tr><tr><td class="small">2026-11-03T08:07:10.900000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:316</td></tr><tr><td class="small">2026-11-03T08:07:11.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:281</td></tr><tr><td class="small">2026-11-03T08:07:11.500000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:235</td></tr><tr><td class="small">2026-11-03T08:07:11.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:326</td></tr><tr><td class="small">2026-11-03T08:07:12.100000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:233</td></tr><tr><td class="small">2026-11-03T08:07:12.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:207</td></tr><tr><td class="small">2026-11-03T08:07:12.700000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:159</td></tr><tr><td class="small">2026-11-03T08:07:13.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:135</td></tr><tr><td class="small">2026-11-03T08:07:13.300000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:288</td></tr><tr><td class="small">2026-11-03T08:07:13.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:266</td></tr><tr><td class="small">2026-11-03T08:07:13.900000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:111</td></tr><tr><td class="small">2026-11-03T08:07:14.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:251</td></tr><tr><td class="small">2026-11-03T08:07:14.500000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:92</td></tr><tr><td class="small">2026-11-03T08:07:14.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:230</td></tr><tr><td class="small">2026-11-03T08:07:15.100000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:54</td></tr><tr><td class="small">2026-11-03T08:07:15.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:8</td></tr><tr><td class="small">2026-11-03T08:07:15.700000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:24</td></tr><tr><td class="small">2026-11-03T08:07:16.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:97</td></tr><tr><td class="small">2026-11-03T08:07:16.300000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:290</td></tr><tr><td class="small">2026-11-03T08:07:16.600000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:53</td></tr><tr><td class="small">2026-11-03T08:07:16.900000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:270</td></tr><tr><td class="small">2026-11-03T08:07:17.200000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:63</td></tr><tr><td class="small">2026-11-03T08:07:17.500000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:147</td></tr><tr><td class="small">2026-11-03T08:07:17.800000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:109</td></tr><tr><td class="small">2026-11-03T08:07:18.100000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:271</td></tr><tr><td class="small">2026-11-03T08:07:18.400000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:291</td></tr><tr><td class="small">2026-11-03T08:07:18.700000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 198.51.100.20 </td><td class="small mono">/healthz</td><td class="small mono">ev:afbd7b7bcb4ab772:342</td></tr><tr><td class="small">2026-11-03T08:33:20.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/admin?id=1</td><td class="small mono">ev:afbd7b7bcb4ab772:309</td></tr><tr><td class="small">2026-11-03T08:33:22.754758Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/backup</td><td class="small mono">ev:afbd7b7bcb4ab772:157</td></tr><tr><td class="small">2026-11-03T08:33:24.635736Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/.git/config</td><td class="small mono">ev:afbd7b7bcb4ab772:221</td></tr><tr><td class="small">2026-11-03T08:33:27.769941Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/wp-login.php</td><td class="small mono">ev:afbd7b7bcb4ab772:269</td></tr><tr><td class="small">2026-11-03T08:33:29.088345Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/api/v1/users</td><td class="small mono">ev:afbd7b7bcb4ab772:107</td></tr><tr><td class="small">2026-11-03T08:33:30.490115Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/api/v1/debug</td><td class="small mono">ev:afbd7b7bcb4ab772:332</td></tr><tr><td class="small">2026-11-03T08:33:32.416596Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/server-status</td><td class="small mono">ev:afbd7b7bcb4ab772:203</td></tr><tr><td class="small">2026-11-03T08:33:34.518803Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/phpinfo.php?id=1</td><td class="small mono">ev:afbd7b7bcb4ab772:150</td></tr><tr><td class="small">2026-11-03T08:33:35.989002Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/console</td><td class="small mono">ev:afbd7b7bcb4ab772:130</td></tr><tr><td class="small">2026-11-03T08:33:38.630105Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/actuator/env</td><td class="small mono">ev:afbd7b7bcb4ab772:217</td></tr><tr><td class="small">2026-11-03T08:33:40.527270Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/graphql</td><td class="small mono">ev:afbd7b7bcb4ab772:33</td></tr><tr><td class="small">2026-11-03T08:33:43.673214Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/swagger.json</td><td class="small mono">ev:afbd7b7bcb4ab772:71</td></tr><tr><td class="small">2026-11-03T08:33:47.395112Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/config.json</td><td class="small mono">ev:afbd7b7bcb4ab772:260</td></tr><tr><td class="small">2026-11-03T08:33:49.500663Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/login</td><td class="small mono">ev:afbd7b7bcb4ab772:188</td></tr><tr><td class="small">2026-11-03T08:33:52.570174Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/.env?id=1</td><td class="small mono">ev:afbd7b7bcb4ab772:19</td></tr><tr><td class="small">2026-11-03T08:33:53.616697Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/old</td><td class="small mono">ev:afbd7b7bcb4ab772:254</td></tr><tr><td class="small">2026-11-03T08:33:56.384194Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/test</td><td class="small mono">ev:afbd7b7bcb4ab772:199</td></tr><tr><td class="small">2026-11-03T08:33:58.075323Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/dev</td><td class="small mono">ev:afbd7b7bcb4ab772:49</td></tr><tr><td class="small">2026-11-03T08:33:59.238543Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/staging</td><td class="small mono">ev:afbd7b7bcb4ab772:117</td></tr><tr><td class="small">2026-11-03T08:34:01.340370Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/upload</td><td class="small mono">ev:afbd7b7bcb4ab772:176</td></tr><tr><td class="small">2026-11-03T08:34:04.943728Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/files</td><td class="small mono">ev:afbd7b7bcb4ab772:35</td></tr><tr><td class="small">2026-11-03T08:34:06.890751Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/export?id=1</td><td class="small mono">ev:afbd7b7bcb4ab772:44</td></tr><tr><td class="small">2026-11-03T08:34:09.267805Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/import</td><td class="small mono">ev:afbd7b7bcb4ab772:11</td></tr><tr><td class="small">2026-11-03T08:34:11.086036Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/jenkins</td><td class="small mono">ev:afbd7b7bcb4ab772:91</td></tr><tr><td class="small">2026-11-03T08:34:13.197601Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/manager/html</td><td class="small mono">ev:afbd7b7bcb4ab772:144</td></tr><tr><td class="small">2026-11-03T08:34:15.925177Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/solr</td><td class="small mono">ev:afbd7b7bcb4ab772:262</td></tr><tr><td class="small">2026-11-03T08:34:17.042342Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/kibana</td><td class="small mono">ev:afbd7b7bcb4ab772:241</td></tr><tr><td class="small">2026-11-03T08:34:20.032157Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/metrics</td><td class="small mono">ev:afbd7b7bcb4ab772:14</td></tr><tr><td class="small">2026-11-03T08:34:21.642660Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/status?id=1</td><td class="small mono">ev:afbd7b7bcb4ab772:272</td></tr><tr><td class="small">2026-11-03T08:34:24.898000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/debug/pprof</td><td class="small mono">ev:afbd7b7bcb4ab772:306</td></tr><tr><td class="small">2026-11-03T08:34:26.360894Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/v2/api-docs</td><td class="small mono">ev:afbd7b7bcb4ab772:263</td></tr><tr><td class="small">2026-11-03T08:34:28.348007Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/cgi-bin/test</td><td class="small mono">ev:afbd7b7bcb4ab772:149</td></tr><tr><td class="small">2026-11-03T08:34:30.358305Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/admin</td><td class="small mono">ev:afbd7b7bcb4ab772:319</td></tr><tr><td class="small">2026-11-03T08:34:31.429163Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/backup</td><td class="small mono">ev:afbd7b7bcb4ab772:250</td></tr><tr><td class="small">2026-11-03T08:34:33.928859Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/.git/config</td><td class="small mono">ev:afbd7b7bcb4ab772:240</td></tr><tr><td class="small">2026-11-03T08:34:35.757318Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/wp-login.php?id=1</td><td class="small mono">ev:afbd7b7bcb4ab772:102</td></tr><tr><td class="small">2026-11-03T08:34:37.282345Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/api/v1/users</td><td class="small mono">ev:afbd7b7bcb4ab772:180</td></tr><tr><td class="small">2026-11-03T08:34:41.050298Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/api/v1/debug</td><td class="small mono">ev:afbd7b7bcb4ab772:57</td></tr><tr><td class="small">2026-11-03T08:34:44.781544Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/server-status</td><td class="small mono">ev:afbd7b7bcb4ab772:303</td></tr><tr><td class="small">2026-11-03T08:34:46.506576Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/phpinfo.php</td><td class="small mono">ev:afbd7b7bcb4ab772:300</td></tr><tr><td class="small">2026-11-03T08:34:48.440890Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/console</td><td class="small mono">ev:afbd7b7bcb4ab772:48</td></tr><tr><td class="small">2026-11-03T08:34:51.095436Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/actuator/env</td><td class="small mono">ev:afbd7b7bcb4ab772:237</td></tr><tr><td class="small">2026-11-03T08:34:54.820986Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/graphql?id=1</td><td class="small mono">ev:afbd7b7bcb4ab772:330</td></tr><tr><td class="small">2026-11-03T08:34:56.911268Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/swagger.json</td><td class="small mono">ev:afbd7b7bcb4ab772:75</td></tr><tr><td class="small">2026-11-03T08:34:58.409523Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/config.json</td><td class="small mono">ev:afbd7b7bcb4ab772:322</td></tr><tr><td class="small">2026-11-03T08:35:00.848036Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/login</td><td class="small mono">ev:afbd7b7bcb4ab772:134</td></tr><tr><td class="small">2026-11-03T08:35:04.467674Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/.env</td><td class="small mono">ev:afbd7b7bcb4ab772:341</td></tr><tr><td class="small">2026-11-03T08:35:06.366025Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/old</td><td class="small mono">ev:afbd7b7bcb4ab772:172</td></tr><tr><td class="small">2026-11-03T08:35:10.166379Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/test</td><td class="small mono">ev:afbd7b7bcb4ab772:83</td></tr><tr><td class="small">2026-11-03T08:35:12.391983Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/dev?id=1</td><td class="small mono">ev:afbd7b7bcb4ab772:132</td></tr><tr><td class="small">2026-11-03T08:35:14.369136Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/staging</td><td class="small mono">ev:afbd7b7bcb4ab772:28</td></tr><tr><td class="small">2026-11-03T08:35:16.758192Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/upload</td><td class="small mono">ev:afbd7b7bcb4ab772:128</td></tr><tr><td class="small">2026-11-03T08:35:20.358549Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/files</td><td class="small mono">ev:afbd7b7bcb4ab772:163</td></tr><tr><td class="small">2026-11-03T08:35:24.284250Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/export</td><td class="small mono">ev:afbd7b7bcb4ab772:25</td></tr><tr><td class="small">2026-11-03T08:35:26.468947Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/import</td><td class="small mono">ev:afbd7b7bcb4ab772:119</td></tr><tr><td class="small">2026-11-03T08:35:29.450988Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/jenkins</td><td class="small mono">ev:afbd7b7bcb4ab772:313</td></tr><tr><td class="small">2026-11-03T08:35:32.781829Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/manager/html?id=1</td><td class="small mono">ev:afbd7b7bcb4ab772:81</td></tr><tr><td class="small">2026-11-03T08:35:36.422734Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/solr</td><td class="small mono">ev:afbd7b7bcb4ab772:274</td></tr><tr><td class="small">2026-11-03T08:35:38.414839Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/kibana</td><td class="small mono">ev:afbd7b7bcb4ab772:191</td></tr><tr><td class="small">2026-11-03T08:35:40.675398Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/metrics</td><td class="small mono">ev:afbd7b7bcb4ab772:200</td></tr><tr><td class="small">2026-11-03T08:35:46.617981Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">/api/v1/export?fmt=csv</td><td class="small mono">ev:afbd7b7bcb4ab772:216</td></tr><tr><td class="small">2026-11-03T08:50:00.000000Z</td><td>authentication</td><td class="small">identity_cloud</td><td>failure</td>
+<td class="small">user00@demo.example 203.0.113.50 </td><td class="small mono">signin</td><td class="small mono">ev:fb385fb1e59fb9f0:1</td></tr><tr><td class="small">2026-11-03T08:50:20.000000Z</td><td>authentication</td><td class="small">identity_cloud</td><td>failure</td>
+<td class="small">user01@demo.example 203.0.113.50 </td><td class="small mono">signin</td><td class="small mono">ev:fb385fb1e59fb9f0:2</td></tr><tr><td class="small">2026-11-03T08:50:40.000000Z</td><td>authentication</td><td class="small">identity_cloud</td><td>failure</td>
+<td class="small">user02@demo.example 203.0.113.50 </td><td class="small mono">signin</td><td class="small mono">ev:fb385fb1e59fb9f0:3</td></tr><tr><td class="small">2026-11-03T08:51:00.000000Z</td><td>authentication</td><td class="small">identity_cloud</td><td>failure</td>
+<td class="small">user03@demo.example 203.0.113.50 </td><td class="small mono">signin</td><td class="small mono">ev:fb385fb1e59fb9f0:4</td></tr><tr><td class="small">2026-11-03T08:51:20.000000Z</td><td>authentication</td><td class="small">identity_cloud</td><td>failure</td>
+<td class="small">user04@demo.example 203.0.113.50 </td><td class="small mono">signin</td><td class="small mono">ev:fb385fb1e59fb9f0:5</td></tr><tr><td class="small">2026-11-03T08:51:40.000000Z</td><td>authentication</td><td class="small">identity_cloud</td><td>failure</td>
+<td class="small">user05@demo.example 203.0.113.50 </td><td class="small mono">signin</td><td class="small mono">ev:fb385fb1e59fb9f0:6</td></tr><tr><td class="small">2026-11-03T08:52:00.000000Z</td><td>authentication</td><td class="small">identity_cloud</td><td>failure</td>
+<td class="small">user06@demo.example 203.0.113.50 </td><td class="small mono">signin</td><td class="small mono">ev:fb385fb1e59fb9f0:7</td></tr><tr><td class="small">2026-11-03T08:52:20.000000Z</td><td>authentication</td><td class="small">identity_cloud</td><td>failure</td>
+<td class="small">user07@demo.example 203.0.113.50 </td><td class="small mono">signin</td><td class="small mono">ev:fb385fb1e59fb9f0:8</td></tr><tr><td class="small">2026-11-03T08:52:40.000000Z</td><td>authentication</td><td class="small">identity_cloud</td><td>failure</td>
+<td class="small">user08@demo.example 203.0.113.50 </td><td class="small mono">signin</td><td class="small mono">ev:fb385fb1e59fb9f0:9</td></tr><tr><td class="small">2026-11-03T08:53:00.000000Z</td><td>authentication</td><td class="small">identity_cloud</td><td>failure</td>
+<td class="small">user09@demo.example 203.0.113.50 </td><td class="small mono">signin</td><td class="small mono">ev:fb385fb1e59fb9f0:10</td></tr><tr><td class="small">2026-11-03T08:53:20.000000Z</td><td>authentication</td><td class="small">identity_cloud</td><td>failure</td>
+<td class="small">user10@demo.example 203.0.113.50 </td><td class="small mono">signin</td><td class="small mono">ev:fb385fb1e59fb9f0:11</td></tr><tr><td class="small">2026-11-03T08:53:40.000000Z</td><td>authentication</td><td class="small">identity_cloud</td><td>failure</td>
+<td class="small">user11@demo.example 203.0.113.50 </td><td class="small mono">signin</td><td class="small mono">ev:fb385fb1e59fb9f0:12</td></tr><tr><td class="small">2026-11-03T09:06:40.000000Z</td><td>network_connection</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">REJ</td><td class="small mono">ev:1de0b46ccb704f34:1</td></tr><tr><td class="small">2026-11-03T09:06:40.500000Z</td><td>network_connection</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">REJ</td><td class="small mono">ev:1de0b46ccb704f34:2</td></tr><tr><td class="small">2026-11-03T09:06:41.000000Z</td><td>network_connection</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">REJ</td><td class="small mono">ev:1de0b46ccb704f34:3</td></tr><tr><td class="small">2026-11-03T09:06:41.500000Z</td><td>network_connection</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">REJ</td><td class="small mono">ev:1de0b46ccb704f34:4</td></tr><tr><td class="small">2026-11-03T09:06:42.000000Z</td><td>network_connection</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">REJ</td><td class="small mono">ev:1de0b46ccb704f34:5</td></tr><tr><td class="small">2026-11-03T09:06:42.500000Z</td><td>network_connection</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">REJ</td><td class="small mono">ev:1de0b46ccb704f34:6</td></tr><tr><td class="small">2026-11-03T09:06:43.000000Z</td><td>network_connection</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">REJ</td><td class="small mono">ev:1de0b46ccb704f34:7</td></tr><tr><td class="small">2026-11-03T09:06:43.500000Z</td><td>network_connection</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">REJ</td><td class="small mono">ev:1de0b46ccb704f34:8</td></tr><tr><td class="small">2026-11-03T09:06:44.000000Z</td><td>network_connection</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">REJ</td><td class="small mono">ev:1de0b46ccb704f34:9</td></tr><tr><td class="small">2026-11-03T09:06:44.500000Z</td><td>network_connection</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">REJ</td><td class="small mono">ev:1de0b46ccb704f34:10</td></tr><tr><td class="small">2026-11-03T09:06:45.000000Z</td><td>network_connection</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">REJ</td><td class="small mono">ev:1de0b46ccb704f34:11</td></tr><tr><td class="small">2026-11-03T09:06:45.500000Z</td><td>network_connection</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">REJ</td><td class="small mono">ev:1de0b46ccb704f34:12</td></tr><tr><td class="small">2026-11-03T09:06:46.000000Z</td><td>network_connection</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">REJ</td><td class="small mono">ev:1de0b46ccb704f34:13</td></tr><tr><td class="small">2026-11-03T09:06:46.500000Z</td><td>network_connection</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">REJ</td><td class="small mono">ev:1de0b46ccb704f34:14</td></tr><tr><td class="small">2026-11-03T09:06:47.000000Z</td><td>network_connection</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">REJ</td><td class="small mono">ev:1de0b46ccb704f34:15</td></tr><tr><td class="small">2026-11-03T09:06:47.500000Z</td><td>network_connection</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">REJ</td><td class="small mono">ev:1de0b46ccb704f34:16</td></tr><tr><td class="small">2026-11-03T09:06:48.000000Z</td><td>network_connection</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">REJ</td><td class="small mono">ev:1de0b46ccb704f34:17</td></tr><tr><td class="small">2026-11-03T09:06:48.500000Z</td><td>network_connection</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">REJ</td><td class="small mono">ev:1de0b46ccb704f34:18</td></tr><tr><td class="small">2026-11-03T09:06:49.000000Z</td><td>network_connection</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">REJ</td><td class="small mono">ev:1de0b46ccb704f34:19</td></tr><tr><td class="small">2026-11-03T09:06:49.500000Z</td><td>network_connection</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">REJ</td><td class="small mono">ev:1de0b46ccb704f34:20</td></tr><tr><td class="small">2026-11-03T09:06:50.000000Z</td><td>network_connection</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">REJ</td><td class="small mono">ev:1de0b46ccb704f34:21</td></tr><tr><td class="small">2026-11-03T09:06:50.500000Z</td><td>network_connection</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">REJ</td><td class="small mono">ev:1de0b46ccb704f34:22</td></tr><tr><td class="small">2026-11-03T09:06:51.000000Z</td><td>network_connection</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">REJ</td><td class="small mono">ev:1de0b46ccb704f34:23</td></tr><tr><td class="small">2026-11-03T09:06:51.500000Z</td><td>network_connection</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">REJ</td><td class="small mono">ev:1de0b46ccb704f34:24</td></tr><tr><td class="small">2026-11-03T09:06:52.000000Z</td><td>network_connection</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">REJ</td><td class="small mono">ev:1de0b46ccb704f34:25</td></tr><tr><td class="small">2026-11-03T09:06:52.500000Z</td><td>network_connection</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">REJ</td><td class="small mono">ev:1de0b46ccb704f34:26</td></tr><tr><td class="small">2026-11-03T09:06:53.000000Z</td><td>network_connection</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">REJ</td><td class="small mono">ev:1de0b46ccb704f34:27</td></tr><tr><td class="small">2026-11-03T09:06:53.500000Z</td><td>network_connection</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">REJ</td><td class="small mono">ev:1de0b46ccb704f34:28</td></tr><tr><td class="small">2026-11-03T09:06:54.000000Z</td><td>network_connection</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">REJ</td><td class="small mono">ev:1de0b46ccb704f34:29</td></tr><tr><td class="small">2026-11-03T09:06:54.500000Z</td><td>network_connection</td><td class="small">victim_network</td><td></td>
+<td class="small"> 203.0.113.50 </td><td class="small mono">REJ</td><td class="small mono">ev:1de0b46ccb704f34:30</td></tr><tr><td class="small">2026-11-03T09:15:00.000000Z</td><td>dns</td><td class="small">victim_network</td><td></td>
+<td class="small"> 10.20.0.31 </td><td class="small mono">api.openai.com</td><td class="small mono">ev:6b383f67e9d8dcf0:1</td></tr><tr><td class="small">2026-11-03T09:23:20.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 192.0.2.77 </td><td class="small mono">/search?q=&lt;script&gt;alert(&#39;x&#39;)&lt;/script&gt;</td><td class="small mono">ev:afbd7b7bcb4ab772:5</td></tr><tr><td class="small">2026-11-03T09:40:00.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 10.20.0.15 </td><td class="small mono">/beacon</td><td class="small mono">ev:afbd7b7bcb4ab772:292</td></tr><tr><td class="small">2026-11-03T09:41:40.000000Z</td><td>http</td><td class="small">victim_network</td><td></td>
+<td class="small"> 10.20.0.16 </td><td class="small mono">/</td><td class="small mono">ev:afbd7b7bcb4ab772:223</td></tr><tr><td class="small">2026-11-03T09:56:40.000000Z</td><td>process_start</td><td class="small">managed_endpoint</td><td>success</td>
+<td class="small">IIS APPPOOL\portal  web-01.demo.example</td><td class="small mono">cmd.exe /c whoami &amp; curl http://203.0.113.66/x</td><td class="small mono">ev:4802ec220c58dfa3:1</td></tr><tr><td class="small">2026-11-03T09:56:50.000000Z</td><td>network_connection</td><td class="small">managed_endpoint</td><td></td>
+<td class="small">IIS APPPOOL\portal 10.20.0.5 web-01.demo.example</td><td class="small mono">sysmon_3</td><td class="small mono">ev:4802ec220c58dfa3:2</td></tr><tr><td class="small">2026-11-03T09:57:00.000000Z</td><td>file_create</td><td class="small">managed_endpoint</td><td>success</td>
+<td class="small">  web-01.demo.example</td><td class="small mono">C:\inetpub\wwwroot\portal\help.aspx</td><td class="small mono">ev:4802ec220c58dfa3:3</td></tr><tr><td class="small">2026-11-03T10:13:10.000000Z</td><td>process_start</td><td class="small">managed_endpoint</td><td>success</td>
+<td class="small">DEMO\eve  dev-ws-07.demo.example</td><td class="small mono">/opt/artex/artex -addr 127.0.0.1:8787</td><td class="small mono">ev:4802ec220c58dfa3:5</td></tr><tr><td class="small">2026-11-03T10:13:15.000000Z</td><td>file_create</td><td class="small">managed_endpoint</td><td>success</td>
+<td class="small">  dev-ws-07.demo.example</td><td class="small mono">/opt/artex/data/traffic/_ca/mitmproxy-ca-cert.pem</td><td class="small mono">ev:4802ec220c58dfa3:7</td></tr><tr><td class="small">2026-11-03T10:13:19.000000Z</td><td>dns</td><td class="small">managed_endpoint</td><td></td>
+<td class="small">  dev-ws-07.demo.example</td><td class="small mono">api.deepseek.com</td><td class="small mono">ev:4802ec220c58dfa3:8</td></tr><tr><td class="small">2026-11-03T10:13:20.000000Z</td><td>model_interaction</td><td class="small">agent_or_model_audit</td><td></td>
+<td class="small">  dev-ws-07.demo.example</td><td class="small mono">completion</td><td class="small mono">ev:9c99a8dd7a056c98:1</td></tr><tr><td class="small">2026-11-03T10:13:24.000000Z</td><td>tool_execution</td><td class="small">agent_or_model_audit</td><td>success</td>
+<td class="small">  dev-ws-07.demo.example</td><td class="small mono">bash</td><td class="small mono">ev:9c99a8dd7a056c98:2</td></tr><tr><td class="small">2026-11-03T10:13:25.000000Z</td><td>process_start</td><td class="small">managed_endpoint</td><td>success</td>
+<td class="small">DEMO\eve  dev-ws-07.demo.example</td><td class="small mono">bash -c &#39;nmap -sV 10.20.0.0/24&#39;</td><td class="small mono">ev:4802ec220c58dfa3:4</td></tr><tr><td class="small">2026-11-03T10:13:26.000000Z</td><td>process_start</td><td class="small">managed_endpoint</td><td>success</td>
+<td class="small">DEMO\eve  dev-ws-07.demo.example</td><td class="small mono">nmap -sV 10.20.0.0/24</td><td class="small mono">ev:4802ec220c58dfa3:6</td></tr><tr><td class="small">2026-11-03T10:15:00.000000Z</td><td>human_approval</td><td class="small">agent_or_model_audit</td><td>success</td>
+<td class="small">DEMO\eve  dev-ws-07.demo.example</td><td class="small mono">approve</td><td class="small mono">ev:9c99a8dd7a056c98:3</td></tr><tr><td class="small">2026-11-03T10:46:40.000000Z</td><td>authentication</td><td class="small">identity_cloud</td><td>failure</td>
+<td class="small">alice@demo.example 203.0.113.51 </td><td class="small mono">signin</td><td class="small mono">ev:fb385fb1e59fb9f0:13</td></tr><tr><td class="small">2026-11-03T11:46:40.000000Z</td><td>authentication</td><td class="small">identity_cloud</td><td>failure</td>
+<td class="small">alice@demo.example 203.0.113.51 </td><td class="small mono">signin</td><td class="small mono">ev:fb385fb1e59fb9f0:14</td></tr><tr><td class="small">2026-11-03T12:46:40.000000Z</td><td>authentication</td><td class="small">identity_cloud</td><td>failure</td>
+<td class="small">alice@demo.example 203.0.113.51 </td><td class="small mono">signin</td><td class="small mono">ev:fb385fb1e59fb9f0:15</td></tr><tr><td class="small">2026-11-03T13:33:20.000000Z</td><td>authentication</td><td class="small">identity_cloud</td><td>failure</td>
+<td class="small">bob@demo.example 192.0.2.10 </td><td class="small mono">signin</td><td class="small mono">ev:fb385fb1e59fb9f0:19</td></tr><tr><td class="small">2026-11-03T13:33:50.000000Z</td><td>authentication</td><td class="small">identity_cloud</td><td>failure</td>
+<td class="small">bob@demo.example 192.0.2.10 </td><td class="small mono">signin</td><td class="small mono">ev:fb385fb1e59fb9f0:20</td></tr><tr><td class="small">2026-11-03T13:34:20.000000Z</td><td>authentication</td><td class="small">identity_cloud</td><td>failure</td>
+<td class="small">bob@demo.example 192.0.2.10 </td><td class="small mono">signin</td><td class="small mono">ev:fb385fb1e59fb9f0:21</td></tr><tr><td class="small">2026-11-03T13:34:50.000000Z</td><td>authentication</td><td class="small">identity_cloud</td><td>failure</td>
+<td class="small">bob@demo.example 192.0.2.10 </td><td class="small mono">signin</td><td class="small mono">ev:fb385fb1e59fb9f0:22</td></tr><tr><td class="small">2026-11-03T13:35:20.000000Z</td><td>authentication</td><td class="small">identity_cloud</td><td>failure</td>
+<td class="small">bob@demo.example 192.0.2.10 </td><td class="small mono">signin</td><td class="small mono">ev:fb385fb1e59fb9f0:23</td></tr><tr><td class="small">2026-11-03T13:38:20.000000Z</td><td>authentication</td><td class="small">identity_cloud</td><td>success</td>
+<td class="small">bob@demo.example 192.0.2.10 </td><td class="small mono">signin</td><td class="small mono">ev:fb385fb1e59fb9f0:25</td></tr><tr><td class="small">2026-11-03T14:56:40.000000Z</td><td>authentication</td><td class="small">identity_cloud</td><td>success</td>
+<td class="small">alice@demo.example 203.0.113.51 </td><td class="small mono">signin</td><td class="small mono">ev:fb385fb1e59fb9f0:17</td></tr><tr><td class="small">2026-11-03T15:46:40.000000Z</td><td>cloud_operation</td><td class="small">identity_cloud</td><td>success</td>
+<td class="small">alice@demo.example 203.0.113.51 </td><td class="small mono">role_assignment</td><td class="small mono">ev:fb385fb1e59fb9f0:18</td></tr><tr><td class="small">2026-11-03T16:20:00.000000Z</td><td>authentication</td><td class="small">identity_cloud</td><td>success</td>
+<td class="small">app-1111-demo 203.0.113.52 </td><td class="small mono">sp_signin</td><td class="small mono">ev:fb385fb1e59fb9f0:27</td></tr><tr><td class="small">2026-11-03T16:30:00.000000Z</td><td>cloud_operation</td><td class="small">identity_cloud</td><td>success</td>
+<td class="small">app-1111-demo 203.0.113.52 </td><td class="small mono">credential_add</td><td class="small mono">ev:fb385fb1e59fb9f0:28</td></tr><tr><td class="small">2026-11-03T16:36:40.000000Z</td><td>cloud_operation</td><td class="small">identity_cloud</td><td>success</td>
+<td class="small">app-1111-demo 203.0.113.52 </td><td class="small mono">secret_read</td><td class="small mono">ev:fb385fb1e59fb9f0:29</td></tr><tr><td class="small">2026-11-03T16:37:40.000000Z</td><td>cloud_operation</td><td class="small">identity_cloud</td><td>success</td>
+<td class="small">app-1111-demo 203.0.113.52 </td><td class="small mono">secret_read</td><td class="small mono">ev:fb385fb1e59fb9f0:30</td></tr><tr><td class="small">2026-11-03T16:38:40.000000Z</td><td>cloud_operation</td><td class="small">identity_cloud</td><td>success</td>
+<td class="small">app-1111-demo 203.0.113.52 </td><td class="small mono">secret_read</td><td class="small mono">ev:fb385fb1e59fb9f0:31</td></tr><tr><td class="small">2026-11-03T16:39:40.000000Z</td><td>cloud_operation</td><td class="small">identity_cloud</td><td>success</td>
+<td class="small">app-1111-demo 203.0.113.52 </td><td class="small mono">secret_read</td><td class="small mono">ev:fb385fb1e59fb9f0:32</td></tr><tr><td class="small">2026-11-03T19:06:40.000000Z</td><td>file_create</td><td class="small">managed_endpoint</td><td>success</td>
+<td class="small">  fileserver-02.demo.example</td><td class="small mono">D:\shares\finance\q3_export.7z</td><td class="small mono">ev:6ba2323d7cba5c9b:1</td></tr><tr><td class="small">2026-11-03T19:16:40.000000Z</td><td>network_connection</td><td class="small">managed_endpoint</td><td>success</td>
+<td class="small"> 10.20.0.40 fileserver-02.demo.example</td><td class="small mono"></td><td class="small mono">ev:6ba2323d7cba5c9b:2</td></tr><tr><td class="small">2026-11-03T19:23:20.000000Z</td><td>file_create</td><td class="small">managed_endpoint</td><td>success</td>
+<td class="small">  backup-01</td><td class="small mono">/backup/nightly.tar</td><td class="small mono">ev:6ba2323d7cba5c9b:3</td></tr><tr><td class="small">2026-11-03T19:25:00.000000Z</td><td>network_connection</td><td class="small">managed_endpoint</td><td>success</td>
+<td class="small">  backup-01</td><td class="small mono"></td><td class="small mono">ev:6ba2323d7cba5c9b:4</td></tr></table>
+<h2>Inputs</h2><table><tr><th>File</th><th>Format</th><th>SHA-256</th><th>Accepted/rejected</th><th>Trust</th></tr>
+<tr><td>proxy_export.csv</td><td>splunk_csv (splunk_csv/1.0)</td><td class="mono small">afbd7b7bcb4ab772a9d34d1a6e5f124ff606d80acb8f034df17106e5fa52c806</td><td>345/0</td><td>unverified</td></tr><tr><td>identity_native.jsonl</td><td>native_jsonl (native_jsonl/1.0)</td><td class="mono small">fb385fb1e59fb9f099542f7110dcf2c9107ce61934570eeafa3ef657095ef96e</td><td>33/0</td><td>unverified</td></tr><tr><td>endpoint_sysmon.xml</td><td>sysmon_xml (sysmon_xml/1.0)</td><td class="mono small">4802ec220c58dfa3646bbc9e50623a11dd1a475fbd4d7afa3fec19328e22b76d</td><td>8/1</td><td>unverified</td></tr><tr><td>endpoint_native.jsonl</td><td>native_jsonl (native_jsonl/1.0)</td><td class="mono small">6ba2323d7cba5c9bd53e80c4cfd7b92a245fc8a5603fa529a29b90b0d587d8e2</td><td>4/0</td><td>unverified</td></tr><tr><td>agent_audit.jsonl</td><td>native_jsonl (native_jsonl/1.0)</td><td class="mono small">9c99a8dd7a056c9842f923b5d174536b0cd57ad22f0213cdda51a2c39c40178e</td><td>3/0</td><td>unverified</td></tr><tr><td>zeek_conn.jsonl</td><td>zeek_jsonl (zeek_jsonl/1.0)</td><td class="mono small">1de0b46ccb704f3481b35eb506222c10e80073a9e86787b18f6c0e4589ac68d3</td><td>30/0</td><td>unverified</td></tr><tr><td>zeek_http.jsonl</td><td>zeek_jsonl (zeek_jsonl/1.0)</td><td class="mono small">009573c8838bda92b5158ef7e7a00f700900ee1b8f11196a3ede06109f74acae</td><td>1/0</td><td>unverified</td></tr><tr><td>zeek_dns.jsonl</td><td>zeek_jsonl (zeek_jsonl/1.0)</td><td class="mono small">6b383f67e9d8dcf0d3ba8e7e90bc4856f808926ad5fcf212f3d90a8e206d14a4</td><td>1/0</td><td>unverified</td></tr></table>
+<h2>Notes</h2><ul><li>none</li></ul>
+<h2>Configuration</h2><pre class="small">{
+  &#34;config_hash&#34;: &#34;ff6f50dfd02d6882&#34;,
+  &#34;llm_provider&#34;: &#34;disabled&#34;,
+  &#34;max_events_per_case&#34;: 2000000
+}</pre>
+<h2>Runs</h2><pre class="small">[
+  {
+    &#34;case_id&#34;: &#34;case-6c9050d48534&#34;,
+    &#34;finished_at&#34;: &#34;2026-11-20T09:04:49.888876Z&#34;,
+    &#34;manifest&#34;: [
+      {
+        &#34;format&#34;: &#34;zeek_jsonl&#34;,
+        &#34;input_id&#34;: &#34;in-009573c8838bda92-36b5aa&#34;,
+        &#34;options&#34;: {
+          &#34;zeek_log&#34;: &#34;http&#34;
+        },
+        &#34;parser_version&#34;: &#34;zeek_jsonl/1.0&#34;,
+        &#34;provenance_trust&#34;: &#34;unverified&#34;,
+        &#34;sha256&#34;: &#34;009573c8838bda92b5158ef7e7a00f700900ee1b8f11196a3ede06109f74acae&#34;
+      },
+      {
+        &#34;format&#34;: &#34;zeek_jsonl&#34;,
+        &#34;input_id&#34;: &#34;in-1de0b46ccb704f34-36b5aa&#34;,
+        &#34;options&#34;: {
+          &#34;zeek_log&#34;: &#34;conn&#34;
+        },
+        &#34;parser_version&#34;: &#34;zeek_jsonl/1.0&#34;,
+        &#34;provenance_trust&#34;: &#34;unverified&#34;,
+        &#34;sha256&#34;: &#34;1de0b46ccb704f3481b35eb506222c10e80073a9e86787b18f6c0e4589ac68d3&#34;
+      },
+      {
+        &#34;format&#34;: &#34;sysmon_xml&#34;,
+        &#34;input_id&#34;: &#34;in-4802ec220c58dfa3-816510&#34;,
+        &#34;options&#34;: {},
+        &#34;parser_version&#34;: &#34;sysmon_xml/1.0&#34;,
+        &#34;provenance_trust&#34;: &#34;unverified&#34;,
+        &#34;sha256&#34;: &#34;4802ec220c58dfa3646bbc9e50623a11dd1a475fbd4d7afa3fec19328e22b76d&#34;
+      },
+      {
+        &#34;format&#34;: &#34;zeek_jsonl&#34;,
+        &#34;input_id&#34;: &#34;in-6b383f67e9d8dcf0-36b5aa&#34;,
+        &#34;options&#34;: {
+          &#34;zeek_log&#34;: &#34;dns&#34;
+        },
+        &#34;parser_version&#34;: &#34;zeek_jsonl/1.0&#34;,
+        &#34;provenance_trust&#34;: &#34;unverified&#34;,
+        &#34;sha256&#34;: &#34;6b383f67e9d8dcf0d3ba8e7e90bc4856f808926ad5fcf212f3d90a8e206d14a4&#34;
+      },
+      {
+        &#34;format&#34;: &#34;native_jsonl&#34;,
+        &#34;input_id&#34;: &#34;in-6ba2323d7cba5c9b-efd0b5&#34;,
+        &#34;options&#34;: {},
+        &#34;parser_version&#34;: &#34;native_jsonl/1.0&#34;,
+        &#34;provenance_trust&#34;: &#34;unverified&#34;,
+        &#34;sha256&#34;: &#34;6ba2323d7cba5c9bd53e80c4cfd7b92a245fc8a5603fa529a29b90b0d587d8e2&#34;
+      },
+      {
+        &#34;format&#34;: &#34;native_jsonl&#34;,
+        &#34;input_id&#34;: &#34;in-9c99a8dd7a056c98-efd0b5&#34;,
+        &#34;options&#34;: {},
+        &#34;parser_version&#34;: &#34;native_jsonl/1.0&#34;,
+        &#34;provenance_trust&#34;: &#34;unverified&#34;,
+        &#34;sha256&#34;: &#34;9c99a8dd7a056c9842f923b5d174536b0cd57ad22f0213cdda51a2c39c40178e&#34;
+      },
+      {
+        &#34;format&#34;: &#34;splunk_csv&#34;,
+        &#34;input_id&#34;: &#34;in-afbd7b7bcb4ab772-30a717&#34;,
+        &#34;options&#34;: {
+          &#34;profile&#34;: &#34;proxy&#34;
+        },
+        &#34;parser_version&#34;: &#34;splunk_csv/1.0&#34;,
+        &#34;provenance_trust&#34;: &#34;unverified&#34;,
+        &#34;sha256&#34;: &#34;afbd7b7bcb4ab772a9d34d1a6e5f124ff606d80acb8f034df17106e5fa52c806&#34;
+      },
+      {
+        &#34;format&#34;: &#34;native_jsonl&#34;,
+        &#34;input_id&#34;: &#34;in-fb385fb1e59fb9f0-efd0b5&#34;,
+        &#34;options&#34;: {},
+        &#34;parser_version&#34;: &#34;native_jsonl/1.0&#34;,
+        &#34;provenance_trust&#34;: &#34;unverified&#34;,
+        &#34;sha256&#34;: &#34;fb385fb1e59fb9f099542f7110dcf2c9107ce61934570eeafa3ef657095ef96e&#34;
+      }
+    ],
+    &#34;run_id&#34;: &#34;run-4a24cb07c48c74d5&#34;,
+    &#34;seq&#34;: 1,
+    &#34;started_at&#34;: &#34;2026-11-20T09:04:49.851295Z&#34;,
+    &#34;stats&#34;: {
+      &#34;alerts&#34;: 29,
+      &#34;events&#34;: 425,
+      &#34;new&#34;: 29,
+      &#34;no_longer_produced&#34;: 0,
+      &#34;rules_evaluated&#34;: 26,
+      &#34;rules_not_evaluable&#34;: 0,
+      &#34;updated&#34;: 0
+    },
+    &#34;versions&#34;: {
+      &#34;argos&#34;: &#34;0.1.0&#34;,
+      &#34;config_hash&#34;: &#34;ff6f50dfd02d6882&#34;,
+      &#34;engine&#34;: &#34;argos-engine/0.1.0&#34;,
+      &#34;ioc_hash&#34;: &#34;425a70690680e296&#34;,
+      &#34;manifest_hash&#34;: &#34;7c527753a49898d7&#34;,
+      &#34;parsers&#34;: [
+        &#34;native_jsonl/1.0&#34;,
+        &#34;splunk_csv/1.0&#34;,
+        &#34;sysmon_xml/1.0&#34;,
+        &#34;zeek_jsonl/1.0&#34;
+      ],
+      &#34;registry_hash&#34;: &#34;4f0f6e2064ef6c50&#34;,
+      &#34;rules&#34;: [
+        &#34;ARG-ARTEX-W01@1&#34;,
+        &#34;ARG-ARTEX-X01@1&#34;,
+        &#34;ARG-ARTEX-X02@1&#34;,
+        &#34;ARG-ARTEX-X03@1&#34;,
+        &#34;ARG-ARTEX-X04@1&#34;,
+        &#34;ARG-AUTH-001@1&#34;,
+        &#34;ARG-AUTH-002@1&#34;,
+        &#34;ARG-AUTH-003@1&#34;,
+        &#34;ARG-AUTO-001@1&#34;,
+        &#34;ARG-AUTO-002@1&#34;,
+        &#34;ARG-COLL-001@1&#34;,
+        &#34;ARG-COLL-002@1&#34;,
+        &#34;ARG-ENUM-001@1&#34;,
+        &#34;ARG-ENUM-002@1&#34;,
+        &#34;ARG-ENUM-003@1&#34;,
+        &#34;ARG-EP-001@1&#34;,
+        &#34;ARG-EP-002@1&#34;,
+        &#34;ARG-EP-003@1&#34;,
+        &#34;ARG-IOC-001@1&#34;,
+        &#34;ARG-LLM-001@1&#34;,
+        &#34;ARG-LLM-002@1&#34;,
+        &#34;ARG-LLM-003@1&#34;,
+        &#34;ARG-LLM-004@1&#34;,
+        &#34;ARG-P[REDACTED]&#34;,
+        &#34;ARG-SP-001@1&#34;,
+        &#34;ARG-SP-002@1&#34;
+      ],
+      &#34;rules_hash&#34;: &#34;48ac7ba2f8ccef22&#34;,
+      &#34;schema&#34;: &#34;argos-event/1&#34;
+    }
+  }
+]</pre>
+</body></html>

@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:">
+<title>ARGOS case report — {{ x.case.name }}</title>
+<style>
+body{font:14px/1.45 system-ui,-apple-system,Segoe UI,sans-serif;margin:24px;color:#1b1f24;max-width:1300px}
+h1{font-size:22px}h2{font-size:18px;border-bottom:1px solid #ccd;padding-bottom:4px;margin-top:28px}h3{font-size:15px}
+table{border-collapse:collapse;width:100%;margin:8px 0}th,td{border:1px solid #d8dbe0;padding:4px 6px;text-align:left;vertical-align:top}
+th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-monospace,Consolas,monospace;word-break:break-all}
+.banner{background:#7a1f9a;color:#fff;padding:8px 12px;font-weight:700;letter-spacing:.04em}
+.badge{display:inline-block;padding:1px 6px;border-radius:9px;background:#e6e8ec;font-size:12px}
+.sev-high,.sev-critical{background:#c62828;color:#fff}.sev-medium{background:#ef8f00;color:#fff}.sev-low{background:#fbc02d}
+.dims{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.dim{border:1px solid #d8dbe0;padding:8px;border-radius:6px}
+</style></head><body>
+{% if x.case.synthetic %}<div class="banner">DEMO/SYNTHETIC — data and all derived findings are synthetic</div>{% endif %}
+<h1>ARGOS Defense case report: {{ x.case.name }}</h1>
+<p class="small">{{ x.banner }} · generated {{ x.generated_at }} · case {{ x.case.case_id }} · status {{ x.case.status }}</p>
+<p class="small">Versions: argos {{ x.versions.argos }}, {{ x.versions.engine }}, schema {{ x.versions.schema }}, rules hash {{ x.versions.rules_hash }}{% if x.versions.latest_run %}, manifest {{ x.versions.latest_run.manifest_hash }}, config {{ x.versions.latest_run.config_hash }}, registry {{ x.versions.latest_run.registry_hash }}, ioc {{ x.versions.latest_run.ioc_hash }}{% endif %}.</p>
+<h2>Limitations</h2><ul>{% for l in x.limitations %}<li>{{ l }}</li>{% endfor %}{% if x.assessment %}{% for l in x.assessment.limitations %}<li>{{ l }}</li>{% endfor %}{% endif %}</ul>
+{% if x.assessment %}{% set a = x.assessment %}
+<h2>Case assessment</h2>
+<div class="dims">
+<div class="dim"><h3>A · Threat activity</h3>max severity <b>{{ a.threat.max_severity }}</b>; {{ a.threat.open_alerts }} open alerts; {{ a.threat.authorized_automation_alerts }} authorized automation; {{ a.threat.abstentions }} abstentions</div>
+<div class="dim"><h3>B · Automation</h3><b>{{ a.automation.level }}</b><br><span class="small">heuristic evidence score {{ a.automation.heuristic_evidence_score }}</span></div>
+<div class="dim"><h3>C · LLM involvement</h3><b>{{ a.llm.level }}</b><br><span class="small">heuristic evidence score {{ a.llm.heuristic_evidence_score }}; {{ a.llm.note }}</span></div>
+<div class="dim"><h3>D · Framework</h3><b>{{ a.framework.level }}</b>{% for f in a.framework.candidates %}<br>{{ f.name }}: {{ f.level }} ({{ f.independent_families|join(', ') }}); responsibility: {{ f.responsibility_for_activity }}{% endfor %}</div>
+<div class="dim"><h3>E · Purpose hypotheses</h3>{% for p in a.purpose %}{{ p.hypothesis }} ({{ p.stages|join('/') }}) ×{{ p.alerts }}<br>{% endfor %}</div>
+<div class="dim"><h3>F · Attribution</h3>{% for k, v in a.attribution.items() %}{{ k }}: {{ v }}<br>{% endfor %}</div>
+</div>
+<h3>Coverage</h3><table><tr><th>Vantage</th><th>Status</th><th>Events</th><th>Interval</th></tr>
+{% for v, c in a.coverage.items() %}<tr><td>{{ v }}</td><td>{{ c.status }}</td><td>{{ c.event_count }}</td><td>{{ c.first or '' }} → {{ c.last or '' }}</td></tr>{% endfor %}</table>
+{% endif %}
+<h2>Alerts</h2>
+{% for al in x.alerts if al.current %}
+<h3>{{ al.rule_title }} <span class="badge sev-{{ al.threat.severity }}">{{ al.threat.severity }}</span> <span class="badge">confidence {{ al.confidence }}</span> <span class="badge">{{ al.disposition }}</span></h3>
+<p class="small">{{ al.alert_id }} · {{ al.rule_id }}@{{ al.rule_version }} · {{ al.first_time }} → {{ al.last_time }} · analyst status {{ al.analyst_status }}</p>
+<p><b>Why:</b> {{ al.why }}</p>
+<p class="small">automation: {{ al.automation.level }} · LLM: {{ al.llm.level }} · framework: {{ al.framework.level }} {{ al.framework.name or '' }} · purpose: {{ al.purpose.hypothesis }} ({{ al.purpose.stage }})</p>
+<p class="small"><b>Confidence rationale:</b> {{ al.confidence_rationale|join(' | ') }}</p>
+<p class="small"><b>Alternatives:</b> {{ al.alternatives|join('; ') }} · <b>Missing visibility:</b> {{ al.missing_visibility|join('; ') }}</p>
+{% for ab in al.absence_checks %}<p class="small"><b>Follow-up:</b> {{ ab.label }} — {{ ab.status }} {{ ab.detail or '' }}</p>{% endfor %}
+<p class="small mono">evidence: {{ al.evidence_refs[:30]|join(' ') }}{% if al.evidence_refs|length > 30 %} …{% endif %}</p>
+{% endfor %}
+<h2>Timeline (evidence events)</h2>
+<table><tr><th>Event time</th><th>Kind</th><th>Vantage</th><th>Outcome</th><th>Actor</th><th>Detail</th><th>Ref</th></tr>
+{% for e in x.timeline %}<tr><td class="small">{{ e.event_time }}</td><td>{{ e.event_kind }}</td><td class="small">{{ e.observation_vantage }}</td><td>{{ e.outcome or '' }}</td>
+<td class="small">{{ e.user or e.app_id or '' }} {{ e.src_ip or '' }} {{ e.host or '' }}</td><td class="small mono">{{ (e.http_uri or e.process_command_line or e.file_path or e.dns_query or e.action or '')|truncate(200) }}</td><td class="small mono">{{ e.evidence_ref }}</td></tr>{% endfor %}</table>
+<h2>Inputs</h2><table><tr><th>File</th><th>Format</th><th>SHA-256</th><th>Accepted/rejected</th><th>Trust</th></tr>
+{% for i in x.inputs %}<tr><td>{{ i.original_name }}</td><td>{{ i.format }} ({{ i.parser_version }})</td><td class="mono small">{{ i.sha256 }}</td><td>{{ i.records_accepted }}/{{ i.records_rejected }}</td><td>{{ i.provenance_trust }}</td></tr>{% endfor %}</table>
+<h2>Notes</h2><ul>{% for n in x.notes %}<li>{{ n.created_at }} {{ n.text }}</li>{% else %}<li>none</li>{% endfor %}</ul>
+<h2>Configuration</h2><pre class="small">{{ x.configuration|tojson_pretty }}</pre>
+<h2>Runs</h2><pre class="small">{{ x.runs|tojson_pretty }}</pre>
+</body></html>

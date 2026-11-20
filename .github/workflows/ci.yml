@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: tests (${{ matrix.os }}, py${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {os: ubuntu-22.04, python: "3.11"}
+          - {os: ubuntu-22.04, python: "3.12"}
+          - {os: ubuntu-22.04, python: "3.13"}
+          - {os: windows-2022, python: "3.12"}
+          - {os: macos-15, python: "3.12"}
+          - {os: macos-15-intel, python: "3.12"}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install pinned dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.lock -r requirements-dev.lock
+          python -m pip install --no-deps -e .
+      - name: Rule validation and doctor
+        run: |
+          python -m argos rules
+          python -m argos --data-dir "${{ runner.temp }}/doctor data é" doctor
+      - name: Test suite
+        run: python -m pytest -q -p no:randomly
+      - name: Synthetic scenario validation
+        run: python scripts/validate.py
+
+  package-install:
+    name: wheel/sdist build + install outside checkout
+    runs-on: ubuntu-22.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.12"
+      - name: Build wheel and sdist
+        run: |
+          python -m pip install -r requirements-build.lock
+          python -m build --outdir dist .
+      - name: Install wheel into a fresh venv and run outside the checkout
+        run: |
+          python -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/pip" install -r requirements.lock
+          "$RUNNER_TEMP/venv/bin/pip" install --no-deps dist/*.whl
+          mkdir -p "$RUNNER_TEMP/outside ü" && cd "$RUNNER_TEMP/outside ü"
+          "$RUNNER_TEMP/venv/bin/argos-defense" --version
+          "$RUNNER_TEMP/venv/bin/argos-defense" --data-dir "./data é" doctor
+          "$RUNNER_TEMP/venv/bin/argos-defense" --data-dir "./data é" demo
+          "$RUNNER_TEMP/venv/bin/argos-defense" --data-dir "./data é" report --case demo-synthetic --format html --output report.html
+          grep -q "DEMO/SYNTHETIC" report.html
+      - name: Install sdist into a fresh venv
+        run: |
+          python -m venv "$RUNNER_TEMP/venv2"
+          "$RUNNER_TEMP/venv2/bin/pip" install -r requirements.lock
+          "$RUNNER_TEMP/venv2/bin/pip" install --no-deps dist/*.tar.gz
+          cd "$RUNNER_TEMP" && "$RUNNER_TEMP/venv2/bin/argos-defense" --data-dir sd doctor

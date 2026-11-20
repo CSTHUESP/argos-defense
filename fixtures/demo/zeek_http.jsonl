@@ -1,0 +1,1 @@
+{"host": "intranet.demo.example", "id.orig_h": "10.20.0.31", "id.orig_p": 53001, "id.resp_h": "10.20.0.80", "id.resp_p": 80, "method": "GET", "request_body_len": 0, "response_body_len": 5120, "status_code": 200, "ts": 1793697400.0, "uid": "Ht0001", "uri": "/", "user_agent": "Mozilla/5.0"}

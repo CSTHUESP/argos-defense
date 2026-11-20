@@ -1,0 +1,89 @@
+........................................................................ [ 96%]
+...                                                                      [100%]
+==================================== PASSES ====================================
+_____________________________ test_bulk_12k_events _____________________________
+----------------------------- Captured stdout call -----------------------------
+{'events': 12000, 'chunk_size': 1000, 'ingest_seconds': 3.031, 'analyze_seconds': 7.672, 'python_tracemalloc_peak_mb': 85.0, 'rss_delta_mb': 184.7, 'alerts': 27, 'machine': 'Linux x86_64 py3.13.18 cpus=2', 'note': 'single run on the build sandbox; not a performance guarantee'}
+____________________ test_cli_refuses_non_loopback[0.0.0.0] ____________________
+----------------------------- Captured stderr call -----------------------------
+refusing to bind to a non-loopback address without --allow-non-loopback
+___________________ test_cli_refuses_non_loopback[192.0.2.1] ___________________
+----------------------------- Captured stderr call -----------------------------
+refusing to bind to a non-loopback address without --allow-non-loopback
+=========================== short test summary info ============================
+PASSED tests/test_acceptance.py::test_01_same_trace_different_external_labels_same_conclusions
+PASSED tests/test_acceptance.py::test_02_authorized_fast_activity_not_artex_or_malicious
+PASSED tests/test_acceptance.py::test_03_legitimate_llm_provider_use_not_malicious
+PASSED tests/test_acceptance.py::test_04_audit_chain_increases_llm_evidence
+PASSED tests/test_acceptance.py::test_05_text_artex_not_strong_attribution
+PASSED tests/test_acceptance.py::test_06_slow_attack_alerts_with_unknown_origin
+PASSED tests/test_acceptance.py::test_07_network_only_exposes_limitations
+PASSED tests/test_acceptance.py::test_08_same_ip_entities_not_merged
+PASSED tests/test_acceptance.py::test_09_and_10_covered_in_test_ingest
+PASSED tests/test_acceptance.py::test_12_expired_ioc_no_strong_attribution
+PASSED tests/test_acceptance.py::test_13_success_without_data_access_not_exfiltration
+PASSED tests/test_acceptance.py::test_14_duplicates_do_not_inflate_and_self_trust_ignored
+PASSED tests/test_acceptance.py::test_14b_analyst_attestation_is_external_and_raises_cap
+PASSED tests/test_acceptance.py::test_15_persistence_restart_reanalysis_no_duplicates
+PASSED tests/test_acceptance.py::test_15b_rule_change_preserves_history
+PASSED tests/test_ingest.py::test_native_minimum_schema_and_nulls
+PASSED tests/test_ingest.py::test_idempotent_reimport
+PASSED tests/test_ingest.py::test_identical_distinct_records_are_kept
+PASSED tests/test_ingest.py::test_out_of_order_events_processed_in_event_time
+PASSED tests/test_ingest.py::test_ambiguous_timestamp_rejected_without_option_and_accepted_with_it
+PASSED tests/test_ingest.py::test_malformed_records_are_reported_not_dropped
+PASSED tests/test_ingest.py::test_splunk_json_result_wrapper_and_proxy_profile
+PASSED tests/test_ingest.py::test_splunk_csv_requires_explicit_mapping
+PASSED tests/test_ingest.py::test_sysmon_xml_supported_ids_and_reject_others
+PASSED tests/test_ingest.py::test_sysmon_xxe_and_doctype_rejected
+PASSED tests/test_ingest.py::test_zeek_logs_preserve_uid
+PASSED tests/test_ingest.py::test_hostile_filenames_rejected
+PASSED tests/test_ingest.py::test_size_limit_enforced
+PASSED tests/test_ingest.py::test_record_size_limit
+PASSED tests/test_ingest.py::test_case_boundaries_same_file_two_cases
+PASSED tests/test_ingest.py::test_synthetic_and_real_not_mixed
+PASSED tests/test_ingest.py::test_original_copy_retained_and_hash
+PASSED tests/test_perf.py::test_bulk_12k_events
+PASSED tests/test_rules.py::test_auto001_positive_and_slow_negative
+PASSED tests/test_rules.py::test_auto002_process_burst
+PASSED tests/test_rules.py::test_enum001_and_002
+PASSED tests/test_rules.py::test_enum003_port_sweep
+PASSED tests/test_rules.py::test_auth001_spray_and_negative
+PASSED tests/test_rules.py::test_auth002_chain_keeps_outcomes_separate
+PASSED tests/test_rules.py::test_sp001_and_sp002_baseline
+PASSED tests/test_rules.py::test_sp002_insufficient_baseline_abstains
+PASSED tests/test_rules.py::test_sp002_history_used_only_from_prior_events
+PASSED tests/test_rules.py::test_ep_rules
+PASSED tests/test_rules.py::test_llm_rules
+PASSED tests/test_rules.py::test_artex_candidates_experimental_and_bounded
+PASSED tests/test_rules.py::test_artex_corroboration_needs_two_independent_families_same_host
+PASSED tests/test_rules.py::test_coll_and_persistence
+PASSED tests/test_rules.py::test_coll002_multivault
+PASSED tests/test_rules.py::test_registry_partial_scope_not_suppressed
+PASSED tests/test_rules.py::test_registry_never_hides_credential_changes
+PASSED tests/test_rules.py::test_rules_all_valid_and_complete
+PASSED tests/test_rules.py::test_rule_schema_rejects_code_and_unknowns[bad0]
+PASSED tests/test_rules.py::test_rule_schema_rejects_code_and_unknowns[bad1]
+PASSED tests/test_rules.py::test_rule_schema_rejects_code_and_unknowns[bad2]
+PASSED tests/test_rules.py::test_rule_schema_rejects_code_and_unknowns[bad3]
+PASSED tests/test_rules.py::test_rule_schema_rejects_code_and_unknowns[bad4]
+PASSED tests/test_rules.py::test_unsafe_yaml_tags_rejected
+PASSED tests/test_security.py::test_11_prompt_injection_inert
+PASSED tests/test_security.py::test_11_html_escaped_in_report
+PASSED tests/test_security.py::test_11_csv_export_neutralizes_formulas
+PASSED tests/test_security.py::test_redaction
+PASSED tests/test_security.py::test_secrets_redacted_in_export
+PASSED tests/test_security.py::test_llm_disabled_by_default
+PASSED tests/test_security.py::test_llm_simulated_valid_response_accepted
+PASSED tests/test_security.py::test_llm_invalid_or_verdict_changing_rejected[payload0]
+PASSED tests/test_security.py::test_llm_invalid_or_verdict_changing_rejected[payload1]
+PASSED tests/test_security.py::test_llm_invalid_or_verdict_changing_rejected[payload2]
+PASSED tests/test_security.py::test_llm_invalid_or_verdict_changing_rejected[payload3]
+PASSED tests/test_security.py::test_llm_invalid_or_verdict_changing_rejected[payload4]
+PASSED tests/test_security.py::test_llm_not_json_rejected
+PASSED tests/test_security.py::test_remote_llm_blocked_without_opt_in
+PASSED tests/test_web_e2e.py::test_16_full_workflow_browser_and_api
+PASSED tests/test_web_e2e.py::test_bearer_requests_from_foreign_origin_rejected
+PASSED tests/test_web_e2e.py::test_cli_refuses_non_loopback[0.0.0.0]
+PASSED tests/test_web_e2e.py::test_cli_refuses_non_loopback[192.0.2.1]
+75 passed in 20.50s

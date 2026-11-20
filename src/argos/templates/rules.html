@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Rule catalog</h1>
+<p class="small">rules hash {{ rules_hash }} · {{ rules|length }} rules · {{ iocs }} IOC entries loaded{% if errors %} · <span class="error">{{ errors|length }} invalid rule(s): {{ errors|join('; ') }}</span>{% endif %}</p>
+<table><thead><tr><th>Rule</th><th>Family</th><th>Status / validation</th><th>Vantage &amp; required telemetry</th><th>Reference</th><th>Severity / max confidence</th><th>Contributes</th><th>Sources</th></tr></thead><tbody>
+{% for r in rules %}<tr id="{{ r.id }}"><td><b>{{ r.id }}</b> v{{ r.version }}<br>{{ r.title }}<br><span class="small">{{ r.description }}</span></td>
+<td>{{ r.family }}</td><td><span class="badge">{{ r.status }}</span><br><span class="small">{{ r.validation_status }}</span></td>
+<td class="small">{{ r.observation_vantage|join(', ') }}<br>{{ r.required_telemetry|join(', ') }}</td>
+<td class="small">{{ r.reference.type }}: {{ r.reference.description }}<br>window {{ r.window_s }}s · group {{ r.group_by|join('+') or '—' }} · {{ r.aggregate.type }}</td>
+<td>{{ r.severity }} / {{ r.base_confidence }}</td>
+<td class="small">threat: {{ r.contributes.threat.suspicion }}<br>automation: {{ r.contributes.automation or '—' }}<br>llm: {{ r.contributes.llm or '—' }}<br>framework: {{ r.contributes.framework.name ~ ' ' ~ r.contributes.framework.level if r.contributes.framework else '—' }}<br>purpose: {{ r.contributes.purpose.hypothesis }}</td>
+<td class="small">{{ r.sources|join(' · ') }}{% if r.fingerprint %}<br><b>fingerprint {{ r.fingerprint.id }}</b>: {{ r.fingerprint.file }} @ {{ r.fingerprint.commit[:12] }}; vantage {{ r.fingerprint.required_vantage }}; spoofability {{ r.fingerprint.spoofability }}; benign overlap {{ r.fingerprint.benign_overlap }}{% endif %}</td></tr>{% endfor %}
+</tbody></table>
+<h2>Authorized automation registry</h2>
+<table><thead><tr><th>Id</th><th>Description</th><th>Owner (descriptive)</th><th>Match</th><th>Scope</th><th>Schedule</th><th>Expires</th></tr></thead><tbody>
+{% for e in registry %}<tr><td>{{ e.id }}</td><td>{{ e.description }}</td><td>{{ e.owner }}</td><td class="small">{{ e.match|tojson }}</td><td class="small">{{ e.scope|tojson }}</td><td class="small">{{ e.schedule|tojson }}</td><td>{{ e.expires }}</td></tr>{% else %}<tr><td colspan="7">empty</td></tr>{% endfor %}</tbody></table>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% macro synth(flag) %}{% if flag %}<span class="badge synth">DEMO/SYNTHETIC</span>{% endif %}{% endmacro %}
+{% macro sev(s) %}<span class="badge sev-{{ s }}">{{ s }}</span>{% endmacro %}
+{% macro conf(c) %}<span class="badge conf-{{ c }}">conf: {{ c }}</span>{% endmacro %}
+{% macro lvl(name, v) %}<span class="badge lvl lvl-{{ v }}" title="{{ name }}">{{ name }}: {{ v }}</span>{% endmacro %}
+{% macro dims(a) %}
+<div class="dims">
+  <section class="dim"><h4>A · Activity &amp; threat</h4><p>{{ a.threat.activity }}</p><p>{{ sev(a.threat.severity) }} <span class="badge">{{ a.threat.suspicion }}</span></p></section>
+  <section class="dim"><h4>B · Automation</h4><p>{{ lvl('automation', a.automation.level) }}</p><p class="small">{{ a.automation.basis }}</p></section>
+  <section class="dim"><h4>C · LLM involvement</h4><p>{{ lvl('llm', a.llm.level) }}</p>
+    {% for b in a.llm.basis %}<p class="small">{{ b }}</p>{% endfor %}
+    {% for l in a.llm.limitations %}<p class="small warn">{{ l }}</p>{% endfor %}</section>
+  <section class="dim"><h4>D · Framework</h4><p>{{ lvl('framework', a.framework.level) }} {% if a.framework.name %}<b>{{ a.framework.name }}</b>{% endif %}</p>
+    {% if a.framework.fingerprint_ids %}<p class="small">fingerprints: {{ a.framework.fingerprint_ids|join(', ') }}</p>{% endif %}
+    {% for l in a.framework.limitations %}<p class="small warn">{{ l }}</p>{% endfor %}</section>
+  <section class="dim"><h4>E · Purpose</h4><p>Observed: {{ a.purpose.observed_action }}</p><p>Hypothesis: <b>{{ a.purpose.hypothesis }}</b> ({{ a.purpose.stage }})</p><p class="small">{{ a.purpose.note }}</p></section>
+  <section class="dim"><h4>F · Entities</h4><ul class="small">{% for e in a.entities[:15] %}<li>{{ e.etype }}: {{ e.display|redact }} <span class="badge str-{{ e.strength }}">{{ e.strength }}</span></li>{% endfor %}</ul>
+    <p class="small">Account ownership ≠ who controls the account. No person, group, nationality or model is inferred.</p></section>
+</div>
+{% endmacro %}

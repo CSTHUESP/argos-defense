@@ -1,0 +1,27 @@
+# environments / caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+dist-native/
+pydist/
+smoke-results/
+release-assets/
+# runtime data (databases, retained originals, tokens, logs) - never commit
+data/
+*.sqlite3
+*.sqlite3-*
+.session_token
+server.json
+logs/
+# ARTEX working checkout (AGPL research reference; retrieve with scripts/fetch_artex_reference.sh)
+reference/ARTEX/
+# local scratch
+reports/ui_export_demo.html
+*.log
+!fixtures/**/*.log
+.DS_Store

@@ -1,0 +1,11 @@
+{% extends "base.html" %}{% from "_m.html" import synth %}
+{% block banner %}{% if case.synthetic %}<div class="synthbanner">DEMO/SYNTHETIC</div>{% endif %}{% endblock %}
+{% block content %}
+<h1>Event {{ ev.evidence_ref }} {{ synth(case.synthetic) }}</h1>
+<p class="small">Normalized record. Values are shown as data (escaped, secrets redacted); nothing in evidence is executed or followed.</p>
+<table class="kv">{% for k, v in ev.items() %}{% if v is not none and v != [] %}<tr><th>{{ k }}</th><td class="mono small">{{ v|string|redact }}</td></tr>{% endif %}{% endfor %}</table>
+{% if orig %}<h2>Original record</h2>
+<p class="small">{{ orig.original_name }} · {{ orig.format }} · {{ orig.location }} · sha256 <span class="mono">{{ orig.sha256 }}</span> · trust {{ orig.provenance_trust }}</p>
+<pre class="mono small">{{ (orig.record_text or '(not available inline)')|redact }}</pre>{% endif %}
+<p><a href="/cases/{{ ev.case_id }}">Back to case</a></p>
+{% endblock %}

@@ -1,0 +1,67 @@
+# Family 1 - bursts, parallelism and repetition.
+# These rules indicate automation ONLY. They never attribute AI involvement,
+# a framework, or maliciousness by themselves.
+id: ARG-AUTO-001
+version: 1
+title: HTTP request burst from one source
+description: |
+  One source IP issued many HTTP requests within a short window with very short
+  inter-arrival times. Consistent with automated tooling (scanners, scripts, CI,
+  crawlers, agents) - not evidence of LLM use or malicious intent.
+family: automation_burst
+status: test
+validation_status: synthetic-scenario tests only; real-world accuracy NOT MEASURED
+observation_vantage: [victim_network]
+required_telemetry: [event_time, src_ip]
+select: {field: event_kind, op: eq, value: http}
+group_by: [src_ip]
+window_s: 60
+aggregate: {type: threshold, min_count: 100, max_median_interarrival_s: 0.5}
+reference: {type: explicit_threshold, description: ">=100 requests in 60s with median inter-arrival <=0.5s (configurable in config/rule_overrides.yaml)"}
+severity: informational
+base_confidence: medium
+contributes:
+  threat: {activity: High-rate HTTP requests from a single source, suspicion: informational}
+  automation: consistent_with_automation
+  purpose: {observed_action: high request rate, hypothesis: unknown, stage: indicator}
+evidence_family: timing_burst_http
+required_evidence: HTTP records with event times and source IP
+explanation: "{count} HTTP requests from {group} within {window_s}s window; timing is consistent with automation."
+alternatives: [authorized vulnerability scanner, CI/CD health checks, search crawler, NAT gateway aggregating many users, load test]
+false_positives: [shared egress/NAT IPs, monitoring probes, browsers prefetching]
+missing_visibility_hints: ["process/agent telemetry of the client is not visible from the victim network"]
+resolving_data: [client endpoint process telemetry, authorized-scanner inventory, proxy authentication user field]
+sources: ["FBI FLASH-20261113-001 (compressed bursts of activity) accessed 2026-11-20", "ARTEX v0.6.0 agent/worker.go (parallel workers) commit a13c68cb"]
+suppressible_by_registry: true
+---
+id: ARG-AUTO-002
+version: 1
+title: Process execution burst under one parent
+description: |
+  A single parent process spawned many child processes within seconds on one host.
+  Consistent with scripted or agent-driven execution; scripts, installers and build
+  systems do the same.
+family: automation_burst
+status: test
+validation_status: synthetic-scenario tests only; real-world accuracy NOT MEASURED
+observation_vantage: [managed_endpoint]
+required_telemetry: [event_time, host, parent_process_guid]
+select: {field: event_kind, op: eq, value: process_start}
+group_by: [host, parent_process_guid]
+window_s: 10
+aggregate: {type: threshold, min_count: 20}
+reference: {type: explicit_threshold, description: ">=20 child processes from one parent within 10s"}
+severity: informational
+base_confidence: medium
+contributes:
+  threat: {activity: Rapid child-process creation, suspicion: informational}
+  automation: consistent_with_automation
+  purpose: {observed_action: rapid process creation, hypothesis: execution, stage: indicator}
+evidence_family: timing_burst_process
+required_evidence: Process creation records with parent ProcessGuid
+explanation: "{count} child processes under {group} within {window_s}s."
+alternatives: [build system, package manager, software installer, monitoring agent, authorized automation]
+false_positives: [compilers, CI runners, backup agents]
+resolving_data: [parent command line and owner, change records, authorized automation registry]
+sources: ["ARTEX v0.6.0 agent/worker.go proxyEnv (bash subprocesses per tool call) commit a13c68cb"]
+suppressible_by_registry: true
