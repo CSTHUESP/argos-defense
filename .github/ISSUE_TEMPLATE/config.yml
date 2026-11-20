@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security vulnerability (private)
+    url: https://github.com/CSTHUESP/argos-defense/security/advisories/new
+    about: Do not use a public issue. If this link is unavailable, follow SECURITY.md.
+  - name: Security policy
+    url: https://github.com/CSTHUESP/argos-defense/blob/main/SECURITY.md
+    about: How vulnerabilities are reported and handled.

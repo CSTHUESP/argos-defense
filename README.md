@@ -1,10 +1,10 @@
 # ARGOS Defense
 
-**Local defensive investigation framework for explainable analysis of suspicious, automated, and LLM-assisted activity.**
+**ARGOS Defense is an experimental defensive investigation framework for analyzing supplied telemetry, identifying suspicious behavior, and assessing automation and LLM involvement with explicit evidence and uncertainty.**
 
-> **Experimental detection; real-world accuracy not measured.** All validation so far uses synthetic data.
+> **Experimental detection; real-world accuracy not measured.** All validation so far uses synthetic data. It is not a production-validated security control, not a universal human-versus-LLM detector, and it does not identify the person behind an activity.
 
-[Español: README.es.md](README.es.md) · [Changelog](CHANGELOG.md) · [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md)
+[Download](#download) · [Español: README.es.md](README.es.md) · [Contributing](CONTRIBUTING.md) · [Roadmap](ROADMAP.md) · [Security](SECURITY.md) · [Changelog](CHANGELOG.md)
 
 ARGOS Defense imports telemetry files you supply (proxy, identity, endpoint, network and AI-agent audit logs), correlates them per case, runs declarative detection rules and explains **what the evidence supports and what it does not**. It is built for a question that agentic offensive tools such as ARTEX make urgent: *is this activity automated, is an LLM involved, is a known framework present, what is the actor after, and which accounts, hosts and processes are involved?* ARGOS keeps those questions separate and answers *unknown* when the data cannot tell.
 
@@ -14,7 +14,7 @@ It is batch analysis on your own machine: not a real-time sensor, EDR agent or S
 
 ## Download
 
-**v0.3.1** — [Release page](https://github.com/CSTHUESP/argos-defense/releases/tag/v0.3.1). The links below work only once v0.3.1 is published. Until then, the latest published version is [v0.3.0](https://github.com/CSTHUESP/argos-defense/releases/tag/v0.3.0); see [docs/RELEASE_VALIDATION.md](docs/RELEASE_VALIDATION.md) for the current state. Assets are published only after every package passed the release contract and the uploaded bytes were downloaded again and verified.
+**v0.3.1** — [release page](https://github.com/CSTHUESP/argos-defense/releases/tag/v0.3.1) · [all releases](https://github.com/CSTHUESP/argos-defense/releases). Assets are published only after every package passed the release contract on its own runner and the uploaded bytes were downloaded again and verified ([docs/RELEASE_VALIDATION.md](docs/RELEASE_VALIDATION.md)).
 
 | Your system | Download | Built and smoke-tested on |
 |---|---|---|
@@ -28,7 +28,7 @@ Also published: `SHA256SUMS`, `release-manifest.json` (commit, build environment
 
 The packages contain everything they need. No Python installation is required, and the core works offline.
 
-**Tested baselines:** native packages are tested only on the GitHub-hosted runner images named above, including launch through the distributed launcher scripts. They were **not** tested on Windows 10/11 desktop editions, other Linux distributions or macOS versions, or after a normal browser download with quarantine attributes (SmartScreen/Gatekeeper behaviour is not verified). A manual acceptance procedure is in [docs/PACKAGING.md](docs/PACKAGING.md).
+**Tested baselines:** native packages are smoke-tested automatically only on the GitHub-hosted runner images named above, including launch through the distributed launcher scripts. They were **not** tested on Windows 10/11 desktop editions, other Linux distributions or macOS versions, or after a normal browser download with quarantine attributes (SmartScreen/Gatekeeper behaviour is not verified). A manual acceptance procedure is in [docs/PACKAGING.md](docs/PACKAGING.md).
 
 ## Start
 
@@ -66,6 +66,11 @@ Then start the UI. The **demo-synthetic** case (purple *DEMO/SYNTHETIC* banner) 
 **Secrets and raw evidence:** UI pages, API responses, exports, notes, status rationales, rejected-record excerpts and optional-LLM input are redacted (key-aware and pattern-based; not every secret format can be recognized). Original files are kept byte-for-byte in owner-private storage. An authenticated analyst can open one record's unredacted view explicitly (*Show raw* on the event page, `?raw=1`); that page is clearly labelled.
 
 ![Alert detail (synthetic demo)](docs/screenshots/04-alert-detail.png)
+
+## What ARGOS can and cannot conclude
+- **Can:** report observed actions and their outcome in the supplied records; flag patterns that match its rules with a severity and a separate confidence; say that activity is *consistent with* automation, or that automation or a model-driven tool call was *directly observed* when audit records link them; note that framework artifacts are present; list the accounts, hosts, processes and sessions involved; explain what evidence supports each point, what contradicts it, and what data is missing.
+- **Cannot:** decide in general whether a human or an LLM acted; name a person, threat group, nationality or exact model; prove that a framework was responsible for an incident; see an attacker's model calls from victim-side traffic; treat missing evidence as proof of absence unless you declared coverage for it; or guarantee detection on real data (it has only been validated on synthetic data).
+- When the records cannot answer a question, ARGOS says **unknown** and lists the data that would resolve it.
 
 ## The six evidence dimensions
 | Dimension | Values | What it takes |
@@ -114,7 +119,7 @@ pip install --require-hashes -r requirements-ci.lock && pip install --no-deps --
 argos-defense doctor && argos-defense demo && argos-defense start
 python -m pytest                       # full suite
 python scripts/validate.py             # synthetic demo scenarios
-python scripts/eval_v2.py run --set dev # synthetic development evaluation (docs/EVALUATION_PROTOCOL.md)
+python scripts/eval_v22.py run --set dev # synthetic development evaluation (docs/EVALUATION_PROTOCOL.md)
 ```
 Native packaging: [docs/PACKAGING.md](docs/PACKAGING.md). Rule export to Sigma/SPL: `argos-defense export-rules --output DIR` ([docs/RULE_EXPORTS.md](docs/RULE_EXPORTS.md)).
 
@@ -131,7 +136,7 @@ files ─► adapters (native/Splunk/Sysmon/Zeek) ─► normalization + provena
 |---|---|
 | Windows Authenticode | **not signed** (no certificate available) |
 | Apple Developer ID / notarization | **not signed / not notarized** (ad-hoc signature only) |
-| GitHub artifact attestations (build provenance) | generated only when the repository is public; for a private repository on the current plan they are not available, and `release-manifest.json` records the actual status. An attestation is not OS code signing |
+| GitHub artifact attestations (build provenance) | generated by the release workflow for the native archives, wheel and sdist of public releases and verified before publication; `release-manifest.json` records the actual status. An attestation shows which workflow built a file; it is **not** OS code signing |
 | Checksums | `SHA256SUMS` + `release-manifest.json`: integrity only, not proof of who published the files |
 
 ## Capability status (v0.3.1)
@@ -149,7 +154,7 @@ Implementation and verification are separate. Verification basis: **S** syntheti
 | Owner-private storage, doctor permission checks | IMPLEMENTED_AND_VERIFIED (POSIX; Windows ACL in Windows CI) | R |
 | Backup / verify / restore with evidence-inventory completeness; migration with verified backup (v0.2.0, v0.3.0 databases) | IMPLEMENTED_AND_VERIFIED | S |
 | Opt-in read-only directory watcher (file-generation identity, durable checkpoints) | IMPLEMENTED_AND_VERIFIED (dedicated synthetic directory) | S |
-| Native packages Windows x64 / Linux x64 / macOS arm64 / macOS x64 incl. launcher scripts, browser opening, update, backup/restore | v0.3.0: IMPLEMENTED_AND_VERIFIED on runner images. v0.3.1: built and smoke-tested only once released (see RELEASE_VALIDATION) | R |
+| Native packages Windows x64 / Linux x64 / macOS arm64 / macOS x64 incl. launcher scripts, browser opening, update, backup/restore | IMPLEMENTED_AND_VERIFIED on GitHub runner images (each release's `smoke-<target>.json` and `release-manifest.json` hold the results); not desktop-tested | R |
 | Desktop acceptance (Windows 11, macOS Gatekeeper with quarantine, other distributions) | IMPLEMENTED_NOT_EXTERNALLY_VERIFIED (procedure provided; no desktop available) | — |
 | Sigma export (faithful subset) | IMPLEMENTED_AND_VERIFIED for structure and selection semantics against a reference matcher; not executed in a Sigma backend | S |
 | SPL export | IMPLEMENTED_NOT_EXTERNALLY_VERIFIED (structure only; no Splunk instance) | — |
@@ -165,6 +170,11 @@ Validation details: [docs/RELEASE_VALIDATION.md](docs/RELEASE_VALIDATION.md), [d
 
 ## Known limitations
 Synthetic validation only, and the rule author also generated the evaluation data. On the eval-v2.2 reserved synthetic set the rules raised a low-or-higher alert for 110 of 320 benign units: repeated typos from a known device, legitimate credential rotation, some stale-credential and multi-device users, and legitimate developer AI agents (correctly reported as observed LLM tool use, at low severity). They missed all 20 attacks that rotate source addresses while interleaving with the real user's sign-ins. Alert-level LLM attribution, scored against exact source records, had 0 overclaims in 714 alerts on that set (synthetic only). Analysis is in memory: 300,000 events of a low-alert-density stress profile were measured at a 2.8 GiB peak; larger cases are refused. Redaction is key- and pattern-based. Declared coverage is the analyst's statement. Single local user; loopback UI without TLS.
+
+## Contributing and reporting problems
+- **Bugs, false positives, feature ideas:** [open an issue](https://github.com/CSTHUESP/argos-defense/issues/new/choose) using the forms. Use synthetic data only; never paste credentials, tokens or real telemetry.
+- **Security vulnerabilities:** report privately as described in [SECURITY.md](SECURITY.md), not in a public issue.
+- **Code, rules, fixtures, docs:** read [CONTRIBUTING.md](CONTRIBUTING.md) and the [roadmap](ROADMAP.md). Issues labelled `good first issue` and `help wanted` are good starting points.
 
 ## License
 ARGOS Defense: Apache-2.0 ([LICENSE](LICENSE); basis in [docs/LICENSING.md](docs/LICENSING.md)). Third-party components keep their own licenses ([THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)). ARTEX (AGPL-3.0) is not distributed.

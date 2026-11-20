@@ -1,3 +1,18 @@
+# BUILD_STATE — current decision (2026-11-20 ~19:15 CET, owner)
+
+```text
+REPOSITORY_VISIBILITY: public
+PUBLIC_SOURCE_PUBLICATION: authorized
+PUBLIC_RELEASE_PUBLICATION: authorized after required gates pass
+COMMUNITY_CONTRIBUTIONS: welcomed
+```
+The owner explicitly chose a public, open project. This supersedes all earlier "intended private" entries below. They are kept as history and explain why earlier candidates were held locally; they are no longer blockers.
+
+- Release work: community docs committed on `v0.3.1-local` on top of `a048ae3`, fast-forwarded to `main`, then CI + `create-tag.yml` (version 0.3.1, publish=true) on the final SHA. Results are recorded below once known.
+- Repository settings writes (description, topics, Discussions, private vulnerability reporting, protections, immutable releases) are refused for this session ("Repository settings writes are not permitted through this proxy"); labels and issues can be created.
+
+---
+
 # BUILD_STATE — latest checkpoint (2026-11-20 ~19:40 CET): v0.3.1 follow-up 2 (recovery A/B)
 
 - Branch `v0.3.1-local` (local only). Recovery fixes `2efbdae`; final SHA after docs is recorded in `dist-v031/HANDOVER.txt`.

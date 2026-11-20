@@ -1,0 +1,65 @@
+name: Bug report
+description: Something does not work as documented (not for security vulnerabilities).
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Public issue.** Do not paste credentials, session tokens, private investigation data or employer/customer telemetry.
+        Security vulnerabilities: use the private route in [SECURITY.md](https://github.com/CSTHUESP/argos-defense/blob/main/SECURITY.md) instead.
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `argos-defense --version` (or the release file name / commit).
+      placeholder: ARGOS Defense 0.3.1 (argos-engine/0.3.1); frozen=True; ...
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: Installation
+      options: [Windows native package, Linux native package, macOS arm64 native package, macOS x86_64 native package, wheel/sdist, from source]
+    validations:
+      required: true
+  - type: input
+    id: platform
+    attributes:
+      label: Operating system and version
+      placeholder: Windows 11 23H2 / Ubuntu 24.04 / macOS 15.2 ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: Observed behaviour
+      description: Include exact error messages.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Minimal safe reproduction
+      description: Steps, commands and a small **synthetic** input that reproduces the problem (RFC 5737 addresses, example.* domains, invented names).
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Sanitized diagnostics
+      description: Output of `argos-defense doctor` and relevant log lines, with paths, user names and secrets removed.
+      render: text
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Data safety
+      options:
+        - label: This issue contains no credentials, tokens, private investigation material or employer/customer telemetry.
+          required: true

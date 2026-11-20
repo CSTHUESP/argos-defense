@@ -4,7 +4,12 @@
 Only the latest 0.x release receives fixes. ARGOS Defense is experimental software for local investigation support.
 
 ## Reporting a vulnerability
-Please report privately to the repository owner (GitHub private vulnerability reporting / a private issue to the owner). Include the version (`argos-defense --version`), platform, reproduction steps and **redacted** logs. Do not include real investigation data, credentials or session tokens.
+Do **not** report vulnerabilities in a public issue, pull request or discussion.
+
+1. **Preferred: GitHub private vulnerability reporting.** Open the repository's [Security tab](https://github.com/CSTHUESP/argos-defense/security) and choose **Report a vulnerability** (direct form: https://github.com/CSTHUESP/argos-defense/security/advisories/new). The report is visible only to you and the maintainers, and the fix can be coordinated in a private advisory.
+2. **If that button is not available** (private reporting is a repository setting and may be switched off): open a public issue titled `Security contact request` that contains **no technical details** — only that you have a security report. A maintainer will then open a draft GitHub security advisory and add you as a collaborator, so the details stay private.
+
+Please include the version (`argos-defense --version`), platform, affected component, reproduction steps with **synthetic** data, impact, and **redacted** logs. Never include real investigation data, credentials or session tokens. There is no bug bounty and no guaranteed response time; reports are handled on a best-effort basis.
 
 ## Security model (summary — details in docs/THREAT_MODEL.md)
 - Binds to `127.0.0.1` by default; non-loopback binding requires a hidden override.
@@ -21,4 +26,4 @@ ARGOS performs no blocking, isolation, scanning or other response. It does not i
 - Data directories ARGOS creates are owner-only (POSIX 0700/0600, originals 0400; Windows ACL limited to the user, SYSTEM and Administrators). `argos-defense doctor` reports locations other local accounts can read. This protects against other unprivileged local accounts only; administrators/root and malware running as you can read the data.
 - Redaction applies to every UI page, API response and export by default. The unredacted view of a single record (`?raw=1`) requires the same authentication and is labelled; do not share screenshots of it.
 - Backups (`argos-defense backup`) contain full investigation data including original evidence; store and transfer them like the data directory itself.
-- Report suspected vulnerabilities privately via GitHub security advisories for this repository rather than public issues.
+- Report suspected vulnerabilities through the private route above, not in public issues.

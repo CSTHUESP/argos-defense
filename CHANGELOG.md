@@ -24,6 +24,9 @@ Corrective pass for review findings R01–R09 (docs/V031_REMEDIATION.md). Experi
 - **Recovery B** Watcher recovery re-delivers the exact byte range of an earlier delivery at the checkpoint offset (hash-verified) before reading appended data, so growth or a changed chunk budget cannot duplicate committed records.
 - **R09** The release preflight authenticates Git remote reads with GH_TOKEN through environment-scoped Git configuration (needed for private repositories); the token never appears in argv or URLs.
 
+### Community
+- Public, open development: contributor guide aligned with eval-v2.2, roadmap, issue forms (bug, feature/integration, detection report), pull-request template, and a concrete private vulnerability-reporting route in SECURITY.md.
+
 ### Changed / migration
 - `inputs.finalized` is added when a database is opened; existing rows are classified (active, kept-previous and superseded revisions are certified; an imported-but-never-activated input is not and is re-run).
 - Watcher results: `duplicates`/`duplicate_segments` are replaced by `redelivered`/`redelivered_segments`; identical lines at different offsets or in different files are kept as distinct occurrences.

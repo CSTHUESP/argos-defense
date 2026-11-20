@@ -1,0 +1,39 @@
+name: Feature or integration proposal
+description: Propose a new capability, adapter, export or workflow improvement.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please check the [roadmap](https://github.com/CSTHUESP/argos-defense/blob/main/ROADMAP.md) and existing issues first.
+        ARGOS stays a local, observation-only investigation tool: no automatic blocking, isolation, scanning or offensive response, and no identification of people, groups, nationalities or exact models.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What investigation task is hard or impossible today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: For an adapter or integration, name the product, version and the public field documentation it would follow.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence and limits
+      description: Which observation vantage and fields would this rely on? What could it NOT conclude? How could it be wrong?
+  - type: textarea
+    id: testing
+    attributes:
+      label: How it could be tested
+      description: Synthetic or authorized sample data, positive and negative cases, external environment needed (if any).
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: Contribution
+      options:
+        - label: I would like to work on this myself.

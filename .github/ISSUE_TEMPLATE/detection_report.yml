@@ -1,0 +1,61 @@
+name: Detection rule / false positive / missed detection
+description: A rule fires on benign activity, misses malicious activity, or over- or under-states automation, LLM or framework involvement.
+labels: ["detection"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Public issue.** Describe the pattern with **synthetic** records only; never paste real telemetry, account names, IPs from your environment, or tokens.
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      placeholder: argos-defense --version
+    validations:
+      required: true
+  - type: input
+    id: rule
+    attributes:
+      label: Rule id(s)
+      placeholder: ARG-AUTH-002 (leave empty for a missed detection)
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind of report
+      options:
+        - False positive (benign activity alerted)
+        - Missed detection (malicious activity not alerted)
+        - Overstated conclusion (automation / LLM / framework / purpose / entity)
+        - Understated or unclear conclusion
+        - Severity or confidence looks wrong
+    validations:
+      required: true
+  - type: textarea
+    id: activity
+    attributes:
+      label: Activity and ground truth
+      description: What really happened, how you know, and which dimension(s) ARGOS got wrong.
+    validations:
+      required: true
+  - type: textarea
+    id: records
+    attributes:
+      label: Minimal synthetic records
+      description: The smallest set of synthetic records (with format/adapter) that reproduces the result.
+      render: json
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: ARGOS output
+      description: Alert severity, confidence, the six dimensions and the rule-eligibility/coverage information shown for the case (sanitized).
+    validations:
+      required: true
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Data safety
+      options:
+        - label: The records above are synthetic or explicitly authorized for publication and contain no secrets or private telemetry.
+          required: true
