@@ -62,6 +62,7 @@ class AppState:
         self.allowed_origins = {f"http://{h}" for h in self.allowed_hosts}
         self.server = None  # set by the CLI launcher; enables /api/shutdown
         self.store.recover_interrupted_jobs()
+        self.store.recover_interrupted_imports()
         self.jobs = JobRunner(settings)
 
 
@@ -248,7 +249,7 @@ async def case_analyze(request: Request):
         with st.lock:
             j = st.store.get_job(jid)
         if j["status"] != "succeeded":
-            return JSONResponse({"error": j.get("error") or j.get("message") or j["status"], "job": j}, status_code=400)
+            return JSONResponse(redact_obj({"error": j.get("error") or j.get("message") or j["status"], "job": j}), status_code=400)
         res = json.loads(j["result"])
         with st.lock:
             run = st.store.get_run(res["run_id"])
@@ -302,7 +303,7 @@ async def runs_compare(request: Request):
                 error = str(exc)
     if request.url.path.startswith("/api/"):
         if error:
-            return JSONResponse({"error": error}, status_code=400)
+            return JSONResponse({"error": redact(error)}, status_code=400)
         return JSONResponse(redact_obj(result or {"error": "need two succeeded runs"}))
     return render(request, "compare.html", case=c, runs=runs, result=result, error=error, a=a, b=b)
 
@@ -600,7 +601,7 @@ async def alert_explain(request: Request):
         prov = provider_from_settings(st.settings)
         res = await run_in_threadpool(explain, a, prov)
     except LLMRejected as exc:
-        return JSONResponse({"error": str(exc)}, status_code=422)
+        return JSONResponse({"error": redact(str(exc))}, status_code=422)
     except Exception as exc:  # noqa: BLE001 - network/timeouts of optional layer
         return JSONResponse({"error": f"LLM provider error: {type(exc).__name__}"}, status_code=502)
     return JSONResponse(redact_obj(res))
@@ -659,7 +660,7 @@ async def rules_page(request: Request):
     rules, rules_hash, errors, registry, iocs, disabled = load_context(st.settings)
     data = [r.model_dump(by_alias=True) for r in rules]
     if request.url.path.startswith("/api/"):
-        return JSONResponse({"rules": data, "rules_hash": rules_hash, "errors": errors})
+        return JSONResponse({"rules": data, "rules_hash": rules_hash, "errors": [redact(str(e)) for e in errors]})
     return render(request, "rules.html", rules=data, rules_hash=rules_hash, errors=errors,
                   registry=[e.model_dump() for e in registry.entries], iocs=sum(len(v) for v in iocs.items.values()))
 
@@ -693,7 +694,7 @@ async def api_cases(request: Request):
             with st.lock:
                 c = st.store.create_case(str(body.get("name", "")), bool(body.get("synthetic", False)), str(body.get("description", ""))[:2000])
         except ValueError as exc:
-            return JSONResponse({"error": str(exc)}, status_code=400)
+            return JSONResponse({"error": redact(str(exc))}, status_code=400)
         return JSONResponse(redact_obj(c), status_code=201)
     with st.lock:
         return JSONResponse(redact_obj({"cases": st.store.list_cases()}))
@@ -703,7 +704,7 @@ async def api_import(request: Request):
     try:
         res = await _do_import(request, request.path_params["cid"])
     except (ImportError_, MappingError, ValueError) as exc:
-        return JSONResponse({"status": "error", "error": str(exc)}, status_code=400)
+        return JSONResponse({"status": "error", "error": redact(str(exc))}, status_code=400)
     return JSONResponse(redact_obj(res), status_code=200 if res["status"] != "rejected" else 422)
 
 

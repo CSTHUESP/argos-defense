@@ -80,8 +80,10 @@ V3_INPUTS = """CREATE TABLE IF NOT EXISTS inputs (
   records_total INTEGER, records_accepted INTEGER, records_rejected INTEGER,
   imported_at TEXT NOT NULL,
   options_hash TEXT NOT NULL DEFAULT '', revision INTEGER NOT NULL DEFAULT 1, active INTEGER NOT NULL DEFAULT 1,
-  status TEXT NOT NULL DEFAULT 'imported', supersedes TEXT, coverage TEXT, source_ref TEXT,
+  status TEXT NOT NULL DEFAULT 'imported', supersedes TEXT, coverage TEXT, source_ref TEXT, delivery_key TEXT,
   UNIQUE(case_id, sha256, format, options_hash));"""
+# An input row only certifies a durable import when its status is one of these (follow-up defect 2).
+COMPLETED_INPUT_STATUSES = ("imported", "rejected", "failed_kept_previous")
 V3_EXTRA = """
 CREATE TABLE IF NOT EXISTS runs (
   run_id TEXT PRIMARY KEY, case_id TEXT NOT NULL, seq INTEGER NOT NULL, started_at TEXT NOT NULL,
@@ -251,6 +253,9 @@ class Store:
         legacy so the watcher re-establishes identity conservatively instead of trusting them (R03).
         Declared coverage JSON is unchanged; declarations without `event_kinds` are interpreted narrowly
         (only the event kinds present in that input) at analysis time (R05)."""
+        icols = [r[1] for r in c.execute("PRAGMA table_info(inputs)")]
+        if icols and "delivery_key" not in icols:
+            c.execute("ALTER TABLE inputs ADD COLUMN delivery_key TEXT")
         cols = [r[1] for r in c.execute("PRAGMA table_info(watch_checkpoints)")]
         if cols and "dev" not in cols:
             for col, typ in (("dev", "INTEGER"), ("ino", "INTEGER"), ("head_fp", "TEXT"), ("tail_sha", "TEXT"),
@@ -326,13 +331,32 @@ class Store:
                                   (case_id, sha256, fmt, opt_hash)).fetchone()
         return dict(r) if r else None
 
-    def revisions_of(self, case_id: str, sha256: str) -> list[dict]:
+    def revisions_of(self, case_id: str, sha256: str, delivery_key: str | None = None) -> list[dict]:
+        """Revisions (interpretations) of ONE logical delivery: manual imports of the same content share
+        delivery_key NULL; each watcher delivery (source, generation, byte range) has its own key."""
         return [dict(r) for r in self.conn.execute(
-            "SELECT * FROM inputs WHERE case_id=? AND sha256=? ORDER BY revision", (case_id, sha256))]
+            "SELECT * FROM inputs WHERE case_id=? AND sha256=? AND delivery_key IS ? ORDER BY revision", (case_id, sha256, delivery_key))]
 
-    def next_revision(self, case_id: str, sha256: str) -> int:
-        return (self.conn.execute("SELECT COALESCE(MAX(revision),0) FROM inputs WHERE case_id=? AND sha256=?",
-                                  (case_id, sha256)).fetchone()[0]) + 1
+    def next_revision(self, case_id: str, sha256: str, delivery_key: str | None = None) -> int:
+        return (self.conn.execute("SELECT COALESCE(MAX(revision),0) FROM inputs WHERE case_id=? AND sha256=? AND delivery_key IS ?",
+                                  (case_id, sha256, delivery_key)).fetchone()[0]) + 1
+
+    def restart_incomplete_input(self, input_id: str) -> None:
+        """Remove the partial rows of an import that never completed (processing/interrupted/failed) so it can be
+        re-run from its retained original under the same deterministic ids. The row stays inactive."""
+        with self.tx() as c:
+            st = c.execute("SELECT status, active FROM inputs WHERE input_id=?", (input_id,)).fetchone()
+            if st is None or st[0] in COMPLETED_INPUT_STATUSES or st[1]:
+                raise ValueError(f"input {input_id} is not an incomplete import")
+            c.execute("DELETE FROM events WHERE input_id=?", (input_id,))
+            c.execute("DELETE FROM rejects WHERE input_id=?", (input_id,))
+            c.execute("UPDATE inputs SET status='processing', records_total=NULL, records_accepted=NULL, records_rejected=NULL "
+                      "WHERE input_id=?", (input_id,))
+
+    def recover_interrupted_imports(self) -> int:
+        """At server start (single process per data dir): imports left 'processing' by a dead process are 'interrupted'."""
+        with self.tx() as c:
+            return c.execute("UPDATE inputs SET status='interrupted' WHERE status='processing' AND active=0").rowcount
 
     def add_input(self, row: dict):
         cols = ",".join(row)
@@ -351,10 +375,12 @@ class Store:
     def activate_revision(self, input_id: str):
         """Make one revision the active interpretation of its file content (exactly one active per content)."""
         with self.tx() as c:
-            r = c.execute("SELECT case_id, sha256 FROM inputs WHERE input_id=?", (input_id,)).fetchone()
+            r = c.execute("SELECT case_id, sha256, delivery_key, status FROM inputs WHERE input_id=?", (input_id,)).fetchone()
             if not r:
                 raise ValueError("unknown input")
-            c.execute("UPDATE inputs SET active=0 WHERE case_id=? AND sha256=?", (r[0], r[1]))
+            if r[3] not in COMPLETED_INPUT_STATUSES:
+                raise ValueError(f"input {input_id} is {r[3]}; only completed imports can be activated")
+            c.execute("UPDATE inputs SET active=0 WHERE case_id=? AND sha256=? AND delivery_key IS ?", (r[0], r[1], r[2]))
             c.execute("UPDATE inputs SET active=1 WHERE input_id=?", (input_id,))
 
     def rebase_originals(self, cases_dir: Path) -> int:

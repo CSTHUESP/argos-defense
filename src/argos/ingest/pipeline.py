@@ -17,6 +17,7 @@ import os
 import re
 import shutil
 import stat
+import threading
 from pathlib import Path
 
 from argos import PARSER_VERSIONS
@@ -25,7 +26,7 @@ from argos.evidence.redact import redact, redact_obj
 from argos.ingest.adapters import READERS, AdapterError
 from argos.normalize import mappers
 from argos.normalize.timeutil import TimestampError, iso, now_iso, parse_timestamp
-from argos.store import Store, options_hash
+from argos.store import COMPLETED_INPUT_STATUSES, Store, options_hash
 
 # Unicode letters/digits allowed (e.g. "Prüfung é.xml"); path separators, control chars and ".." are not.
 SAFE_NAME_RE = re.compile(r"^[^\W_][\w .,()+\-]{0,200}$", re.UNICODE)
@@ -150,42 +151,80 @@ def validate_coverage(cov: dict | None) -> dict | None:
             "basis": "analyst-declared (not verified by ARGOS)", "note": (cov.get("note") or "")[:500]}
 
 
+_IMPORT_LOCKS: dict = {}
+_IMPORT_LOCKS_GUARD = threading.Lock()
+
+
+def _import_lock(key):
+    with _IMPORT_LOCKS_GUARD:
+        return _IMPORT_LOCKS.setdefault(key, threading.Lock())
+
+
 def ingest_file(store: Store, settings: Settings, case: dict, path: str | Path, fmt: str,
                 options: dict | None = None, original_name: str | None = None, reprocess: bool = False,
-                coverage: dict | None = None, source_ref: dict | None = None) -> dict:
+                coverage: dict | None = None, source_ref: dict | None = None, delivery_key: str | None = None) -> dict:
+    """Import one file as one input revision.
+
+    Completion (follow-up defect 2): an input row certifies a durable import only when its status is in
+    COMPLETED_INPUT_STATUSES. A row left 'processing'/'interrupted'/'failed' (e.g. the process died or a write
+    failed after some batches committed) is restarted: its partial events/rejects are removed and the import is
+    re-run from the retained original under the same deterministic input and event ids. Imports of the same
+    content+options are serialized in-process; event ids are deterministic and inserted with INSERT OR IGNORE, so
+    a retry cannot create duplicate occurrences.
+
+    Delivery identity (follow-up defect 3): `delivery_key` (used by the watcher: source, file generation, byte range)
+    is part of the input identity. A retry of the same delivery is idempotent; another delivery with byte-identical
+    content is a different occurrence and is imported separately (the original bytes are stored once)."""
     if fmt not in READERS:
         raise ImportError_(f"unknown format {fmt!r}; supported: {', '.join(READERS)}")
     opts, profile = effective_options(fmt, options)
     cov = validate_coverage(coverage)
     parser_version = PARSER_VERSIONS[fmt]
-    oh = options_hash(fmt, parser_version, opts)
+    oh = options_hash(fmt, parser_version, {**opts, "_delivery": delivery_key} if delivery_key else opts)
     src = Path(path)
     case_dir = safe_join(settings.cases_dir, case["case_id"])
     _private_dir(case_dir)
     digest, stored, size = _copy_and_hash(src, case_dir / "originals", settings.max_file_bytes)
+    with _import_lock((case["case_id"], digest, fmt, oh)):
+        return _ingest_locked(store, settings, case, src, fmt, opts, profile, cov, parser_version, oh, digest, stored, size,
+                              original_name, reprocess, source_ref, delivery_key)
+
+
+def _ingest_locked(store, settings, case, src, fmt, opts, profile, cov, parser_version, oh, digest, stored, size,
+                   original_name, reprocess, source_ref, delivery_key):
     same = store.find_input(case["case_id"], digest, fmt, oh)
-    if same:
-        return {"status": "already_imported", "input_id": same["input_id"], "sha256": digest, "revision": same["revision"],
-                "active": bool(same["active"]), "accepted": same["records_accepted"], "rejected": same["records_rejected"],
+    resumed = False
+    if same and same["status"] in COMPLETED_INPUT_STATUSES:
+        return {"status": "already_imported", "completed": True, "input_id": same["input_id"], "sha256": digest,
+                "revision": same["revision"], "active": bool(same["active"]), "input_status": same["status"],
+                "accepted": same["records_accepted"], "rejected": same["records_rejected"],
                 "total": same["records_total"], "new_events": 0}
-    revisions = store.revisions_of(case["case_id"], digest)
+    if same:
+        # an earlier attempt of exactly this import did not complete: discard its partial rows and redo it
+        store.restart_incomplete_input(same["input_id"])
+        resumed = True
+    revisions = [r for r in store.revisions_of(case["case_id"], digest, delivery_key) if not same or r["input_id"] != same["input_id"]]
     active = next((r for r in revisions if r["active"]), None)
-    if revisions and not reprocess:
+    if revisions and not reprocess and not resumed:
         return {"status": "different_options_require_reprocess", "sha256": digest, "active_input_id": active["input_id"] if active else None,
                 "message": "this file content was already imported with other parsing options; use reprocess to create a new revision",
                 "accepted": 0, "rejected": 0, "total": 0, "new_events": 0}
-    revision = store.next_revision(case["case_id"], digest)
-    input_id = "in-" + digest[:16] + "-" + hashlib.sha256(f"{case['case_id']}|{fmt}|{oh}".encode()).hexdigest()[:6]
-    store.add_input({
-        "input_id": input_id, "case_id": case["case_id"], "sha256": digest,
-        "original_name": original_name or src.name, "stored_path": str(stored), "format": fmt,
-        "parser_version": parser_version, "options": json.dumps(opts, sort_keys=True, default=str),
-        "size_bytes": size, "provenance_trust": "unverified",
-        "provenance_note": "imported file; origin not independently verified (sha256 establishes integrity only)",
-        "imported_at": now_iso(), "options_hash": oh, "revision": revision, "active": 0, "status": "processing",
-        "supersedes": active["input_id"] if active else None, "coverage": json.dumps(cov) if cov else None,
-        "source_ref": json.dumps(source_ref) if source_ref else None,
-    })
+    if resumed:
+        revision, input_id = same["revision"], same["input_id"]
+    else:
+        revision = store.next_revision(case["case_id"], digest, delivery_key)
+        input_id = "in-" + digest[:16] + "-" + hashlib.sha256(f"{case['case_id']}|{fmt}|{oh}".encode()).hexdigest()[:6]
+    if not resumed:
+        store.add_input({
+            "input_id": input_id, "case_id": case["case_id"], "sha256": digest,
+            "original_name": original_name or src.name, "stored_path": str(stored), "format": fmt,
+            "parser_version": parser_version, "options": json.dumps(opts, sort_keys=True, default=str),
+            "size_bytes": size, "provenance_trust": "unverified",
+            "provenance_note": "imported file; origin not independently verified (sha256 establishes integrity only)",
+            "imported_at": now_iso(), "options_hash": oh, "revision": revision, "active": 0, "status": "processing",
+            "supersedes": active["input_id"] if active else None, "coverage": json.dumps(cov) if cov else None,
+            "source_ref": json.dumps(source_ref) if source_ref else None, "delivery_key": delivery_key,
+        })
     ingested_at = now_iso()
     total = accepted = rejected = new = 0
     chunk, rej_chunk = [], []
@@ -203,7 +242,12 @@ def ingest_file(store: Store, settings: Settings, case: dict, path: str | Path, 
 
     file_error = None
     try:
-        for record_no, raw, err, locator in READERS[fmt](stored, settings.max_record_bytes):
+        records = READERS[fmt](stored, settings.max_record_bytes)
+    except Exception:
+        store.set_input_status(input_id, "interrupted")
+        raise
+    try:
+        for record_no, raw, err, locator in records:
             total += 1
             ev = None
             ts_raw = None
@@ -259,6 +303,13 @@ def ingest_file(store: Store, settings: Settings, case: dict, path: str | Path, 
         file_error = str(exc)
         rejected += 1
         store.insert_rejects([(case["case_id"], input_id, 0, f"file rejected: {exc}"[:300], None)])
+    except BaseException:
+        # write failure, cancellation, ...: committed batches stay but the input is NOT complete and stays inactive
+        try:
+            store.set_input_status(input_id, "interrupted")
+        except Exception:  # noqa: BLE001 - the original error matters more; a later import treats 'processing' alike
+            pass
+        raise
     store.update_input_counts(input_id, total, accepted, rejected)
     # decide whether this revision becomes the active interpretation
     previous_usable = active is not None and (active["records_accepted"] or 0) > 0
@@ -266,12 +317,13 @@ def ingest_file(store: Store, settings: Settings, case: dict, path: str | Path, 
         store.set_input_status(input_id, "failed_kept_previous")
         status = "reprocess_failed_previous_kept"
     else:
-        store.activate_revision(input_id)
         store.set_input_status(input_id, "rejected" if file_error else "imported")
+        store.activate_revision(input_id)
         status = "rejected" if file_error else ("reprocessed" if active else "imported")
     res = {"status": status, "input_id": input_id, "sha256": digest, "revision": revision, "options_hash": oh,
            "accepted": accepted, "rejected": rejected, "skipped": max(0, total - accepted - rejected), "total": total,
-           "new_events": new, "stored_copy": str(stored), "superseded": active["input_id"] if active and status == "reprocessed" else None}
+           "new_events": new, "stored_copy": str(stored), "superseded": active["input_id"] if active and status == "reprocessed" else None,
+           "completed": True, "recovered_incomplete_attempt": resumed}
     if file_error:
         res["error"] = file_error
     return res

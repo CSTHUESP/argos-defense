@@ -1,0 +1,285 @@
+{
+  "protocol": "eval-v2.2",
+  "set": "dev",
+  "events": 4184,
+  "rejected": 0,
+  "units": 321,
+  "run_id": "run-495086ad22057d2a",
+  "rules_hash": "a0dba54b8a5fcef5",
+  "engine": "argos-engine/0.3.1",
+  "per_scenario": {
+    "B10_incomplete_telemetry": {
+      "units": 12,
+      "any_alert": 0,
+      "alert_low_or_above": 0,
+      "alerts": 0,
+      "abstained_alerts": 0,
+      "direct_llm_alerts": 0
+    },
+    "B1_typo_then_success": {
+      "units": 12,
+      "any_alert": 0,
+      "alert_low_or_above": 0,
+      "alerts": 0,
+      "abstained_alerts": 0,
+      "direct_llm_alerts": 0
+    },
+    "B2_many_typos_known_device": {
+      "units": 12,
+      "any_alert": 12,
+      "alert_low_or_above": 12,
+      "alerts": 12,
+      "abstained_alerts": 0,
+      "direct_llm_alerts": 0
+    },
+    "B3_multi_device_intermittent": {
+      "units": 12,
+      "any_alert": 0,
+      "alert_low_or_above": 0,
+      "alerts": 0,
+      "abstained_alerts": 0,
+      "direct_llm_alerts": 0
+    },
+    "B4_stale_credential_device": {
+      "units": 12,
+      "any_alert": 2,
+      "alert_low_or_above": 2,
+      "alerts": 2,
+      "abstained_alerts": 0,
+      "direct_llm_alerts": 0
+    },
+    "B5_shared_egress": {
+      "units": 12,
+      "any_alert": 0,
+      "alert_low_or_above": 0,
+      "alerts": 0,
+      "abstained_alerts": 0,
+      "direct_llm_alerts": 0
+    },
+    "B6_service_automation": {
+      "units": 12,
+      "any_alert": 0,
+      "alert_low_or_above": 0,
+      "alerts": 0,
+      "abstained_alerts": 0,
+      "direct_llm_alerts": 0
+    },
+    "B7_admin_credential_rotation": {
+      "units": 12,
+      "any_alert": 12,
+      "alert_low_or_above": 12,
+      "alerts": 12,
+      "abstained_alerts": 0,
+      "direct_llm_alerts": 0
+    },
+    "B8_developer_ai_assistant": {
+      "units": 12,
+      "any_alert": 12,
+      "alert_low_or_above": 12,
+      "alerts": 117,
+      "abstained_alerts": 0,
+      "direct_llm_alerts": 70
+    },
+    "B9_background_ai_traffic": {
+      "units": 12,
+      "any_alert": 12,
+      "alert_low_or_above": 0,
+      "alerts": 21,
+      "abstained_alerts": 0,
+      "direct_llm_alerts": 0
+    },
+    "H_same_trace_hidden_origin": {
+      "units": 9,
+      "any_alert": 9,
+      "alert_low_or_above": 9,
+      "alerts": 9,
+      "abstained_alerts": 0,
+      "direct_llm_alerts": 0,
+      "detected": 9
+    },
+    "M10_slow_guess_no_source_field": {
+      "units": 12,
+      "any_alert": 12,
+      "alert_low_or_above": 12,
+      "alerts": 12,
+      "abstained_alerts": 0,
+      "direct_llm_alerts": 0,
+      "detected": 12
+    },
+    "M1_fast_guessing": {
+      "units": 12,
+      "any_alert": 12,
+      "alert_low_or_above": 12,
+      "alerts": 12,
+      "abstained_alerts": 0,
+      "direct_llm_alerts": 0,
+      "detected": 12
+    },
+    "M2_slow_guessing": {
+      "units": 12,
+      "any_alert": 12,
+      "alert_low_or_above": 12,
+      "alerts": 12,
+      "abstained_alerts": 0,
+      "direct_llm_alerts": 0,
+      "detected": 12
+    },
+    "M3_guessing_interleaved_user": {
+      "units": 12,
+      "any_alert": 12,
+      "alert_low_or_above": 12,
+      "alerts": 12,
+      "abstained_alerts": 0,
+      "direct_llm_alerts": 0,
+      "detected": 12
+    },
+    "M4_rotating_sources": {
+      "units": 12,
+      "any_alert": 12,
+      "alert_low_or_above": 12,
+      "alerts": 12,
+      "abstained_alerts": 0,
+      "direct_llm_alerts": 0,
+      "detected": 12
+    },
+    "M5_rotating_and_interleaved": {
+      "units": 12,
+      "any_alert": 0,
+      "alert_low_or_above": 0,
+      "alerts": 0,
+      "abstained_alerts": 0,
+      "direct_llm_alerts": 0,
+      "detected": 0
+    },
+    "M6_sp_credential_add_failed": {
+      "units": 12,
+      "any_alert": 12,
+      "alert_low_or_above": 12,
+      "alerts": 12,
+      "abstained_alerts": 0,
+      "direct_llm_alerts": 0,
+      "detected": 12
+    },
+    "M7_sp_credential_add_then_vault_reads": {
+      "units": 12,
+      "any_alert": 12,
+      "alert_low_or_above": 12,
+      "alerts": 24,
+      "abstained_alerts": 0,
+      "direct_llm_alerts": 0,
+      "detected": 12
+    },
+    "M8_web_shell": {
+      "units": 12,
+      "any_alert": 12,
+      "alert_low_or_above": 12,
+      "alerts": 24,
+      "abstained_alerts": 0,
+      "direct_llm_alerts": 0,
+      "detected": 12
+    },
+    "M9_password_spray": {
+      "units": 12,
+      "any_alert": 12,
+      "alert_low_or_above": 12,
+      "alerts": 12,
+      "abstained_alerts": 0,
+      "direct_llm_alerts": 0,
+      "detected": 12
+    },
+    "N1_tool_only_automation": {
+      "units": 12,
+      "any_alert": 12,
+      "alert_low_or_above": 0,
+      "alerts": 12,
+      "abstained_alerts": 0,
+      "direct_llm_alerts": 0
+    },
+    "N2_model_only": {
+      "units": 12,
+      "any_alert": 0,
+      "alert_low_or_above": 0,
+      "alerts": 0,
+      "abstained_alerts": 0,
+      "direct_llm_alerts": 0
+    },
+    "N3_mismatched_call_ids": {
+      "units": 12,
+      "any_alert": 12,
+      "alert_low_or_above": 0,
+      "alerts": 12,
+      "abstained_alerts": 0,
+      "direct_llm_alerts": 0
+    },
+    "N4_independent_collectors_reuse_ids": {
+      "units": 12,
+      "any_alert": 12,
+      "alert_low_or_above": 0,
+      "alerts": 12,
+      "abstained_alerts": 0,
+      "direct_llm_alerts": 0
+    },
+    "N5_mixed_valid_chain_and_unrelated_execution": {
+      "units": 12,
+      "any_alert": 12,
+      "alert_low_or_above": 12,
+      "alerts": 48,
+      "abstained_alerts": 0,
+      "direct_llm_alerts": 24
+    },
+    "N6_valid_chain_plus_reused_call_and_guid_in_other_collector": {
+      "units": 12,
+      "any_alert": 12,
+      "alert_low_or_above": 12,
+      "alerts": 48,
+      "abstained_alerts": 0,
+      "direct_llm_alerts": 24
+    }
+  },
+  "threat": {
+    "benign_units": 192,
+    "benign_units_with_low_or_higher_alert": 62,
+    "benign_units_with_any_alert": 110,
+    "benign_alerts_per_benign_unit_day": 0.2569,
+    "malicious_detection": {
+      "H_same_trace_hidden_origin": "9/9",
+      "M10_slow_guess_no_source_field": "12/12",
+      "M1_fast_guessing": "12/12",
+      "M2_slow_guessing": "12/12",
+      "M3_guessing_interleaved_user": "12/12",
+      "M4_rotating_sources": "12/12",
+      "M5_rotating_and_interleaved": "0/12",
+      "M6_sp_credential_add_failed": "12/12",
+      "M7_sp_credential_add_then_vault_reads": "12/12",
+      "M8_web_shell": "12/12",
+      "M9_password_spray": "12/12"
+    }
+  },
+  "attribution": {
+    "alerts_scored": 433,
+    "llm_overclaims": 0,
+    "llm_overclaim_examples": [],
+    "framework_errors": 0,
+    "identity_errors": 0,
+    "labelled_chains": 59,
+    "labelled_chains_directly_observed": 59,
+    "labelled_chains_missed_examples": []
+  },
+  "hidden_origin_triplets_identical": "3/3",
+  "abstention": {
+    "abstained_alerts": 0,
+    "alerts": 433
+  },
+  "rule_status": {
+    "evaluable_no_candidate_records": 14,
+    "matched": 12,
+    "evaluable_no_match": 3
+  },
+  "review_burden": {
+    "alerts_total": 433,
+    "alerts_per_100_units": 134.9,
+    "median_alerts_per_unit": 1,
+    "max_alerts_per_unit": 13,
+    "low_confidence_share": 0.028
+  }
+}

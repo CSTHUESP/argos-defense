@@ -631,3 +631,262 @@ def test_r03_legacy_v030_checkpoint_adopted_without_duplicates(env, tmp_path):
     s = poll_once(env.store, env.settings, src)
     assert any("legacy v0.3.0 checkpoint adopted" in e for e in s["errors"])
     assert _queries(env, c) == ["new-2.example", "old-0.example", "old-1.example"]
+
+
+# =============================================================== v0.3.1 follow-up (FU1-FU5)
+# FU1: error responses use the output-redaction policy
+def test_fu1_import_validation_error_and_failed_analysis_are_redacted(env, monkeypatch):
+    import argos.analysis as AN
+    token = "t-fu1"
+    with Server(env.settings, token) as srv:
+        cl = Client(srv.port, token)
+        c = env.case("fu1")
+        p = env.tmp / "x.json"
+        p.write_text('{"a": 1}\n')
+        boundary = "----fu1"
+        body = (f"--{boundary}\r\nContent-Disposition: form-data; name=\"format\"\r\n\r\nsplunk_json\r\n"
+                f"--{boundary}\r\nContent-Disposition: form-data; name=\"profile\"\r\n\r\napi_key: SYNTH_PROFILE_SECRET\r\n"
+                f"--{boundary}\r\nContent-Disposition: form-data; name=\"file\"; filename=\"x.json\"\r\n"
+                f"Content-Type: application/json\r\n\r\n{p.read_text()}\r\n--{boundary}--\r\n")
+        st, _, resp = cl.req("POST", f"/api/cases/{c['case_id']}/import", body.encode(), {"Content-Type": f"multipart/form-data; boundary={boundary}"}, bearer=True)
+        assert st == 400, resp
+        d = json.loads(resp)
+        assert d["status"] == "error" and "SYNTH_PROFILE_SECRET" not in resp
+        assert "profile" in d["error"].lower() and "[REDACTED]" in d["error"]  # useful message kept
+        # failed analysis: secret in the exception text
+        env.ingest(c, [{"event_time": ts(0), "event_kind": "dns", "dns_query": "a.example"}])
+
+        def boom(*a, **k):
+            raise RuntimeError('cannot evaluate {"password": "SYNTH_JOB_SECRET"} token=SYNTH_JOB_SECRET2')
+        monkeypatch.setattr(AN, "case_assessment", boom)
+        st, _, resp = cl.req("POST", f"/api/cases/{c['case_id']}/analyze", bearer=True)
+        assert st == 400 and "SYNTH_JOB_SECRET" not in resp and "RuntimeError" in resp
+        jid = json.loads(resp)["job"]["job_id"]
+        st, _, resp = cl.req("GET", f"/api/jobs/{jid}", bearer=True)
+        assert st == 200 and "SYNTH_JOB_SECRET" not in resp and json.loads(resp)["status"] == "failed"
+        st, _, page = cl.req("GET", f"/jobs/{jid}", bearer=True)
+        assert st == 200 and "SYNTH_JOB_SECRET" not in page and "RuntimeError" in page
+
+
+# FU2: an interrupted import is not a completed duplicate
+def _two_records(tmp_path, name="feed.jsonl"):
+    d = tmp_path / "fu2-watch"
+    d.mkdir(exist_ok=True)
+    (d / name).write_text(_line(0, "r0.example") + _line(1, "r1.example"))
+    return d
+
+
+def test_fu2_failure_after_committed_batch_then_retry_exactly_once(env, tmp_path, monkeypatch):
+    import argos.watch as W
+    from argos.store import Store
+    d = _two_records(tmp_path)
+    c = env.case("fu2")
+    env.settings.chunk_size = 1
+    src = W.add_source(env.store, c, d, "*.jsonl", "native_jsonl")
+    real_insert = Store.insert_events
+    calls = {"n": 0}
+
+    def fail_after_first(self, events):
+        n = real_insert(self, events)  # this batch really commits
+        calls["n"] += 1
+        if calls["n"] == 1:
+            raise OSError("simulated disk failure after the first committed batch")
+        return n
+    monkeypatch.setattr(Store, "insert_events", fail_after_first)
+    s = W.poll_once(env.store, env.settings, src)
+    assert s["errors"] and calls["n"] == 1
+    assert env.store.conn.execute("SELECT COUNT(*) FROM events").fetchone()[0] == 1  # partial batch is in the DB...
+    inp = env.store.conn.execute("SELECT status, active FROM inputs").fetchone()
+    assert inp["status"] in ("interrupted", "processing") and inp["active"] == 0  # ...but the input is not complete
+    assert env.store.count_events(c["case_id"]) == 0
+    cp = env.store.conn.execute("SELECT offset FROM watch_checkpoints").fetchone()
+    assert cp["offset"] == 0
+    monkeypatch.setattr(Store, "insert_events", real_insert)
+    s = W.poll_once(env.store, env.settings, src)
+    assert not s["errors"] and s["segments_imported"] == 1 and s["redelivered"] == 0
+    assert _queries(env, c) == ["r0.example", "r1.example"]
+    assert env.store.conn.execute("SELECT COUNT(*) FROM events").fetchone()[0] == 2  # exactly once
+    assert env.store.conn.execute("SELECT status, active FROM inputs").fetchone()["status"] == "imported"
+
+
+def test_fu2_completed_import_then_crash_before_checkpoint_is_idempotent(env, tmp_path, monkeypatch):
+    import argos.watch as W
+    d = _two_records(tmp_path)
+    c = env.case("fu2b")
+    src = W.add_source(env.store, c, d, "*.jsonl", "native_jsonl")
+    real_tail = W._tail_sha
+    state = {"first": True}
+
+    def crash_once(path, offset):
+        if state["first"] and offset > 0:
+            state["first"] = False
+            raise OSError("simulated crash after import, before checkpoint update")
+        return real_tail(path, offset)
+    monkeypatch.setattr(W, "_tail_sha", crash_once)
+    s = W.poll_once(env.store, env.settings, src)
+    assert s["errors"] and _queries(env, c) == ["r0.example", "r1.example"]
+    assert env.store.conn.execute("SELECT offset FROM watch_checkpoints").fetchone()["offset"] == 0
+    s = W.poll_once(env.store, env.settings, src)
+    assert s["redelivered"] == 1 and s["segments_imported"] == 0 and not s["errors"]
+    assert _queries(env, c) == ["r0.example", "r1.example"]
+    assert env.store.conn.execute("SELECT offset FROM watch_checkpoints").fetchone()["offset"] > 0
+
+
+def test_fu2_incomplete_input_cannot_be_activated_or_satisfy_dedup(env):
+    from argos.ingest.pipeline import ingest_file
+    c = env.case("fu2c")
+    p = env.write("m.jsonl", [{"event_time": ts(i), "event_kind": "dns", "dns_query": f"m{i}.example"} for i in range(3)])
+    r = ingest_file(env.store, env.settings, c, p, "native_jsonl", {})
+    with env.store.tx() as cx:  # make it look like an interrupted import
+        cx.execute("UPDATE inputs SET status='interrupted', active=0 WHERE input_id=?", (r["input_id"],))
+        cx.execute("DELETE FROM events WHERE input_id=? AND record_no>1", (r["input_id"],))
+    with pytest.raises(ValueError, match="only completed"):
+        env.store.activate_revision(r["input_id"])
+    r2 = ingest_file(env.store, env.settings, c, p, "native_jsonl", {})
+    assert r2["status"] == "imported" and r2["recovered_incomplete_attempt"] and r2["input_id"] == r["input_id"]
+    assert env.store.count_events(c["case_id"]) == 3
+    r3 = ingest_file(env.store, env.settings, c, p, "native_jsonl", {})
+    assert r3["status"] == "already_imported" and r3["completed"]
+
+
+def test_fu2_interrupted_reprocess_keeps_previous_usable_revision(env, monkeypatch):
+    from argos.ingest.pipeline import ingest_file
+    from argos.store import Store
+    c = env.case("fu2d")
+    p = env.write("n.jsonl", [{"event_time": "2026-11-03 10:00:0%d" % i, "event_kind": "dns", "dns_query": f"n{i}.example"} for i in range(3)])
+    assert ingest_file(env.store, env.settings, c, p, "native_jsonl", {"assume_tz": "UTC"})["accepted"] == 3
+    env.settings.chunk_size = 1
+    real = Store.insert_events
+    n = {"k": 0}
+
+    def fail_second(self, ev):
+        n["k"] += 1
+        if n["k"] == 2:
+            raise OSError("simulated")
+        return real(self, ev)
+    monkeypatch.setattr(Store, "insert_events", fail_second)
+    with pytest.raises(OSError):
+        ingest_file(env.store, env.settings, c, p, "native_jsonl", {"assume_tz": "+02:00"}, reprocess=True)
+    monkeypatch.setattr(Store, "insert_events", real)
+    active = [i for i in env.store.list_inputs(c["case_id"], include_inactive=True) if i["active"]]
+    assert len(active) == 1 and json.loads(active[0]["options"]) == {"assume_tz": "UTC"}
+    assert env.store.count_events(c["case_id"]) == 3
+    r = ingest_file(env.store, env.settings, c, p, "native_jsonl", {"assume_tz": "+02:00"}, reprocess=True)
+    assert r["status"] == "reprocessed" and env.store.count_events(c["case_id"]) == 3
+
+
+# FU3: delivery identity, not content identity; independent of chunk size
+def _occurrences(env, c):
+    rows = []
+    for e in env.store.iter_events(c["case_id"]):
+        ref = json.loads(env.store.get_input(e["input_id"])["source_ref"])
+        loc = e["source_locator"]
+        rows.append((ref["file"], ref["byte_start"] + loc["byte_start"], ref["byte_start"] + loc["byte_end"], e["dns_query"]))
+    return sorted(rows)
+
+
+@pytest.mark.parametrize("chunk", [1 << 20, 250, 98])  # 98 bytes = exactly one line per chunk
+def test_fu3_occurrences_independent_of_chunk_size_and_repeat_lines(env, tmp_path, chunk):
+    from argos.store import Store
+    from argos.watch import add_source, poll_once
+    d = tmp_path / f"fu3-{chunk}"
+    d.mkdir()
+    shared = _line(0, "shared.example")
+    (d / "a.jsonl").write_text(shared + _line(1, "only-a.example") + shared)  # same bytes again at another offset
+    (d / "b.jsonl").write_text(shared + _line(1, "only-b.example"))
+    c = env.case(f"fu3-{chunk}")
+    src = add_source(env.store, c, d, "*.jsonl", "native_jsonl")
+    for _ in range(20):
+        s = poll_once(env.store, env.settings, src, max_chunk_bytes=max(chunk, 1), max_cycle_bytes=1 << 24)
+        if s["waiting_partial"] == 0 and not s["backpressure"]:
+            break
+    occ = _occurrences(env, c)
+    assert [o[3] for o in occ].count("shared.example") == 3 and len(occ) == 5, occ
+    expected = [("a.jsonl", 0, len(shared), "shared.example"), ("a.jsonl", len(shared), len(shared) + len(_line(1, "only-a.example")), "only-a.example"),
+                ("a.jsonl", len(shared) + len(_line(1, "only-a.example")), 2 * len(shared) + len(_line(1, "only-a.example")), "shared.example"),
+                ("b.jsonl", 0, len(shared), "shared.example"), ("b.jsonl", len(shared), len(shared) + len(_line(1, "only-b.example")), "only-b.example")]
+    assert occ == sorted(expected)
+    # repeat poll and restart: idempotent
+    poll_once(env.store, env.settings, src, max_chunk_bytes=max(chunk, 1))
+    st2 = Store(env.settings.db_path)
+    poll_once(st2, env.settings, src, max_chunk_bytes=max(chunk, 1))
+    st2.close()
+    assert _occurrences(env, c) == occ
+    # original-record locator still points at the exact line
+    from argos.evidence.original import original_record
+    ev = next(e for e in env.store.iter_events(c["case_id"]) if e["dns_query"] == "only-b.example")
+    assert "only-b.example" in original_record(env.store.get_input(ev["input_id"]), ev)["record_text"]
+
+
+def test_fu3_manual_import_dedup_semantics_unchanged(env):
+    c = env.case("fu3-manual")
+    p = env.write("same.jsonl", [{"event_time": ts(0), "event_kind": "dns", "dns_query": "x.example"}])
+    assert env.ingest(c, p)["status"] == "imported"
+    assert env.ingest(c, p)["status"] == "already_imported"
+    assert env.ingest(c, p, options={"assume_tz": "UTC"})["status"] == "different_options_require_reprocess"
+
+
+# FU4: a job that fails before acquiring a slot must not block the FIFO
+def test_fu4_failure_before_slot_does_not_block_fifo(env, monkeypatch):
+    from argos.jobs import JobRunner
+    from argos.store import Store
+    c1 = env.run("fu4-a", [{"event_time": ts(0), "event_kind": "dns", "dns_query": "a.example"}])
+    c2 = env.run("fu4-b", [{"event_time": ts(0), "event_kind": "dns", "dns_query": "b.example"}])
+    before = env.store.latest_successful_run(c1["case_id"])["run_id"]
+    real = Store.update_job
+    state = {"failed": False}
+
+    def flaky(self, jid, **fields):
+        if not state["failed"] and fields.get("message", "").startswith("queued"):
+            state["failed"] = True
+            raise OSError("simulated store failure before slot acquisition")
+        return real(self, jid, **fields)
+    monkeypatch.setattr(Store, "update_job", flaky)
+    jr = JobRunner(env.settings)
+    j1 = jr.submit_analysis(env.store, c1["case_id"])
+    assert jr.wait(j1, 20)
+    assert env.store.get_job(j1)["status"] == "failed" and "simulated store failure" in env.store.get_job(j1)["error"]
+    assert jr._fifo == [] and jr._admitted == 0 and jr._running == 0 and not jr.busy(c1["case_id"])
+    j2 = jr.submit_analysis(env.store, c2["case_id"])
+    assert jr.wait(j2, 20) and env.store.get_job(j2)["status"] == "succeeded"
+    assert env.store.latest_successful_run(c1["case_id"])["run_id"] == before
+    j3 = jr.submit_analysis(env.store, c1["case_id"])  # the failed case is usable again
+    assert jr.wait(j3, 20) and env.store.get_job(j3)["status"] == "succeeded"
+
+
+def test_fu4_cleanup_runs_even_if_recording_failure_fails_and_store_init_fails(env, monkeypatch):
+    import argos.jobs as J
+    from argos.jobs import JobRunner
+    c1 = env.run("fu4-c", [{"event_time": ts(0), "event_kind": "dns", "dns_query": "c.example"}])
+    c2 = env.run("fu4-d", [{"event_time": ts(0), "event_kind": "dns", "dns_query": "d.example"}])
+    jr = JobRunner(env.settings)
+    real_store = J.Store
+    calls = {"n": 0}
+
+    class BrokenStore:
+        def __new__(cls, *a, **k):
+            calls["n"] += 1
+            raise OSError("simulated: database cannot be opened")
+    monkeypatch.setattr(J, "Store", BrokenStore)
+    j1 = jr.submit_analysis(env.store, c1["case_id"])
+    assert jr.wait(j1, 20) and calls["n"] >= 1
+    assert jr._fifo == [] and jr._admitted == 0 and jr._running == 0 and not jr.busy(c1["case_id"])
+    monkeypatch.setattr(J, "Store", real_store)
+    j2 = jr.submit_analysis(env.store, c2["case_id"])
+    assert jr.wait(j2, 20) and env.store.get_job(j2)["status"] == "succeeded"
+
+
+def test_fu4_thread_start_failure_releases_everything(env, monkeypatch):
+    import threading as T
+    from argos.jobs import JobRunner
+    c = env.run("fu4-e", [{"event_time": ts(0), "event_kind": "dns", "dns_query": "e.example"}])
+    jr = JobRunner(env.settings)
+    monkeypatch.setattr(T.Thread, "start", lambda self: (_ for _ in ()).throw(RuntimeError("can't start new thread")))
+    with pytest.raises(RuntimeError):
+        jr.submit_analysis(env.store, c["case_id"])
+    monkeypatch.undo()
+    assert jr._fifo == [] and jr._admitted == 0 and not jr.busy(c["case_id"])
+    failed = [j for j in env.store.list_jobs(c["case_id"]) if j["status"] == "failed"]
+    assert failed and "could not start job" in failed[0]["error"]
+    j = jr.submit_analysis(env.store, c["case_id"])
+    assert jr.wait(j, 20) and env.store.get_job(j)["status"] == "succeeded"

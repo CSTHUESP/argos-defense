@@ -609,10 +609,13 @@ def test_watch_partial_writes_rotation_duplicates_and_restart(env, tmp_path):
     (d / "app.jsonl").write_text(line(10))
     s = poll_once(env.store, env.settings, src)
     assert s["accepted"] == 1 and env.store.count_events(c["case_id"]) == 5
-    # duplicate delivery of identical content under another name is not double counted
+    # v0.3.1 follow-up: a byte-identical line in ANOTHER file is a distinct occurrence (delivery identity, not content
+    # identity), so it is imported; re-polling the same delivery stays idempotent
     (d / "copy.jsonl").write_text(line(10))
     poll_once(env.store, env.settings, src)
-    assert env.store.count_events(c["case_id"]) == 5
+    assert env.store.count_events(c["case_id"]) == 6
+    poll_once(env.store, env.settings, src)
+    assert env.store.count_events(c["case_id"]) == 6
     info = list_sources(env.store, c["case_id"])[0]
     assert info["last_event_time"] and info["last_poll"] and len(info["files"]) >= 2
     # invalid format for watching

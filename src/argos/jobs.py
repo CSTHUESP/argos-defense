@@ -125,26 +125,55 @@ class JobRunner:
                 raise QueueFull(f"analysis queue is full ({self._admitted} admitted: up to {running} running and "
                                 f"{limit - running} queued); try again later")
             self._admitted += 1
+        jid = None
         try:
             jid = store.create_job(case_id, "analyze")
             with self._guard:
                 self._fifo.append(jid)
-        except Exception:
-            with self._guard:
-                self._admitted -= 1
-            lock.release()
+            t = threading.Thread(target=self._run_analysis, args=(jid, case_id, lock), name=f"argos-{jid}", daemon=True)
+            self._threads[jid] = t
+            t.start()
+        except BaseException as exc:
+            # thread never ran: apply the same cleanup invariant here
+            self._cleanup(jid, lock, have_slot=False)
+            if jid is not None:
+                self._record_terminal(store, jid, "failed", error=f"could not start job: {type(exc).__name__}: {exc}"[:2000])
             raise
-        t = threading.Thread(target=self._run_analysis, args=(jid, case_id, lock), name=f"argos-{jid}", daemon=True)
-        self._threads[jid] = t
-        t.start()
         return jid
+
+    def _cleanup(self, jid, lock: threading.Lock, have_slot: bool):
+        """Single cleanup invariant for EVERY terminal path (follow-up defect 4): the job leaves the FIFO, gives back
+        its running slot (if it had one) and its admission, wakes the waiting workers and releases the case lock.
+        It never raises, so it also runs when recording the job's final state failed."""
+        with self._cond:
+            if jid is not None and jid in self._fifo:
+                self._fifo.remove(jid)
+            if have_slot:
+                self._running -= 1
+            self._admitted -= 1
+            self._cond.notify_all()
+        try:
+            lock.release()
+        except RuntimeError:
+            pass
+        if jid is not None:
+            self._threads.pop(jid, None)
+
+    @staticmethod
+    def _record_terminal(st, jid: str, status: str, **fields) -> bool:
+        try:
+            st.update_job(jid, status=status, finished_at=now_iso(), **fields)
+            return True
+        except Exception:  # noqa: BLE001 - recording must not prevent cleanup; restart recovery marks it interrupted
+            return False
 
     def _run_analysis(self, jid: str, case_id: str, lock: threading.Lock):
         from argos.analysis import AnalysisCancelled, run_analysis
-        st = Store(self.settings.db_path)
+        st = None
         last = [0.0]
         have_slot = False
         try:
+            st = Store(self.settings.db_path)
             st.update_job(jid, message="queued: waiting for an analysis slot")
             while True:
                 with self._cond:
@@ -157,16 +186,9 @@ class JobRunner:
                     self._cond.wait(0.2)
                 j = st.get_job(jid)
                 if j and j.get("cancel_requested"):
-                    with self._cond:
-                        if jid in self._fifo:
-                            self._fifo.remove(jid)
-                        self._cond.notify_all()
                     break
-            if not have_slot:
-                st.update_job(jid, status="cancelled", message="cancelled before it started", finished_at=now_iso())
-                return
-            if (st.get_job(jid) or {}).get("cancel_requested"):
-                st.update_job(jid, status="cancelled", message="cancelled before it started", finished_at=now_iso())
+            if not have_slot or (st.get_job(jid) or {}).get("cancel_requested"):
+                self._record_terminal(st, jid, "cancelled", message="cancelled before it started")
                 return
             st.update_job(jid, status="running", started_at=now_iso(), progress=0.0, message="starting")
 
@@ -184,18 +206,25 @@ class JobRunner:
             st.update_job(jid, status="succeeded", progress=1.0, message="done", finished_at=now_iso(),
                           result=json.dumps({"run_id": res["run_id"], "stats": res.get("stats")}))
         except AnalysisCancelled as exc:
-            st.update_job(jid, status="cancelled", message=str(exc), finished_at=now_iso())
-        except Exception as exc:  # noqa: BLE001 - recorded for the analyst
-            st.update_job(jid, status="failed", error=f"{type(exc).__name__}: {exc}"[:2000], finished_at=now_iso())
+            self._record_terminal(st, jid, "cancelled", message=str(exc))
+        except BaseException as exc:  # noqa: BLE001 - recorded for the analyst; cleanup below always runs
+            rec = st
+            if rec is None:
+                try:
+                    rec = Store(self.settings.db_path)
+                except Exception:  # noqa: BLE001
+                    rec = None
+            if rec is not None:
+                self._record_terminal(rec, jid, "failed", error=f"{type(exc).__name__}: {exc}"[:2000])
+                if rec is not st:
+                    rec.close()
         finally:
-            with self._cond:
-                if have_slot:
-                    self._running -= 1
-                self._admitted -= 1
-                self._cond.notify_all()
-            st.close()
-            lock.release()
-            self._threads.pop(jid, None)
+            self._cleanup(jid, lock, have_slot)
+            if st is not None:
+                try:
+                    st.close()
+                except Exception:  # noqa: BLE001
+                    pass
 
     def wait(self, jid: str, timeout: float | None = None) -> bool:
         t = self._threads.get(jid)

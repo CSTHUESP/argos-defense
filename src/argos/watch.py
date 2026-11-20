@@ -13,14 +13,14 @@ Behaviour
 - Namespace: all segments of one watched source carry the declared collector id `watch:<source id>`.
 - Each new chunk of complete lines is written to an owner-private segment file and imported through
   the normal pipeline (hash, original retention, rejects, unverified provenance). The checkpoint is
-  advanced only after the import commits. A crash between the two re-imports the same bytes, which
-  the pipeline recognises as already imported (same content hash) -> no duplicate events.
+  advanced only after that delivery's import is COMPLETED; a crash before the checkpoint update re-runs the
+  same delivery, which the pipeline recognises (same delivery key, completed) -> no duplicate events.
 - A segment that is not durably imported (error or non-imported status) does not advance the checkpoint.
-- Content deduplication: a byte-identical segment already imported in the same case is treated as
-  duplicate delivery and reported in `duplicate_segments`; segments that differ in any byte are always
-  imported, so distinct events from distinct files are never dropped.
-- Backpressure: at most `max_chunk_bytes` per file and `max_cycle_bytes` per poll cycle.
-- Freshness: last poll, last import, newest event time and last error are stored per source.
+- Delivery identity vs content identity (v0.3.1 follow-up): every chunk is imported as a delivery identified by
+  (source, file generation, byte range). Re-polling or restarting after a completed delivery is idempotent; a
+  byte-identical chunk from another file or another offset is a different occurrence and is imported (the raw
+  bytes are stored once, the occurrences and their provenance stay distinct). The number of event occurrences
+  therefore does not depend on the chunk size. A delivery counts as done only when its input is completed.
 """
 from __future__ import annotations
 
@@ -36,7 +36,7 @@ from argos.config import Settings, make_private_dir
 from argos.ingest.pipeline import ImportError_, ingest_file, safe_join
 from argos.evidence.assess import iso_from
 from argos.normalize.timeutil import now_iso
-from argos.store import Store
+from argos.store import COMPLETED_INPUT_STATUSES, Store
 
 TAIL_FORMATS = ("native_jsonl", "splunk_json", "zeek_jsonl")
 
@@ -169,8 +169,8 @@ def poll_once(store: Store, settings: Settings, source: dict, max_chunk_bytes: i
     seg_dir = safe_join(settings.cases_dir, case["case_id"], "watch_segments")
     make_private_dir(seg_dir.parent)
     make_private_dir(seg_dir)
-    summary = {"files_seen": 0, "segments_imported": 0, "bytes": 0, "accepted": 0, "rejected": 0, "duplicates": 0,
-               "duplicate_segments": [], "waiting_partial": 0, "rotations": 0, "errors": [], "backpressure": False}
+    summary = {"files_seen": 0, "segments_imported": 0, "bytes": 0, "accepted": 0, "rejected": 0, "redelivered": 0,
+               "redelivered_segments": [], "waiting_partial": 0, "rotations": 0, "errors": [], "backpressure": False}
     cycle_bytes = 0
     newest = source.get("last_event_time")
     try:
@@ -209,13 +209,15 @@ def poll_once(store: Store, settings: Settings, source: dict, max_chunk_bytes: i
                     res = ingest_file(store, settings, case, seg, source["format"], options,
                                       original_name=f"{p.name}@{offset}-{offset + len(chunk)}",
                                       source_ref={"watch_source": sid, "file": p.name, "generation": fid, "byte_start": offset,
-                                                  "byte_end": offset + len(chunk)})
+                                                  "byte_end": offset + len(chunk)},
+                                      delivery_key=json.dumps([sid, fid, offset, offset + len(chunk)], separators=(",", ":")))
                 finally:
                     seg.unlink(missing_ok=True)  # the pipeline retained its own private copy when it succeeded
-                if res["status"] == "already_imported":
-                    # byte-identical segment already imported in this case: duplicate delivery (documented); reported, not hidden
-                    summary["duplicates"] += 1
-                    summary["duplicate_segments"].append(f"{p.name}@{offset}-{offset + len(chunk)}")
+                if res["status"] == "already_imported" and res.get("completed") and res.get("input_status") in COMPLETED_INPUT_STATUSES:
+                    # the SAME delivery (source, generation, byte range) completed earlier, e.g. before a crash that
+                    # prevented the checkpoint update: idempotent retry, nothing new to store
+                    summary["redelivered"] += 1
+                    summary["redelivered_segments"].append(f"{p.name}@{offset}-{offset + len(chunk)}")
                 elif res["status"] in ("imported", "reprocessed"):
                     summary["segments_imported"] += 1
                     summary["accepted"] += res.get("accepted", 0)
