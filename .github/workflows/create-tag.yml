@@ -1,17 +1,24 @@
 name: Create release tag
 
-# Run manually from the Actions tab. Creates an annotated version tag on a reviewed commit
-# that is on main and has a successful CI run, then starts release.yml for that tag
-# (release.yml only produces a DRAFT release; publication is a separate step).
+# Run manually from the Actions tab (owner/maintainer). Applies the SAME shared preflight as
+# release.yml (packaging/release_preflight.py --mode create-tag): semantic version, pyproject and
+# package version equal to the input, release notes present, commit on main, successful CI for
+# that exact SHA, and the tag must not already exist (version tags are never moved). Then creates
+# an annotated tag, verifies it on the remote, and dispatches release.yml for that tag
+# (draft only unless publish=true; publication still requires uploaded-byte verification).
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: "Version without the leading v (must equal pyproject version), e.g. 0.2.0"
+        description: "Version without the leading v (must equal pyproject version), e.g. 0.3.0"
         required: true
       commit:
         description: "Full 40-character commit SHA to tag"
         required: true
+      publish:
+        description: "Publish the release after the draft passes verification"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -26,31 +33,21 @@ jobs:
     env:
       VERSION: ${{ inputs.version }}
       COMMIT: ${{ inputs.commit }}
+      PUBLISH: ${{ inputs.publish }}
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      - name: Validate inputs and commit
-        run: |
-          [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "bad version"; exit 1; }
-          [[ "$COMMIT" =~ ^[0-9a-f]{40}$ ]] || { echo "commit must be a full SHA"; exit 1; }
-          TAG="v$VERSION"
-          if git ls-remote --exit-code origin "refs/tags/$TAG" >/dev/null; then echo "$TAG already exists - tags are never moved"; exit 1; fi
-          git merge-base --is-ancestor "$COMMIT" origin/main || { echo "commit is not on main"; exit 1; }
-          test "$(git show "$COMMIT:pyproject.toml" | sed -n 's/^version = "\(.*\)"/\1/p')" = "$VERSION" || { echo "pyproject version differs"; exit 1; }
-          test "$(git show "$COMMIT:src/argos/__init__.py" | sed -n 's/^__version__ = "\(.*\)"/\1/p')" = "$VERSION" || { echo "package version differs"; exit 1; }
-          git show "$COMMIT:docs/release-notes/$TAG.md" >/dev/null || { echo "release notes missing"; exit 1; }
-          OK=$(gh api "repos/$GITHUB_REPOSITORY/actions/workflows/ci.yml/runs?head_sha=$COMMIT&status=success" --jq '.total_count')
-          test "$OK" -ge 1 || { echo "no successful CI run for $COMMIT"; exit 1; }
-          echo "TAG=$TAG" >> "$GITHUB_ENV"
+      - name: Shared preflight (create-tag mode)
+        run: python3 packaging/release_preflight.py --mode create-tag --version "$VERSION" --sha "$COMMIT"
       - name: Create and push annotated tag
         run: |
+          TAG="v$VERSION"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git tag -a "$TAG" "$COMMIT" -m "ARGOS Defense $VERSION (experimental detection; real-world accuracy not measured)"
           git push origin "refs/tags/$TAG"
-          test "$(git ls-remote origin "refs/tags/$TAG^{}" | cut -f1)" = "$COMMIT"
-          echo "tag $TAG -> $COMMIT verified on remote"
-      - name: Start release build (draft only)
-        run: gh workflow run release.yml --ref main -f tag="$TAG"
+          python3 packaging/release_preflight.py --mode recheck --tag "$TAG" --expect-sha "$COMMIT"
+      - name: Start release build
+        run: gh workflow run release.yml --ref main -f tag="v$VERSION" -f publish="$PUBLISH"

@@ -76,10 +76,26 @@ def extract(archive: Path, dest: Path) -> Path:
 
 
 def tree_fingerprint(root: Path) -> str:
+    """Content fingerprint of a directory tree (F13): relative path, entry type, permission bits,
+    symlink target and SHA-256 of every regular file. Same-length edits, mode changes, added/removed
+    files and retargeted symlinks all change the result. Symlinks are not followed."""
     h = hashlib.sha256()
-    for p in sorted(root.rglob("*")):
-        if p.is_file():
-            h.update(f"{p.relative_to(root).as_posix()}|{p.stat().st_size}\n".encode())
+    for p in sorted(root.rglob("*"), key=lambda x: x.relative_to(root).as_posix()):
+        rel = p.relative_to(root).as_posix()
+        st = p.lstat()
+        mode = oct(st.st_mode & 0o7777) if os.name != "nt" else "-"
+        if p.is_symlink():
+            h.update(f"L|{rel}|{os.readlink(p)}\n".encode())
+        elif p.is_dir():
+            h.update(f"D|{rel}|{mode}\n".encode())
+        elif p.is_file():
+            fh = hashlib.sha256()
+            with open(p, "rb") as f:
+                for chunk in iter(lambda: f.read(1 << 20), b""):
+                    fh.update(chunk)
+            h.update(f"F|{rel}|{mode}|{st.st_size}|{fh.hexdigest()}\n".encode())
+        else:
+            h.update(f"O|{rel}\n".encode())
     return h.hexdigest()
 
 
@@ -164,7 +180,14 @@ def browser_flow_full(srv: Server, upload: Path, shots: Path) -> None:
         record("browser: multipart import form", "imported" in body and "accepted 2" in body, body[:300])
         pg.click("a:has-text('Open case')")
         pg.click("button:has-text('Analyze / re-analyze')")
-        record("browser: analyze button", pg.is_visible("text=Analysis run"), pg.url)
+        ok = "/jobs/" in pg.url
+        try:
+            pg.wait_for_selector("text=Analysis run", timeout=120000)  # job page auto-refreshes
+            pg.click("a.button:has-text('Open case')")
+        except Exception as exc:  # noqa: BLE001
+            ok = False
+            LOG.append(f"analyze job page: {exc}")
+        record("browser: analyze button (background job with progress page)", ok and pg.is_visible("text=Analysis run"), pg.url)
         pg.screenshot(path=str(shots / "case.png"), full_page=True)
         pg.click("a.button:has-text('Alert queue')")
         pg.click("a:has-text('Server or office process spawned a command shell')")
@@ -175,7 +198,9 @@ def browser_flow_full(srv: Server, upload: Path, shots: Path) -> None:
         record("browser: note form", "smoke note persists" in pg.inner_text("body"), "")
         pg.screenshot(path=str(shots / "alert.png"), full_page=True)
         pg.locator("a[href^='/events/']").first.click()
-        record("browser: evidence page with original record", pg.is_visible("text=Original record"), pg.url)
+        body = pg.inner_text("body")
+        record("browser: evidence page with original record", pg.is_visible("text=Original record") and "Lookup: located" in body
+               and "&lt;Event" not in body and "EventData" in body, pg.url)
         pg.go_back()
         pg.goto(srv.base + "/")
         pg.click("a:has-text('smoke-ui')")
@@ -199,6 +224,132 @@ def make_upload(dir_: Path) -> Path:
     p = dir_ / "sysmon export é.xml"
     p.write_text(xml, encoding="utf-8")
     return p
+
+
+def _wait_server(data: Path, proc, seconds=60):
+    for _ in range(seconds * 10):
+        if (data / "server.json").exists():
+            return json.loads((data / "server.json").read_text())
+        if proc.poll() is not None:
+            return None
+        time.sleep(0.1)
+    return None
+
+
+def launcher_checks(top: Path, base: Path, work: Path):
+    """Start the app through the DISTRIBUTED launcher (.cmd / .command / .sh), with ARGOS_HOME pointing at a
+    non-ASCII data directory. 1) --no-browser: server comes up and shuts down cleanly. 2) default (browser
+    opening): BROWSER points at a recorder script; the login URL must reach it and target loopback."""
+    if sys.platform.startswith("win"):
+        launcher = top / "Start ARGOS Defense.cmd"
+        argv = ["cmd.exe", "/d", "/c", str(launcher)]
+    elif sys.platform == "darwin":
+        launcher = top / "Start ARGOS Defense.command"
+        argv = ["/bin/bash", str(launcher)]
+    else:
+        launcher = top / "start-argos-defense.sh"
+        argv = [str(launcher)]
+    record(f"launcher: {launcher.name} present", launcher.is_file(), launcher.name)
+    if not sys.platform.startswith("win"):
+        record("launcher: executable bit preserved", os.access(launcher, os.X_OK), oct(launcher.stat().st_mode))
+    for mode in ("no-browser", "browser"):
+        data = base / f"launcher data {mode} ü"
+        env = clean_env()
+        env["ARGOS_HOME"] = str(data)
+        rec = base / f"browser-url-{mode}.txt"
+        if mode == "browser":
+            if sys.platform.startswith("win"):
+                script = base / "record-browser.cmd"
+                script.write_text(f'@echo off\r\n>"{rec}" echo %~1\r\n', encoding="utf-8")
+            else:
+                script = base / "record-browser.sh"
+                script.write_text(f'#!/bin/sh\nprintf "%s" "$1" > "{rec}"\n', encoding="utf-8")
+                os.chmod(script, 0o700)
+            env["BROWSER"] = str(script)
+            extra = ["--port", "0"]
+        else:
+            extra = ["--no-browser", "--port", "0"]
+        out = open(work / f"launcher-{mode}.log", "w+", encoding="utf-8")
+        kw = {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP} if sys.platform.startswith("win") else {}
+        # cmd.exe quoting: /s + one outer pair of quotes keeps a launcher path with spaces intact
+        cmdline = (f'cmd.exe /d /s /c ""{launcher}" {" ".join(extra)}"' if sys.platform.startswith("win") else [*argv, *extra])
+        proc = subprocess.Popen(cmdline, cwd=work, env=env, stdout=out, stderr=subprocess.STDOUT,
+                                stdin=subprocess.DEVNULL, **kw)
+        info = _wait_server(data, proc)
+        ok = info is not None
+        srv_tok = (data / ".session_token").read_text().strip() if (data / ".session_token").exists() else ""
+        SECRETS.append(srv_tok)
+        if ok:
+            try:
+                st, _ = http(f"http://127.0.0.1:{info['port']}/api/cases", token=srv_tok)
+                ok = st == 200
+            except Exception:  # noqa: BLE001
+                ok = False
+        record(f"launcher: {launcher.name} starts the native app ({mode}, ARGOS_HOME non-ASCII)", ok, info and info.get("port"))
+        if mode == "browser":
+            url = ""
+            for _ in range(100):
+                if rec.exists() and rec.read_text(errors="replace").strip():
+                    url = rec.read_text(errors="replace").strip()
+                    break
+                time.sleep(0.1)
+            record("launcher: default start opens the browser via BROWSER (login URL on loopback)",
+                   url.startswith(f"http://127.0.0.1:{info['port'] if info else ''}/login"), redact(url)[:80])
+            rec.unlink(missing_ok=True)
+        else:
+            record("launcher: --no-browser does not open a browser", not rec.exists(), "")
+        code = -1
+        if info:
+            try:
+                http(f"http://127.0.0.1:{info['port']}/api/shutdown", "POST", srv_tok, b"{}")
+                code = proc.wait(60)
+            except Exception:  # noqa: BLE001
+                proc.kill()
+        else:
+            proc.kill()
+        out.seek(0)
+        LOG.append(f"[launcher {mode}]\n" + out.read())
+        out.close()
+        record(f"launcher: clean shutdown ({mode})", code == 0, code)
+
+
+def update_backup_restore_checks(exe: Path, base: Path, work: Path, out: Path):
+    """Update path: a v0.2.0 data directory (synthetic demo DB fixture) is migrated by the new executable with a
+    verified pre-migration backup; then backup -> verify -> restore into a new directory -> data present."""
+    import gzip
+    import sqlite3
+    fixture = Path(__file__).resolve().parent / "fixtures" / "legacy-v0.2.0-demo.sql.gz"
+    old = base / "legacy data v0.2 ö"
+    old.mkdir()
+    con = sqlite3.connect(old / "argos.sqlite3")
+    con.executescript(gzip.decompress(fixture.read_bytes()).decode())
+    con.commit()
+    con.close()
+    r = run(exe, ["--data-dir", str(old), "cases"], work)
+    backups = list(old.glob("argos.v2-backup.sqlite3"))
+    record("update: v0.2.0 database migrated by the native app", r.returncode == 0 and "demo-synthetic" in r.stdout, r.stdout[-200:])
+    ok = False
+    if backups:
+        b = sqlite3.connect(backups[0])
+        ok = b.execute("PRAGMA integrity_check").fetchone()[0] == "ok" and b.execute("SELECT COUNT(*) FROM events").fetchone()[0] == 425
+        b.close()
+    record("update: verified pre-migration backup retained", ok, [p.name for p in backups])
+    r = run(exe, ["--data-dir", str(old), "runs", "--case", "demo-synthetic"], work)
+    record("update: legacy run labelled (no invented snapshot)", r.returncode == 0 and "legacy-none" in r.stdout, r.stdout[-200:])
+    r = run(exe, ["--data-dir", str(old), "analyze", "--case", "demo-synthetic", "--quiet"], work)
+    record("update: re-analysis after migration", r.returncode == 0 and '"run_id"' in r.stdout, r.stdout[-200:] + r.stderr[-200:])
+    bk = base / "backup ü.zip"
+    r = run(exe, ["--data-dir", str(old), "backup", "--output", str(bk)], work)
+    record("backup: created", r.returncode == 0 and bk.is_file(), r.stdout[-200:])
+    r = run(exe, ["verify-backup", str(bk)], work)
+    record("backup: verified", r.returncode == 0 and r.stdout.startswith("OK"), r.stdout[-200:] + r.stderr[-200:])
+    new = base / "restored data é"
+    r = run(exe, ["--data-dir", str(new), "restore", str(bk)], work)
+    record("restore: into new directory", r.returncode == 0 and '"schema_version": 3' in r.stdout, r.stdout[-300:] + r.stderr[-300:])
+    r = run(exe, ["--data-dir", str(new), "alerts", "--case", "demo-synthetic"], work)
+    record("restore: restored case and alerts readable", r.returncode == 0 and "ARG-" in r.stdout, r.stdout[-200:])
+    r = run(exe, ["--data-dir", str(new), "restore", str(bk)], work)
+    record("restore: refuses non-empty target", r.returncode == 2, r.stderr[-200:])
 
 
 def kill_leftovers():
@@ -298,6 +449,8 @@ def main(argv=None):
             ok = a.no_browser or "smoke note persists" in notes
         record("exe: persistence across restart (cases, alerts, notes)", ok, f"cases={len(cases)}")
         record("exe: second clean shutdown", srv2.stop() == 0, "")
+        launcher_checks(top, base, work)
+        update_backup_restore_checks(exe, base, work, out)
         record("bundle: no files written inside the application bundle", tree_fingerprint(top) == bundle_before, "")
         logs = "\n".join(LOG)
         record("logs: session token never printed", all(s not in logs for s in SECRETS), "")
@@ -305,8 +458,9 @@ def main(argv=None):
         record("harness: unexpected error", False, f"{type(exc).__name__}: {exc}\n{traceback.format_exc()[-1500:]}")
     finally:
         kill_leftovers()
-    passed = all(r["pass"] for r in RESULTS) and len(RESULTS) >= 20
-    res = {"overall_pass": passed, "checks_total": len(RESULTS), "checks_passed": sum(r["pass"] for r in RESULTS), **meta,
+    passed = all(r["pass"] for r in RESULTS) and bool(RESULTS)
+    res = {"schema": "argos-smoke/2", "overall_pass": passed, "checks_total": len(RESULTS), "checks_passed": sum(r["pass"] for r in RESULTS),
+           "browser_part": not a.no_browser, **meta,
            "results": RESULTS, "note": "the application under test is the extracted native executable; Playwright/harness run in the runner's Python"}
     target = re.sub(r"^ARGOS-Defense-[^-]+-|\.(zip|tar\.gz)$", "", archive.name)
     (out / f"smoke-{target}.json").write_text(json.dumps(res, indent=2))

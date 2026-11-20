@@ -1,0 +1,54 @@
+{
+  "F01": {
+    "reproduced": false,
+    "detail": "{'ARG-AUTO-003': 'unknown'}"
+  },
+  "F02": {
+    "reproduced": false,
+    "detail": "[]"
+  },
+  "F03": {
+    "reproduced": false,
+    "detail": "{'action_outcome': {'basis': \"outcome field of the terminal step's records\", 'outcome': 'failure', 'terminal_step': 'privilege_or_credential_change'}, 'hypothesis': 'persistence', 'note': 'hypothesized objective, not an observed fact', 'observed_action': 'SP sign-in, then a credential/permission cha"
+  },
+  "F04": {
+    "reproduced": false,
+    "detail": "['insufficient_baseline']"
+  },
+  "F05": {
+    "reproduced": false,
+    "detail": "[]"
+  },
+  "F06": {
+    "reproduced": false,
+    "detail": "{'live': 2, 'backup': 2}"
+  },
+  "F07": {
+    "reproduced": false,
+    "detail": "{'home': '0o700', 'db': '0o600', 'orig': '0o400'}"
+  },
+  "F08": {
+    "reproduced": false,
+    "detail": "{\"event_time\": \"2026-11-03T08:00:00.000000Z\", \"event_kind\": \"dns\", \"dns_query\": \"first.example\"}"
+  },
+  "F09": {
+    "reproduced": false,
+    "detail": "{'runs': 2, 'first_run_alert_preserved': True}"
+  },
+  "F10": {
+    "reproduced": false,
+    "detail": "(0, 'different_options_require_reprocess')"
+  },
+  "F11": {
+    "reproduced": false,
+    "detail": "release.yml and create-tag.yml use the shared preflight and pin checkouts to its SHA"
+  },
+  "F12": {
+    "reproduced": false,
+    "detail": "RELEASE GATE FAILED:\n  missing asset: ARGOS-Defense-0.2.0-linux-x86_64.tar.gz\n  missing asset: ARGOS-Defense-0.2.0-macos"
+  },
+  "F13": {
+    "reproduced": false,
+    "detail": "same-length modification detected"
+  }
+}

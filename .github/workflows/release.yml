@@ -1,19 +1,31 @@
 name: Release
 
-# Builds natively on each target, smoke-tests the EXTRACTED archives, then assembles a DRAFT
-# GitHub release for an existing tag. Publication of the draft is a separate, explicit step
-# taken only after the draft's assets are re-verified.
+# Every entry point runs the shared preflight (packaging/release_preflight.py), which resolves the
+# tag or explicit SHA ONCE to a full commit SHA and enforces version agreement, release notes,
+# main ancestry and a successful CI run for that exact SHA. All builds check out that SHA.
+#
+#   push of tag vX.Y.Z            -> build, gate, DRAFT release, verify downloaded bytes
+#   dispatch tag=vX.Y.Z           -> same; publish=true additionally publishes the verified draft
+#   dispatch dry_run=true sha=... -> build + gate only; never creates or publishes a release
 on:
   push:
     tags: ["v*.*.*"]
   workflow_dispatch:
     inputs:
       tag:
-        description: "Existing tag to build (e.g. v0.2.0). Leave empty with dry_run to build the dispatched commit."
+        description: "Existing tag to release (e.g. v0.3.0). Not used for dry runs."
         required: false
         default: ""
       dry_run:
-        description: "Build + smoke-test + run the release gate only (no tag needed, no release created)"
+        description: "Build + smoke-test + release gate only (no release). Requires sha."
+        type: boolean
+        default: false
+      sha:
+        description: "Dry runs: full 40-character commit SHA to build"
+        required: false
+        default: ""
+      publish:
+        description: "After the draft passes uploaded-byte verification, publish it"
         type: boolean
         default: false
 
@@ -21,19 +33,47 @@ permissions:
   contents: read
 
 concurrency:
-  group: release-${{ github.event.inputs.tag || github.ref_name }}
+  group: release-${{ github.event.inputs.tag || github.event.inputs.sha || github.ref_name }}
   cancel-in-progress: false
 
-env:
-  TAG: ${{ github.event.inputs.tag || github.ref_name }}
-  # Commit to build: the tag for real releases, the dispatched commit for dry runs.
-  BUILD_REF: ${{ (github.event.inputs.dry_run == 'true' && github.sha) || github.event.inputs.tag || github.ref_name }}
-
 jobs:
+  preflight:
+    name: preflight (resolve ref once, policy checks)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      sha: ${{ steps.pf.outputs.sha }}
+      version: ${{ steps.pf.outputs.version }}
+      tag: ${{ steps.pf.outputs.tag }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - id: pf
+        name: Shared release preflight
+        env:
+          GH_TOKEN: ${{ github.token }}
+          IN_DRY: ${{ github.event.inputs.dry_run }}
+          IN_SHA: ${{ github.event.inputs.sha }}
+          IN_TAG: ${{ github.event.inputs.tag || github.ref_name }}
+        run: |
+          git remote set-url origin "https://github.com/$GITHUB_REPOSITORY.git"
+          if [ "$IN_DRY" = "true" ]; then
+            python3 packaging/release_preflight.py --mode dry-run --sha "$IN_SHA"
+          else
+            python3 packaging/release_preflight.py --mode release --tag "$IN_TAG"
+          fi
+
   native:
     name: native ${{ matrix.target }} (${{ matrix.runner }})
+    needs: preflight
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 60
+    timeout-minutes: 75
     strategy:
       fail-fast: false
       matrix:
@@ -45,11 +85,12 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ env.BUILD_REF }}
+          ref: ${{ needs.preflight.outputs.sha }}
           persist-credentials: false
-      - name: Verify runner architecture matches target
+      - name: Verify checked-out commit and runner architecture
         shell: bash
         run: |
+          test "$(git rev-parse HEAD)" = "${{ needs.preflight.outputs.sha }}"
           echo "runner.arch=${{ runner.arch }} expected=${{ matrix.arch }} uname=$(uname -m)"
           test "${{ runner.arch }}" = "${{ matrix.arch }}"
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
@@ -62,6 +103,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.lock -r requirements-dev.lock -r requirements-build.lock
           python -m pip install --no-deps -e .
+          python -m pip freeze --all
       - name: Source tests on this platform
         shell: bash
         run: python -m pytest -q
@@ -72,21 +114,26 @@ jobs:
         shell: bash
         run: |
           if [ "$RUNNER_OS" = "Linux" ]; then python -m playwright install --with-deps chromium; else python -m playwright install chromium; fi
-      - name: Smoke-test the extracted native package
+      - name: Smoke-test the extracted native package (exact archive bytes)
         shell: bash
         run: |
           ARCHIVE=$(ls dist-native/ARGOS-Defense-*-${{ matrix.target }}.* | head -n1)
           cd "$RUNNER_TEMP"
           python "$GITHUB_WORKSPACE/packaging/smoke_test.py" --archive "$GITHUB_WORKSPACE/$ARCHIVE" --out "$GITHUB_WORKSPACE/smoke-results"
-      - name: SBOM
+      - name: SBOM (CycloneDX) + structural validation
         shell: bash
-        run: python packaging/sbom.py dist-native/build-info-${{ matrix.target }}.json dist-native/sbom-${{ matrix.target }}.cdx.json
+        run: |
+          python packaging/sbom.py dist-native/build-info-${{ matrix.target }}.json dist-native/sbom-${{ matrix.target }}.cdx.json
+          python packaging/sbom.py --validate dist-native/sbom-${{ matrix.target }}.cdx.json dist-native/build-info-${{ matrix.target }}.json
+      - name: Record archive digest in the log
+        shell: bash
+        run: python -c "import json,sys; d=json.load(open('dist-native/build-info-${{ matrix.target }}.json')); print(d['name'], d['sha256'], d['size'])"
       - name: Upload package and evidence
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: native-${{ matrix.target }}
-          retention-days: 14
+          retention-days: 30
           if-no-files-found: error
           path: |
             dist-native/ARGOS-Defense-*
@@ -97,97 +144,179 @@ jobs:
 
   python-dist:
     name: wheel + sdist
+    needs: preflight
     runs-on: ubuntu-22.04
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ env.BUILD_REF }}
+          ref: ${{ needs.preflight.outputs.sha }}
           persist-credentials: false
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.12"
-      - name: Build and install-test
+      - name: Build, install-test, record provenance
+        env:
+          SHA: ${{ needs.preflight.outputs.sha }}
+          VERSION: ${{ needs.preflight.outputs.version }}
         run: |
+          test "$(git rev-parse HEAD)" = "$SHA"
           python -m pip install -r requirements-build.lock
           python -m build --outdir pydist .
           python -m venv "$RUNNER_TEMP/v" && "$RUNNER_TEMP/v/bin/pip" install -r requirements.lock && "$RUNNER_TEMP/v/bin/pip" install --no-deps pydist/*.whl
-          cd "$RUNNER_TEMP" && "$RUNNER_TEMP/v/bin/argos-defense" --data-dir "w é" doctor && "$RUNNER_TEMP/v/bin/argos-defense" --data-dir "w é" demo
+          (cd "$RUNNER_TEMP" && "$RUNNER_TEMP/v/bin/argos-defense" --data-dir "w é" doctor && "$RUNNER_TEMP/v/bin/argos-defense" --data-dir "w é" demo \
+            && "$RUNNER_TEMP/v/bin/argos-defense" --version | grep -F "ARGOS Defense $VERSION ")
+          python - <<'PY'
+          import hashlib, json, os, pathlib
+          files = sorted(pathlib.Path("pydist").iterdir())
+          info = {"version": os.environ["VERSION"], "commit": os.environ["SHA"], "install_test": "passed",
+                  "files": [{"name": p.name, "sha256": hashlib.sha256(p.read_bytes()).hexdigest(), "size": p.stat().st_size} for p in files]}
+          pathlib.Path("pydist/python-dist-info.json").write_text(json.dumps(info, indent=2))
+          print(json.dumps(info, indent=2))
+          PY
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: python-dist
-          retention-days: 14
+          retention-days: 30
           if-no-files-found: error
           path: pydist/*
 
-  gate-dry-run:
-    name: release gate (dry run, no release)
-    if: github.event.inputs.dry_run == 'true'
-    needs: [native, python-dist]
+  gate:
+    name: release contract gate
+    needs: [preflight, native, python-dist]
     runs-on: ubuntu-22.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ env.BUILD_REF }}
+          ref: ${{ needs.preflight.outputs.sha }}
           persist-credentials: false
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
-        with:
-          python-version: "3.12"
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           path: collected
-      - name: Release gate on dry-run artifacts
+      - name: Assemble assets and enforce the complete contract
+        env:
+          SHA: ${{ needs.preflight.outputs.sha }}
+          VERSION: ${{ needs.preflight.outputs.version }}
+          TAG: ${{ needs.preflight.outputs.tag }}
         run: |
           mkdir release-assets
-          find collected -type f \( -name 'ARGOS-Defense-*' -o -name 'build-info-*.json' -o -name 'sbom-*.cdx.json' -o -name 'smoke-*.json' -o -name 'smoke-*.log' -o -name '*.whl' -o -name '*.tar.gz' \) -exec cp {} release-assets/ \;
-          python packaging/release_manifest.py --assets release-assets --version dry-run --tag dry-run --commit "$(git rev-parse HEAD)"
-          cat release-assets/SHA256SUMS
+          find collected -type f -exec cp -n {} release-assets/ \;
+          cp LICENSE THIRD_PARTY_NOTICES.md release-assets/
+          ls -la release-assets
+          python3 packaging/release_manifest.py --assets release-assets --version "$VERSION" --tag "$TAG" --commit "$SHA" \
+            --source-dir . --expected-out expected-assets.json \
+            --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" \
+            --attestations "${{ (github.event.repository.private == false && github.event.inputs.dry_run != 'true') && 'GitHub artifact attestations (build provenance) generated for the native archives, wheel and sdist' || 'not generated' }}"
+          echo "---- retained expectations (pre-upload) ----"; cat expected-assets.json
+          echo "---- SHA256SUMS ----"; cat release-assets/SHA256SUMS
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-assets-gated
+          retention-days: 30
+          if-no-files-found: error
+          path: |
+            release-assets/*
+            expected-assets.json
 
-  draft-release:
-    name: assemble + verify draft release
+  draft:
+    name: draft release + uploaded-byte verification
     if: github.event.inputs.dry_run != 'true'
-    needs: [native, python-dist]
+    needs: [preflight, gate]
     runs-on: ubuntu-22.04
     timeout-minutes: 20
     permissions:
       contents: write
+      id-token: write
+      attestations: write
+    env:
+      SHA: ${{ needs.preflight.outputs.sha }}
+      VERSION: ${{ needs.preflight.outputs.version }}
+      TAG: ${{ needs.preflight.outputs.tag }}
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ env.BUILD_REF }}
+          ref: ${{ needs.preflight.outputs.sha }}
+          fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
-        with:
-          python-version: "3.12"
       - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          path: collected
-      - name: Gather assets
+          name: release-assets-gated
+          path: gated
+      - name: Build provenance attestations (public repositories)
+        if: github.event.repository.private == false
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-path: |
+            gated/release-assets/ARGOS-Defense-*
+            gated/release-assets/argos_defense-*
+      - name: Recheck remote tag identity, then create the draft
         run: |
-          mkdir release-assets
-          find collected -type f \( -name 'ARGOS-Defense-*' -o -name 'build-info-*.json' -o -name 'sbom-*.cdx.json' -o -name 'smoke-*.json' -o -name 'smoke-*.log' -o -name '*.whl' -o -name '*.tar.gz' \) -exec cp {} release-assets/ \;
-          cp LICENSE THIRD_PARTY_NOTICES.md release-assets/
-          ls -la release-assets
-      - name: Release gate (all 4 targets present, smoke-tested on the exact bytes, same commit)
-        run: |
-          python packaging/release_manifest.py --assets release-assets --version "${TAG#v}" --tag "$TAG" \
-            --commit "$(git rev-parse HEAD)" --run-url "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
-      - name: Create draft release for the existing tag
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          NOTES="docs/release-notes/${TAG}.md"
-          test -f "$NOTES"
+          git remote set-url origin "https://github.com/$GITHUB_REPOSITORY.git"
+          python3 packaging/release_preflight.py --mode recheck --tag "$TAG" --expect-sha "$SHA"
+          test -f "docs/release-notes/$TAG.md"
           if gh release view "$TAG" >/dev/null 2>&1; then
-            echo "A release for $TAG already exists - refusing to modify it"; exit 1
+            echo "A release for $TAG already exists - refusing to modify it (published bytes are never replaced)"; exit 1
           fi
-          gh release create "$TAG" --verify-tag --draft --title "ARGOS Defense ${TAG#v} (experimental detection)" --notes-file "$NOTES" release-assets/*
-      - name: Verify draft assets (names, sizes, hashes of downloaded bytes)
-        env:
-          GH_TOKEN: ${{ github.token }}
+          gh release create "$TAG" --verify-tag --draft --title "ARGOS Defense $VERSION (experimental detection)" \
+            --notes-file "docs/release-notes/$TAG.md" gated/release-assets/*
+      - name: Download the draft and verify against retained pre-upload expectations
         run: |
-          gh release view "$TAG" --json isDraft,tagName,assets --jq '{isDraft, tagName, assets: [.assets[] | {name, size}]}' | tee draft.json
+          gh release view "$TAG" --json isDraft,tagName,assets --jq '{isDraft, tagName, assets: [.assets[] | {name, size}]}' > release.json
+          cat release.json
           mkdir verify && gh release download "$TAG" --dir verify
-          cd verify && sha256sum -c SHA256SUMS
-          for f in ../release-assets/*; do test -f "$(basename "$f")" || { echo "missing $(basename "$f")"; exit 1; }; done
+          python3 packaging/verify_release.py --downloaded verify --expected gated/expected-assets.json \
+            --version "$VERSION" --commit "$SHA" --release-json release.json --want-draft true
+      - name: Verify attestations of downloaded archives
+        if: github.event.repository.private == false
+        run: |
+          for f in verify/ARGOS-Defense-* verify/argos_defense-*; do
+            gh attestation verify "$f" --repo "$GITHUB_REPOSITORY" --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/release.yml" >/dev/null
+            echo "attestation verified: $(basename "$f")"
+          done
+
+  publish:
+    name: publish verified draft
+    if: github.event.inputs.dry_run != 'true' && github.event.inputs.publish == 'true'
+    needs: [preflight, gate, draft]
+    runs-on: ubuntu-22.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      SHA: ${{ needs.preflight.outputs.sha }}
+      VERSION: ${{ needs.preflight.outputs.version }}
+      TAG: ${{ needs.preflight.outputs.tag }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.preflight.outputs.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-assets-gated
+          path: gated
+      - name: Recheck tag and draft bytes, then publish
+        run: |
+          git remote set-url origin "https://github.com/$GITHUB_REPOSITORY.git"
+          python3 packaging/release_preflight.py --mode recheck --tag "$TAG" --expect-sha "$SHA"
+          gh release view "$TAG" --json isDraft,tagName,assets --jq '{isDraft, tagName, assets: [.assets[] | {name, size}]}' > pre.json
+          mkdir pre && gh release download "$TAG" --dir pre
+          python3 packaging/verify_release.py --downloaded pre --expected gated/expected-assets.json \
+            --version "$VERSION" --commit "$SHA" --release-json pre.json --want-draft true
+          gh release edit "$TAG" --draft=false
+      - name: Verify the published release and its public download links
+        run: |
+          gh release view "$TAG" --json isDraft,tagName,assets,url --jq '{isDraft, tagName, url, assets: [.assets[] | {name, size}]}' > pub.json
+          cat pub.json
+          mkdir pub && gh release download "$TAG" --dir pub
+          python3 packaging/verify_release.py --downloaded pub --expected gated/expected-assets.json \
+            --version "$VERSION" --commit "$SHA" --release-json pub.json --want-draft false
+          if [ "${{ github.event.repository.private }}" = "true" ]; then echo "private repository: anonymous download links not checked"; exit 0; fi
+          for n in $(python3 -c "import json; print(' '.join(json.load(open('gated/expected-assets.json'))['assets']))"); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' -L "https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/$n")
+            echo "$code $n"; test "$code" = "200"
+          done

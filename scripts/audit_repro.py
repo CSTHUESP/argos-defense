@@ -160,8 +160,10 @@ def f12():
         h = hashlib.sha256(b"x").hexdigest()
         (d / f"build-info-{t}.json").write_text(json.dumps({"name": a.name, "sha256": h, "commit": "c", "build_env": {}, "signing": "", "version": "9.9", "target": "linux"}))
         (d / f"smoke-{t}.json").write_text(json.dumps({"overall_pass": True, "checks_passed": 0, "checks_total": 0, "archive_sha256": h, "os": {}}))
-    r = subprocess.run([sys.executable, str(ROOT / "packaging/release_manifest.py"), "--assets", str(d), "--version", "0.2.0", "--commit", "c", "--tag", "v0.2.0"],
-                       capture_output=True, text=True)
+    args = ["--assets", str(d), "--version", "0.2.0", "--commit", "c", "--tag", "v0.2.0"]
+    if "--expected-out" in (ROOT / "packaging/release_manifest.py").read_text():
+        args = ["--assets", str(d), "--version", "0.2.0", "--commit", "c" * 40, "--tag", "v0.2.0", "--expected-out", str(d.parent / "exp.json")]
+    r = subprocess.run([sys.executable, str(ROOT / "packaging/release_manifest.py"), *args], capture_output=True, text=True)
     return r.returncode == 0, r.stdout.strip()[:120]
 
 
@@ -172,12 +174,15 @@ def f13():
     (d / "a.txt").write_text("AAAA")
     h1 = smoke_test.tree_fingerprint(d)
     (d / "a.txt").write_text("BBBB")
-    return smoke_test.tree_fingerprint(d) == h1, "same-length modification undetected"
+    same = smoke_test.tree_fingerprint(d) == h1
+    return same, "same-length modification undetected" if same else "same-length modification detected"
 
 
 def f11():
     y = (ROOT / ".github/workflows/release.yml").read_text()
-    return "is-ancestor" not in y, "release.yml lacks main-ancestry/CI preflight"
+    c = (ROOT / ".github/workflows/create-tag.yml").read_text()
+    shared = "release_preflight.py" in y and "release_preflight.py" in c and "needs.preflight.outputs.sha" in y
+    return not shared, "release.yml and create-tag.yml use the shared preflight and pin checkouts to its SHA" if shared else "no shared preflight"
 
 
 for name in ("f01", "f02", "f03", "f04", "f05", "f06", "f07", "f08", "f09", "f10", "f11", "f12", "f13"):
