@@ -32,13 +32,14 @@ sources: ["Microsoft Security blog 2026-10-21 Storm-0940 (cross-tenant password 
 suppressible_by_registry: false
 ---
 id: ARG-AUTH-002
-version: 2
+version: 3
 title: Failures, then success, then sensitive action by the same identity
 description: |
   The same tenant+account had failed sign-ins, then a successful sign-in, then a
   sensitive action (role assignment, credential addition, secret read). Failed and
   successful outcomes are listed separately in the evidence. Timing does not
-  matter: slow sequences alert too.
+  matter: slow sequences alert too. v3 (eval-v2 development set): mailbox rule / mail-forwarding
+  changes are treated as sensitive post-sign-in actions (common business-email-compromise persistence).
 family: auth_sequence
 status: test
 validation_status: synthetic-scenario tests only
@@ -62,7 +63,7 @@ aggregate:
       where:
         all:
           - {field: event_kind, op: eq, value: cloud_operation}
-          - {field: action, op: in, value: [role_assignment, add_role_member, credential_add, add_service_principal_credentials, secret_read, consent_grant, mfa_method_change]}
+          - {field: action, op: in, value: [role_assignment, add_role_member, credential_add, add_service_principal_credentials, secret_read, consent_grant, mfa_method_change, mailbox_rule_create, new_inbox_rule, set_inbox_rule, mail_forwarding_set]}
 reference: {type: not_applicable, description: ordered sequence within 24h; no anomaly claim}
 severity: high
 base_confidence: high

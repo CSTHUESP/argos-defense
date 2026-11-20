@@ -1,0 +1,88 @@
+{
+  "generator": "scripts/eval_v2.py",
+  "protocol": "eval-v2.0",
+  "sets": {
+    "dev": {
+      "events": 3945,
+      "params": {
+        "days": 6,
+        "devices": 3,
+        "fast_k": [
+          6,
+          10
+        ],
+        "heavy_k": [
+          5,
+          7
+        ],
+        "n": 12,
+        "nat_users": 5,
+        "p_fail": 0.35,
+        "seed": 101,
+        "slow_k": [
+          5,
+          7
+        ],
+        "spray_users": [
+          10,
+          14
+        ],
+        "stale_fix_p": 0.3,
+        "stale_k": [
+          4,
+          9
+        ],
+        "typo_k": [
+          1,
+          3
+        ]
+      },
+      "sha256": {
+        "events.jsonl": "13c73e2945482a45fbc4860fd2de70329397ec3c51dff92c6d9ffef67a74d45f",
+        "labels.json": "a7b14a1a2eca8cb74684b97144e9176840e6b3adc97b93c2ea8587880741627d"
+      },
+      "units": 249
+    },
+    "reserved": {
+      "events": 6942,
+      "params": {
+        "days": 7,
+        "devices": 4,
+        "fast_k": [
+          6,
+          15
+        ],
+        "heavy_k": [
+          5,
+          9
+        ],
+        "n": 20,
+        "nat_users": 7,
+        "p_fail": 0.45,
+        "seed": 9277,
+        "slow_k": [
+          5,
+          9
+        ],
+        "spray_users": [
+          9,
+          18
+        ],
+        "stale_fix_p": 0.5,
+        "stale_k": [
+          5,
+          12
+        ],
+        "typo_k": [
+          1,
+          4
+        ]
+      },
+      "sha256": {
+        "events.jsonl": "e4969a95b603dc565bac652c935b1f3fe059df021f3455b402372a9addd3e207",
+        "labels.json": "750afab90b47aed8b0b99d67b004df205f3e5cfbe80eb731c710526c1644309f"
+      },
+      "units": 415
+    }
+  }
+}
