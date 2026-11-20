@@ -36,6 +36,10 @@ def read_jsonl(path: Path, max_record_bytes: int):
         if err:
             yield no, None, err
             continue
+        if text.startswith("#"):
+            # Zeek TSV header/comment lines (#separator, #fields...) - only Zeek JSON logs are supported
+            yield no, None, "comment/TSV header line (only JSON logs are supported; Zeek TSV is not)"
+            continue
         if first and text.startswith("["):
             # JSON array file (e.g. Splunk JSON export of a result list). Bounded by max file size.
             first = False
@@ -67,7 +71,7 @@ def _read_json_array(path: Path):
 
 
 def read_csv(path: Path, max_record_bytes: int):
-    with open(path, "r", encoding="utf-8", newline="") as fh:
+    with open(path, "r", encoding="utf-8-sig", newline="") as fh:  # tolerate a UTF-8 BOM (Excel/Splunk exports)
         reader = csv.DictReader(fh)
         if not reader.fieldnames:
             yield 0, None, "CSV without header row"
@@ -93,9 +97,19 @@ def read_sysmon_xml(path: Path, max_record_bytes: int):
     head = path.read_bytes()[:4096].upper()
     if b"<!DOCTYPE" in head or b"<!ENTITY" in head:
         raise AdapterError("XML document type declarations / entities are not accepted")
+    source = str(path)
+    raw = path.read_bytes()
+    body = raw.lstrip(b"\xef\xbb\xbf").lstrip()
+    if body.startswith(b"<?xml"):
+        body = body[body.index(b"?>") + 2:].lstrip()
+    if body.startswith(b"<Event ") or body.startswith(b"<Event>"):
+        # wevtutil qe /f:xml and Get-WinEvent ...ToXml() emit concatenated <Event> elements without a
+        # root element; wrap them so the document is well-formed (bounded by the file size limit).
+        import io
+        source = io.BytesIO(b"<Events>" + body + b"</Events>")
     try:
         ordinal = 0
-        for _evt, elem in DET.iterparse(str(path), events=("end",), forbid_dtd=True, forbid_entities=True, forbid_external=True):
+        for _evt, elem in DET.iterparse(source, events=("end",), forbid_dtd=True, forbid_entities=True, forbid_external=True):
             tag = elem.tag.replace(SYSMON_NS, "")
             if tag != "Event":
                 continue

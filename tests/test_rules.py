@@ -305,3 +305,28 @@ def test_auth003_v2_without_source_address_is_not_evaluated(env):
     assert env.alerts(c, "ARG-AUTH-003") == []
     assert env.assessment(c)["rule_stats"]["ARG-AUTH-003"]["missing_required_telemetry"] == 7  # visible, not silent
     assert any("ARG-AUTH-003: 7 candidate records lacked" in x for x in env.assessment(c)["limitations"])
+
+
+# ---------- Sigma / SPL export (syntax/structure only; never executed in Splunk or a Sigma backend)
+def test_rule_exports_faithful_or_explicitly_unsupported(env, tmp_path):
+    import json as _j
+
+    import yaml as _y
+    from argos.detect.export_rules import DERIVED_SPL, check_spl, export_all
+    rep = export_all(env.settings, tmp_path / "x")
+    assert rep["executed_in_splunk"] is False
+    for rid, e in rep["rules"].items():
+        for k in ("sigma", "spl"):
+            assert e[k] == "exported" or e[k].startswith("unsupported: "), (rid, k)
+    # temporal correlations are never approximated
+    for rid in ("ARG-AUTH-002", "ARG-AUTH-003", "ARG-EP-002", "ARG-SP-002", "ARG-COLL-001"):
+        assert "unsupported" in rep["rules"][rid]["spl"] and "unsupported" in rep["rules"][rid]["sigma"]
+    sig = _y.safe_load((tmp_path / "x/sigma/ARG-EP-001.yml").read_text())
+    assert sig["logsource"]["category"] == "process_creation" and "Image|endswith" in sig["detection"]["selection"]
+    for f in (tmp_path / "x/spl").glob("*.spl"):
+        text = f.read_text()
+        assert not check_spl(text), f.name
+        for d in DERIVED_SPL:  # every derived field used is defined first
+            if f"({d})" in text or f" {d} " in text.split("| where", 1)[-1] or f"dc({d})" in text:
+                assert f"eval {d}=" in text, (f.name, d)
+    assert _j.loads((tmp_path / "x/export-report.json").read_text())["summary"]["spl"]["exported"] >= 10

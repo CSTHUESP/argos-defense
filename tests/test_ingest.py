@@ -199,3 +199,69 @@ def test_outcome_synonyms_normalized_conservatively(env):
     assert [e["outcome"] for e in evs] == ["failure", "success", "unknown"]
     assert any(w.startswith("outcome_normalized") for w in evs[0]["quality_warnings"])
     assert any(w.startswith("outcome_unrecognized") for w in evs[2]["quality_warnings"])
+
+
+# ---------------- vendor-format edge cases (schema-shaped from documented formats; not vendor exports)
+NS = 'xmlns="http://schemas.microsoft.com/win/2004/08/events/event"'
+
+
+def _sysmon_event(eid, data, ns=True):
+    d = "".join(f'<Data Name="{k}">{v}</Data>' for k, v in data.items())
+    return (f'<Event {NS if ns else ""}><System><Provider Name="Microsoft-Windows-Sysmon" Guid="{{5770385f-c22a-43e0-bf4c-06f5698ffbd9}}"/>'
+            f'<EventID>{eid}</EventID><Version>5</Version><TimeCreated SystemTime="2026-11-03T10:00:00.1234567Z"/>'
+            f'<Computer>ws1.corp.example</Computer></System><EventData>{d}<Data>unnamed</Data></EventData>'
+            f'<RenderingInfo Culture="en-US"><Message>m</Message></RenderingInfo></Event>')
+
+
+def test_sysmon_wevtutil_style_without_root_and_without_namespace(env):
+    c = env.case("wev")
+    body = _sysmon_event(1, {"UtcTime": "2026-11-03 10:00:00.123", "ProcessGuid": "{A}", "Image": "C:\\x\\a.exe"}) + "\n" + \
+        _sysmon_event(22, {"UtcTime": "2026-11-03 10:00:01.000", "ProcessGuid": "{A}", "QueryName": "example.com", "QueryStatus": "0"}, ns=False)
+    r = env.ingest(c, env.write("wev.xml", body), fmt="sysmon_xml")
+    assert r["accepted"] == 2 and r["rejected"] == 0
+    evs = list(env.store.iter_events(c["case_id"]))
+    assert evs[0]["host"] == "ws1.corp.example" and evs[1]["dns_query"] == "example.com"
+    assert evs[0]["timestamp_note"] == "sysmon_UtcTime_documented_as_UTC"
+
+
+def test_sysmon_bom_and_declaration(env):
+    c = env.case("bom")
+    body = "\ufeff<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" + _sysmon_event(11, {"UtcTime": "2026-11-03 10:00:00.000", "ProcessGuid": "{A}",
+                                                                                    "TargetFilename": "C:\\t\\a.zip"})
+    assert env.ingest(c, env.write("bom.xml", body), fmt="sysmon_xml")["accepted"] == 1
+
+
+def test_splunk_json_metadata_lines_and_multivalue(env):
+    c = env.case("spl")
+    rows = [{"preview": False, "offset": 0, "result": {"_time": "2026-11-03T10:00:00.000+00:00", "c_ip": "192.0.2.1", "cs_host": "h",
+                                                       "cs_uri": "/x", "sc_status": "200", "cs_User_Agent": ["a", "b"]}},
+            {"preview": False, "offset": 1, "lastrow": True, "result": {"_time": "2026-11-03T10:00:01.000+00:00", "c_ip": "192.0.2.2", "cs_uri": "/y"}},
+            {"messages": [{"type": "INFO", "text": "search finalized"}]}]
+    r = env.ingest(c, rows, fmt="splunk_json", options={"profile": "proxy"})
+    assert r["accepted"] == 2 and r["rejected"] == 1
+    assert "timestamp" in env.store.list_rejects(c["case_id"])[0]["reason"]
+    e = next(env.store.iter_events(c["case_id"]))
+    assert e["http_user_agent"] is None and any(w.startswith("non_scalar_ignored") for w in e["quality_warnings"])
+
+
+def test_splunk_csv_bom_and_quoted_newlines(env):
+    c = env.case("csvq")
+    text = '\ufeff_time,c_ip,cs_uri,cs_User_Agent\n2026-11-03T10:00:00Z,192.0.2.1,"/a,b","Mozilla/5.0 ""quoted""\nsecond line"\n'
+    r = env.ingest(c, env.write("q.csv", text), fmt="splunk_csv", options={"profile": "proxy"})
+    assert r["accepted"] == 1
+    e = next(env.store.iter_events(c["case_id"]))
+    assert e["src_ip"] == "192.0.2.1" and e["http_uri"] == "/a,b" and "second line" in e["http_user_agent"]
+
+
+def test_zeek_iso_timestamps_and_tsv_rejected(env):
+    c = env.case("zki")
+    rows = [{"ts": "2026-11-03T10:00:00.123456Z", "uid": "CzI1", "id.orig_h": "10.0.0.1", "id.orig_p": 1, "id.resp_h": "10.0.0.2",
+             "id.resp_p": 53, "proto": "udp", "query": "a.example", "rcode_name": "NOERROR"}]
+    assert env.ingest(c, rows, fmt="zeek_jsonl", options={"zeek_log": "dns"})["accepted"] == 1
+    e = next(env.store.iter_events(c["case_id"]))
+    assert e["event_time"] == "2026-11-03T10:00:00.123456Z" and e["zeek_uid"] == "CzI1"
+    tsv = "#separator \\x09\n#fields\tts\tuid\n1793700000.0\tC1\n"
+    c2 = env.case("zkt")
+    r = env.ingest(c2, env.write("conn.log", tsv), fmt="zeek_jsonl")
+    assert r["accepted"] == 0 and r["rejected"] == 3
+    assert "Zeek TSV is not" in env.store.list_rejects(c2["case_id"])[0]["reason"]
