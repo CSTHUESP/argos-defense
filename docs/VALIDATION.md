@@ -1,4 +1,8 @@
-# Validation (actual results, 2026-11-20, Linux sandbox, Python 3.13.18)
+# Validation
+
+> v0.2.0 status: see **RELEASE_VALIDATION.md** (110 tests, native package smoke tests on 4 targets) and **AUTH_RULE_EVALUATION.md**. The section below is the original v0.1.0 record, kept for history.
+
+## v0.1.0 record (2026-11-20, Linux sandbox, Python 3.13.18)
 
 **Scope:** synthetic scenarios only. Real-world attack-detection accuracy is **NOT MEASURED** (no independent labelled corpus). Source-derived patterns and synthetic tests do not establish production-validated detection.
 

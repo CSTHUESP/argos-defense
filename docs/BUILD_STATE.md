@@ -35,3 +35,6 @@ pytest 75 passed · validate.py 15/15 scenarios · 12k events: ingest ~3.1 s, an
 - 11:2x AUTH-003 v2 + AUTH-004 + source_history; labeled tuning/held-out eval (docs/AUTH_RULE_EVALUATION.md). EP-002 adapter-level provenance tests + ambiguous-vantage rejection. ARTEX FP independence review (X03 weak). 90+ tests pass.
 - 11:4x rules/config moved to src/argos/resources; platform data dir; start launcher; /api/shutdown; schema meta + v1 migration; Apache-2.0 full text; notices; ARTEX manifest. Wheel install verified outside checkout.
 - Next: PyInstaller spec + smoke test + workflows (pinned SHAs), docs, git init/commit, then GitHub publish when access exists.
+- 11:0x GitHub app installed by owner; repo CSTHUESP/argos-defense (private, empty) attached; pushed main. CI run 44715570390 green (7 jobs).
+- Release dry runs: 44716220769 (Windows spec tzdata TOC bug; others 30/30), 44716998681 (Windows cp1252 output crash + harness hang), 44719465528 (after fixes).
+- Proxy limits: artifact/blob downloads blocked from session -> verification via job logs; repo settings writes blocked (description must be set by owner).
