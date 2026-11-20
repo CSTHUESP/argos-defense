@@ -1,0 +1,20 @@
+name: Security contact request (no details)
+description: Ask the maintainers for a private channel to report a vulnerability. Do NOT describe the vulnerability here.
+title: "Security contact request"
+labels: ["security-contact"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **This issue is public.** Use it only to ask for a private channel, and only when the **Report a vulnerability** button is not available on the [Security tab](https://github.com/CSTHUESP/argos-defense/security).
+        Do **not** write anything about the vulnerability: no affected component, steps, impact, logs, credentials, tokens or investigation data.
+        A maintainer will open a draft GitHub security advisory and add you as a collaborator, where the details can be shared privately. See [SECURITY.md](https://github.com/CSTHUESP/argos-defense/blob/main/SECURITY.md).
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Confirmation
+      options:
+        - label: I have a security report for ARGOS Defense and would like a private channel.
+          required: true
+        - label: This issue contains no details of the vulnerability, no credentials or tokens, and no investigation data.
+          required: true

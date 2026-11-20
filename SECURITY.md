@@ -6,10 +6,10 @@ Only the latest 0.x release receives fixes. ARGOS Defense is experimental softwa
 ## Reporting a vulnerability
 Do **not** report vulnerabilities in a public issue, pull request or discussion.
 
-1. **Preferred: GitHub private vulnerability reporting.** Open the repository's [Security tab](https://github.com/CSTHUESP/argos-defense/security) and choose **Report a vulnerability** (direct form: https://github.com/CSTHUESP/argos-defense/security/advisories/new). The report is visible only to you and the maintainers, and the fix can be coordinated in a private advisory.
-2. **If that button is not available** (private reporting is a repository setting and may be switched off): open a public issue titled `Security contact request` that contains **no technical details** — only that you have a security report. A maintainer will then open a draft GitHub security advisory and add you as a collaborator, so the details stay private.
+1. **GitHub private vulnerability reporting, when it is shown.** If the repository's [Security tab](https://github.com/CSTHUESP/argos-defense/security) offers **Report a vulnerability**, use it. The report is visible only to you and the maintainers, and the fix can be coordinated in a private advisory. *Status: this repository setting was **not enabled** when last checked (2026-11-20), so the button may not be there yet.*
+2. **Otherwise: ask for a private channel.** Open an issue with the [Security contact request (no details)](https://github.com/CSTHUESP/argos-defense/issues/new?template=security_contact.yml) form. It asks for nothing but two confirmations; do **not** add any technical details. A maintainer will then open a draft GitHub security advisory and add you as a collaborator, so the details stay private.
 
-Please include the version (`argos-defense --version`), platform, affected component, reproduction steps with **synthetic** data, impact, and **redacted** logs. Never include real investigation data, credentials or session tokens. There is no bug bounty and no guaranteed response time; reports are handled on a best-effort basis.
+In the private channel, please include the version (`argos-defense --version`), platform, affected component, reproduction steps with **synthetic** data, impact, and **redacted** logs. Never include real investigation data, credentials or session tokens. There is no bug bounty and no guaranteed response time; reports are handled on a best-effort basis.
 
 ## Security model (summary — details in docs/THREAT_MODEL.md)
 - Binds to `127.0.0.1` by default; non-loopback binding requires a hidden override.
