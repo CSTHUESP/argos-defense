@@ -1,0 +1,2385 @@
+{
+ "_note": "labels are NEVER imported; evaluation only",
+ "units": {
+  "u0001": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B1_typo_then_success",
+   "threat": "benign"
+  },
+  "u0002": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B2_many_typos_known_device",
+   "threat": "benign"
+  },
+  "u0003": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B3_multi_device_intermittent",
+   "threat": "benign"
+  },
+  "u0004": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B4_stale_credential_device",
+   "threat": "benign"
+  },
+  "u0005": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B10_incomplete_telemetry",
+   "threat": "benign"
+  },
+  "u0006": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B5_shared_egress",
+   "threat": "benign"
+  },
+  "u0007": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "B6_service_automation",
+   "threat": "benign"
+  },
+  "u0008": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B7_admin_credential_rotation",
+   "threat": "benign"
+  },
+  "u0009": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M6_sp_credential_add_failed",
+   "threat": "malicious"
+  },
+  "u0010": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M7_sp_credential_add_then_vault_reads",
+   "threat": "malicious"
+  },
+  "u0011": {
+   "chains": [
+    {
+     "call": "call-u0011-0",
+     "process": "{u0011-p0}"
+    },
+    {
+     "call": "call-u0011-1",
+     "process": "{u0011-p1}"
+    },
+    {
+     "call": "call-u0011-2",
+     "process": "{u0011-p2}"
+    },
+    {
+     "call": "call-u0011-3",
+     "process": "{u0011-p3}"
+    }
+   ],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "B8_developer_ai_assistant",
+   "threat": "benign"
+  },
+  "u0012": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B9_background_ai_traffic",
+   "threat": "benign"
+  },
+  "u0013": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M8_web_shell",
+   "threat": "malicious"
+  },
+  "u0014": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "M1_fast_guessing",
+   "threat": "malicious"
+  },
+  "u0015": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M2_slow_guessing",
+   "threat": "malicious"
+  },
+  "u0016": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M3_guessing_interleaved_user",
+   "threat": "malicious"
+  },
+  "u0017": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "M4_rotating_sources",
+   "threat": "malicious"
+  },
+  "u0018": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M5_rotating_and_interleaved",
+   "threat": "malicious"
+  },
+  "u0019": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M9_password_spray",
+   "threat": "malicious"
+  },
+  "u0020": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M10_slow_guess_no_source_field",
+   "threat": "malicious"
+  },
+  "u0021": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "N1_tool_only_automation",
+   "threat": "benign"
+  },
+  "u0022": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "N2_model_only",
+   "threat": "benign"
+  },
+  "u0023": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "N3_mismatched_call_ids",
+   "threat": "benign"
+  },
+  "u0024": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "N4_independent_collectors_reuse_ids",
+   "threat": "benign"
+  },
+  "u0025": {
+   "chains": [
+    {
+     "call": "call-u0025-ok",
+     "process": "{u0025-p-ok}"
+    }
+   ],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "N5_mixed_valid_chain_and_unrelated_execution",
+   "threat": "benign"
+  },
+  "u0026": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B1_typo_then_success",
+   "threat": "benign"
+  },
+  "u0027": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B2_many_typos_known_device",
+   "threat": "benign"
+  },
+  "u0028": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B3_multi_device_intermittent",
+   "threat": "benign"
+  },
+  "u0029": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B4_stale_credential_device",
+   "threat": "benign"
+  },
+  "u0030": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B10_incomplete_telemetry",
+   "threat": "benign"
+  },
+  "u0031": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B5_shared_egress",
+   "threat": "benign"
+  },
+  "u0032": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "B6_service_automation",
+   "threat": "benign"
+  },
+  "u0033": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B7_admin_credential_rotation",
+   "threat": "benign"
+  },
+  "u0034": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "M6_sp_credential_add_failed",
+   "threat": "malicious"
+  },
+  "u0035": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M7_sp_credential_add_then_vault_reads",
+   "threat": "malicious"
+  },
+  "u0036": {
+   "chains": [
+    {
+     "call": "call-u0036-0",
+     "process": "{u0036-p0}"
+    },
+    {
+     "call": "call-u0036-1",
+     "process": "{u0036-p1}"
+    }
+   ],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "B8_developer_ai_assistant",
+   "threat": "benign"
+  },
+  "u0037": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B9_background_ai_traffic",
+   "threat": "benign"
+  },
+  "u0038": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M8_web_shell",
+   "threat": "malicious"
+  },
+  "u0039": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M1_fast_guessing",
+   "threat": "malicious"
+  },
+  "u0040": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M2_slow_guessing",
+   "threat": "malicious"
+  },
+  "u0041": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M3_guessing_interleaved_user",
+   "threat": "malicious"
+  },
+  "u0042": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "M4_rotating_sources",
+   "threat": "malicious"
+  },
+  "u0043": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M5_rotating_and_interleaved",
+   "threat": "malicious"
+  },
+  "u0044": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "M9_password_spray",
+   "threat": "malicious"
+  },
+  "u0045": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M10_slow_guess_no_source_field",
+   "threat": "malicious"
+  },
+  "u0046": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "N1_tool_only_automation",
+   "threat": "benign"
+  },
+  "u0047": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "N2_model_only",
+   "threat": "benign"
+  },
+  "u0048": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "N3_mismatched_call_ids",
+   "threat": "benign"
+  },
+  "u0049": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "N4_independent_collectors_reuse_ids",
+   "threat": "benign"
+  },
+  "u0050": {
+   "chains": [
+    {
+     "call": "call-u0050-ok",
+     "process": "{u0050-p-ok}"
+    }
+   ],
+   "framework": null,
+   "origin": "script",
+   "scenario": "N5_mixed_valid_chain_and_unrelated_execution",
+   "threat": "benign"
+  },
+  "u0051": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B1_typo_then_success",
+   "threat": "benign"
+  },
+  "u0052": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B2_many_typos_known_device",
+   "threat": "benign"
+  },
+  "u0053": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B3_multi_device_intermittent",
+   "threat": "benign"
+  },
+  "u0054": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B4_stale_credential_device",
+   "threat": "benign"
+  },
+  "u0055": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B10_incomplete_telemetry",
+   "threat": "benign"
+  },
+  "u0056": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B5_shared_egress",
+   "threat": "benign"
+  },
+  "u0057": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "B6_service_automation",
+   "threat": "benign"
+  },
+  "u0058": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B7_admin_credential_rotation",
+   "threat": "benign"
+  },
+  "u0059": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M6_sp_credential_add_failed",
+   "threat": "malicious"
+  },
+  "u0060": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M7_sp_credential_add_then_vault_reads",
+   "threat": "malicious"
+  },
+  "u0061": {
+   "chains": [
+    {
+     "call": "call-u0061-0",
+     "process": "{u0061-p0}"
+    },
+    {
+     "call": "call-u0061-1",
+     "process": "{u0061-p1}"
+    }
+   ],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "B8_developer_ai_assistant",
+   "threat": "benign"
+  },
+  "u0062": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B9_background_ai_traffic",
+   "threat": "benign"
+  },
+  "u0063": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "M8_web_shell",
+   "threat": "malicious"
+  },
+  "u0064": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M1_fast_guessing",
+   "threat": "malicious"
+  },
+  "u0065": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M2_slow_guessing",
+   "threat": "malicious"
+  },
+  "u0066": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M3_guessing_interleaved_user",
+   "threat": "malicious"
+  },
+  "u0067": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M4_rotating_sources",
+   "threat": "malicious"
+  },
+  "u0068": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M5_rotating_and_interleaved",
+   "threat": "malicious"
+  },
+  "u0069": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "M9_password_spray",
+   "threat": "malicious"
+  },
+  "u0070": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M10_slow_guess_no_source_field",
+   "threat": "malicious"
+  },
+  "u0071": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "N1_tool_only_automation",
+   "threat": "benign"
+  },
+  "u0072": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "N2_model_only",
+   "threat": "benign"
+  },
+  "u0073": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "N3_mismatched_call_ids",
+   "threat": "benign"
+  },
+  "u0074": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "N4_independent_collectors_reuse_ids",
+   "threat": "benign"
+  },
+  "u0075": {
+   "chains": [
+    {
+     "call": "call-u0075-ok",
+     "process": "{u0075-p-ok}"
+    }
+   ],
+   "framework": null,
+   "origin": "script",
+   "scenario": "N5_mixed_valid_chain_and_unrelated_execution",
+   "threat": "benign"
+  },
+  "u0076": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B1_typo_then_success",
+   "threat": "benign"
+  },
+  "u0077": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B2_many_typos_known_device",
+   "threat": "benign"
+  },
+  "u0078": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B3_multi_device_intermittent",
+   "threat": "benign"
+  },
+  "u0079": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B4_stale_credential_device",
+   "threat": "benign"
+  },
+  "u0080": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B10_incomplete_telemetry",
+   "threat": "benign"
+  },
+  "u0081": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B5_shared_egress",
+   "threat": "benign"
+  },
+  "u0082": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "B6_service_automation",
+   "threat": "benign"
+  },
+  "u0083": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B7_admin_credential_rotation",
+   "threat": "benign"
+  },
+  "u0084": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M6_sp_credential_add_failed",
+   "threat": "malicious"
+  },
+  "u0085": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M7_sp_credential_add_then_vault_reads",
+   "threat": "malicious"
+  },
+  "u0086": {
+   "chains": [
+    {
+     "call": "call-u0086-0",
+     "process": "{u0086-p0}"
+    },
+    {
+     "call": "call-u0086-1",
+     "process": "{u0086-p1}"
+    },
+    {
+     "call": "call-u0086-2",
+     "process": "{u0086-p2}"
+    },
+    {
+     "call": "call-u0086-3",
+     "process": "{u0086-p3}"
+    }
+   ],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "B8_developer_ai_assistant",
+   "threat": "benign"
+  },
+  "u0087": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B9_background_ai_traffic",
+   "threat": "benign"
+  },
+  "u0088": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M8_web_shell",
+   "threat": "malicious"
+  },
+  "u0089": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M1_fast_guessing",
+   "threat": "malicious"
+  },
+  "u0090": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "M2_slow_guessing",
+   "threat": "malicious"
+  },
+  "u0091": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M3_guessing_interleaved_user",
+   "threat": "malicious"
+  },
+  "u0092": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M4_rotating_sources",
+   "threat": "malicious"
+  },
+  "u0093": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M5_rotating_and_interleaved",
+   "threat": "malicious"
+  },
+  "u0094": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M9_password_spray",
+   "threat": "malicious"
+  },
+  "u0095": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M10_slow_guess_no_source_field",
+   "threat": "malicious"
+  },
+  "u0096": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "N1_tool_only_automation",
+   "threat": "benign"
+  },
+  "u0097": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "N2_model_only",
+   "threat": "benign"
+  },
+  "u0098": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "N3_mismatched_call_ids",
+   "threat": "benign"
+  },
+  "u0099": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "N4_independent_collectors_reuse_ids",
+   "threat": "benign"
+  },
+  "u0100": {
+   "chains": [
+    {
+     "call": "call-u0100-ok",
+     "process": "{u0100-p-ok}"
+    }
+   ],
+   "framework": null,
+   "origin": "script",
+   "scenario": "N5_mixed_valid_chain_and_unrelated_execution",
+   "threat": "benign"
+  },
+  "u0101": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B1_typo_then_success",
+   "threat": "benign"
+  },
+  "u0102": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B2_many_typos_known_device",
+   "threat": "benign"
+  },
+  "u0103": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B3_multi_device_intermittent",
+   "threat": "benign"
+  },
+  "u0104": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B4_stale_credential_device",
+   "threat": "benign"
+  },
+  "u0105": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B10_incomplete_telemetry",
+   "threat": "benign"
+  },
+  "u0106": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B5_shared_egress",
+   "threat": "benign"
+  },
+  "u0107": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "B6_service_automation",
+   "threat": "benign"
+  },
+  "u0108": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B7_admin_credential_rotation",
+   "threat": "benign"
+  },
+  "u0109": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M6_sp_credential_add_failed",
+   "threat": "malicious"
+  },
+  "u0110": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "M7_sp_credential_add_then_vault_reads",
+   "threat": "malicious"
+  },
+  "u0111": {
+   "chains": [
+    {
+     "call": "call-u0111-0",
+     "process": "{u0111-p0}"
+    },
+    {
+     "call": "call-u0111-1",
+     "process": "{u0111-p1}"
+    }
+   ],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "B8_developer_ai_assistant",
+   "threat": "benign"
+  },
+  "u0112": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B9_background_ai_traffic",
+   "threat": "benign"
+  },
+  "u0113": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "M8_web_shell",
+   "threat": "malicious"
+  },
+  "u0114": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M1_fast_guessing",
+   "threat": "malicious"
+  },
+  "u0115": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M2_slow_guessing",
+   "threat": "malicious"
+  },
+  "u0116": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M3_guessing_interleaved_user",
+   "threat": "malicious"
+  },
+  "u0117": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "M4_rotating_sources",
+   "threat": "malicious"
+  },
+  "u0118": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "M5_rotating_and_interleaved",
+   "threat": "malicious"
+  },
+  "u0119": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "M9_password_spray",
+   "threat": "malicious"
+  },
+  "u0120": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M10_slow_guess_no_source_field",
+   "threat": "malicious"
+  },
+  "u0121": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "N1_tool_only_automation",
+   "threat": "benign"
+  },
+  "u0122": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "N2_model_only",
+   "threat": "benign"
+  },
+  "u0123": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "N3_mismatched_call_ids",
+   "threat": "benign"
+  },
+  "u0124": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "N4_independent_collectors_reuse_ids",
+   "threat": "benign"
+  },
+  "u0125": {
+   "chains": [
+    {
+     "call": "call-u0125-ok",
+     "process": "{u0125-p-ok}"
+    }
+   ],
+   "framework": null,
+   "origin": "script",
+   "scenario": "N5_mixed_valid_chain_and_unrelated_execution",
+   "threat": "benign"
+  },
+  "u0126": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B1_typo_then_success",
+   "threat": "benign"
+  },
+  "u0127": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B2_many_typos_known_device",
+   "threat": "benign"
+  },
+  "u0128": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B3_multi_device_intermittent",
+   "threat": "benign"
+  },
+  "u0129": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B4_stale_credential_device",
+   "threat": "benign"
+  },
+  "u0130": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B10_incomplete_telemetry",
+   "threat": "benign"
+  },
+  "u0131": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B5_shared_egress",
+   "threat": "benign"
+  },
+  "u0132": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "B6_service_automation",
+   "threat": "benign"
+  },
+  "u0133": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B7_admin_credential_rotation",
+   "threat": "benign"
+  },
+  "u0134": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "M6_sp_credential_add_failed",
+   "threat": "malicious"
+  },
+  "u0135": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M7_sp_credential_add_then_vault_reads",
+   "threat": "malicious"
+  },
+  "u0136": {
+   "chains": [
+    {
+     "call": "call-u0136-0",
+     "process": "{u0136-p0}"
+    },
+    {
+     "call": "call-u0136-1",
+     "process": "{u0136-p1}"
+    },
+    {
+     "call": "call-u0136-2",
+     "process": "{u0136-p2}"
+    }
+   ],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "B8_developer_ai_assistant",
+   "threat": "benign"
+  },
+  "u0137": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B9_background_ai_traffic",
+   "threat": "benign"
+  },
+  "u0138": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M8_web_shell",
+   "threat": "malicious"
+  },
+  "u0139": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M1_fast_guessing",
+   "threat": "malicious"
+  },
+  "u0140": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M2_slow_guessing",
+   "threat": "malicious"
+  },
+  "u0141": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M3_guessing_interleaved_user",
+   "threat": "malicious"
+  },
+  "u0142": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M4_rotating_sources",
+   "threat": "malicious"
+  },
+  "u0143": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M5_rotating_and_interleaved",
+   "threat": "malicious"
+  },
+  "u0144": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M9_password_spray",
+   "threat": "malicious"
+  },
+  "u0145": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M10_slow_guess_no_source_field",
+   "threat": "malicious"
+  },
+  "u0146": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "N1_tool_only_automation",
+   "threat": "benign"
+  },
+  "u0147": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "N2_model_only",
+   "threat": "benign"
+  },
+  "u0148": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "N3_mismatched_call_ids",
+   "threat": "benign"
+  },
+  "u0149": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "N4_independent_collectors_reuse_ids",
+   "threat": "benign"
+  },
+  "u0150": {
+   "chains": [
+    {
+     "call": "call-u0150-ok",
+     "process": "{u0150-p-ok}"
+    }
+   ],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "N5_mixed_valid_chain_and_unrelated_execution",
+   "threat": "benign"
+  },
+  "u0151": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B1_typo_then_success",
+   "threat": "benign"
+  },
+  "u0152": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B2_many_typos_known_device",
+   "threat": "benign"
+  },
+  "u0153": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B3_multi_device_intermittent",
+   "threat": "benign"
+  },
+  "u0154": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B4_stale_credential_device",
+   "threat": "benign"
+  },
+  "u0155": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B10_incomplete_telemetry",
+   "threat": "benign"
+  },
+  "u0156": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B5_shared_egress",
+   "threat": "benign"
+  },
+  "u0157": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "B6_service_automation",
+   "threat": "benign"
+  },
+  "u0158": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B7_admin_credential_rotation",
+   "threat": "benign"
+  },
+  "u0159": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M6_sp_credential_add_failed",
+   "threat": "malicious"
+  },
+  "u0160": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M7_sp_credential_add_then_vault_reads",
+   "threat": "malicious"
+  },
+  "u0161": {
+   "chains": [
+    {
+     "call": "call-u0161-0",
+     "process": "{u0161-p0}"
+    },
+    {
+     "call": "call-u0161-1",
+     "process": "{u0161-p1}"
+    },
+    {
+     "call": "call-u0161-2",
+     "process": "{u0161-p2}"
+    }
+   ],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "B8_developer_ai_assistant",
+   "threat": "benign"
+  },
+  "u0162": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B9_background_ai_traffic",
+   "threat": "benign"
+  },
+  "u0163": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M8_web_shell",
+   "threat": "malicious"
+  },
+  "u0164": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "M1_fast_guessing",
+   "threat": "malicious"
+  },
+  "u0165": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "M2_slow_guessing",
+   "threat": "malicious"
+  },
+  "u0166": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M3_guessing_interleaved_user",
+   "threat": "malicious"
+  },
+  "u0167": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M4_rotating_sources",
+   "threat": "malicious"
+  },
+  "u0168": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M5_rotating_and_interleaved",
+   "threat": "malicious"
+  },
+  "u0169": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "M9_password_spray",
+   "threat": "malicious"
+  },
+  "u0170": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M10_slow_guess_no_source_field",
+   "threat": "malicious"
+  },
+  "u0171": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "N1_tool_only_automation",
+   "threat": "benign"
+  },
+  "u0172": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "N2_model_only",
+   "threat": "benign"
+  },
+  "u0173": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "N3_mismatched_call_ids",
+   "threat": "benign"
+  },
+  "u0174": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "N4_independent_collectors_reuse_ids",
+   "threat": "benign"
+  },
+  "u0175": {
+   "chains": [
+    {
+     "call": "call-u0175-ok",
+     "process": "{u0175-p-ok}"
+    }
+   ],
+   "framework": null,
+   "origin": "script",
+   "scenario": "N5_mixed_valid_chain_and_unrelated_execution",
+   "threat": "benign"
+  },
+  "u0176": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B1_typo_then_success",
+   "threat": "benign"
+  },
+  "u0177": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B2_many_typos_known_device",
+   "threat": "benign"
+  },
+  "u0178": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B3_multi_device_intermittent",
+   "threat": "benign"
+  },
+  "u0179": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B4_stale_credential_device",
+   "threat": "benign"
+  },
+  "u0180": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B10_incomplete_telemetry",
+   "threat": "benign"
+  },
+  "u0181": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B5_shared_egress",
+   "threat": "benign"
+  },
+  "u0182": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "B6_service_automation",
+   "threat": "benign"
+  },
+  "u0183": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B7_admin_credential_rotation",
+   "threat": "benign"
+  },
+  "u0184": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M6_sp_credential_add_failed",
+   "threat": "malicious"
+  },
+  "u0185": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M7_sp_credential_add_then_vault_reads",
+   "threat": "malicious"
+  },
+  "u0186": {
+   "chains": [
+    {
+     "call": "call-u0186-0",
+     "process": "{u0186-p0}"
+    },
+    {
+     "call": "call-u0186-1",
+     "process": "{u0186-p1}"
+    },
+    {
+     "call": "call-u0186-2",
+     "process": "{u0186-p2}"
+    },
+    {
+     "call": "call-u0186-3",
+     "process": "{u0186-p3}"
+    }
+   ],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "B8_developer_ai_assistant",
+   "threat": "benign"
+  },
+  "u0187": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B9_background_ai_traffic",
+   "threat": "benign"
+  },
+  "u0188": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M8_web_shell",
+   "threat": "malicious"
+  },
+  "u0189": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "M1_fast_guessing",
+   "threat": "malicious"
+  },
+  "u0190": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M2_slow_guessing",
+   "threat": "malicious"
+  },
+  "u0191": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "M3_guessing_interleaved_user",
+   "threat": "malicious"
+  },
+  "u0192": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M4_rotating_sources",
+   "threat": "malicious"
+  },
+  "u0193": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M5_rotating_and_interleaved",
+   "threat": "malicious"
+  },
+  "u0194": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "M9_password_spray",
+   "threat": "malicious"
+  },
+  "u0195": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "M10_slow_guess_no_source_field",
+   "threat": "malicious"
+  },
+  "u0196": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "N1_tool_only_automation",
+   "threat": "benign"
+  },
+  "u0197": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "N2_model_only",
+   "threat": "benign"
+  },
+  "u0198": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "N3_mismatched_call_ids",
+   "threat": "benign"
+  },
+  "u0199": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "N4_independent_collectors_reuse_ids",
+   "threat": "benign"
+  },
+  "u0200": {
+   "chains": [
+    {
+     "call": "call-u0200-ok",
+     "process": "{u0200-p-ok}"
+    }
+   ],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "N5_mixed_valid_chain_and_unrelated_execution",
+   "threat": "benign"
+  },
+  "u0201": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B1_typo_then_success",
+   "threat": "benign"
+  },
+  "u0202": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B2_many_typos_known_device",
+   "threat": "benign"
+  },
+  "u0203": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B3_multi_device_intermittent",
+   "threat": "benign"
+  },
+  "u0204": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B4_stale_credential_device",
+   "threat": "benign"
+  },
+  "u0205": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B10_incomplete_telemetry",
+   "threat": "benign"
+  },
+  "u0206": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B5_shared_egress",
+   "threat": "benign"
+  },
+  "u0207": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "B6_service_automation",
+   "threat": "benign"
+  },
+  "u0208": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B7_admin_credential_rotation",
+   "threat": "benign"
+  },
+  "u0209": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M6_sp_credential_add_failed",
+   "threat": "malicious"
+  },
+  "u0210": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M7_sp_credential_add_then_vault_reads",
+   "threat": "malicious"
+  },
+  "u0211": {
+   "chains": [
+    {
+     "call": "call-u0211-0",
+     "process": "{u0211-p0}"
+    },
+    {
+     "call": "call-u0211-1",
+     "process": "{u0211-p1}"
+    },
+    {
+     "call": "call-u0211-2",
+     "process": "{u0211-p2}"
+    },
+    {
+     "call": "call-u0211-3",
+     "process": "{u0211-p3}"
+    }
+   ],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "B8_developer_ai_assistant",
+   "threat": "benign"
+  },
+  "u0212": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B9_background_ai_traffic",
+   "threat": "benign"
+  },
+  "u0213": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M8_web_shell",
+   "threat": "malicious"
+  },
+  "u0214": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M1_fast_guessing",
+   "threat": "malicious"
+  },
+  "u0215": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "M2_slow_guessing",
+   "threat": "malicious"
+  },
+  "u0216": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M3_guessing_interleaved_user",
+   "threat": "malicious"
+  },
+  "u0217": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M4_rotating_sources",
+   "threat": "malicious"
+  },
+  "u0218": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M5_rotating_and_interleaved",
+   "threat": "malicious"
+  },
+  "u0219": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "M9_password_spray",
+   "threat": "malicious"
+  },
+  "u0220": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M10_slow_guess_no_source_field",
+   "threat": "malicious"
+  },
+  "u0221": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "N1_tool_only_automation",
+   "threat": "benign"
+  },
+  "u0222": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "N2_model_only",
+   "threat": "benign"
+  },
+  "u0223": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "N3_mismatched_call_ids",
+   "threat": "benign"
+  },
+  "u0224": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "N4_independent_collectors_reuse_ids",
+   "threat": "benign"
+  },
+  "u0225": {
+   "chains": [
+    {
+     "call": "call-u0225-ok",
+     "process": "{u0225-p-ok}"
+    }
+   ],
+   "framework": null,
+   "origin": "script",
+   "scenario": "N5_mixed_valid_chain_and_unrelated_execution",
+   "threat": "benign"
+  },
+  "u0226": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B1_typo_then_success",
+   "threat": "benign"
+  },
+  "u0227": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B2_many_typos_known_device",
+   "threat": "benign"
+  },
+  "u0228": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B3_multi_device_intermittent",
+   "threat": "benign"
+  },
+  "u0229": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B4_stale_credential_device",
+   "threat": "benign"
+  },
+  "u0230": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B10_incomplete_telemetry",
+   "threat": "benign"
+  },
+  "u0231": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B5_shared_egress",
+   "threat": "benign"
+  },
+  "u0232": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "B6_service_automation",
+   "threat": "benign"
+  },
+  "u0233": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B7_admin_credential_rotation",
+   "threat": "benign"
+  },
+  "u0234": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "M6_sp_credential_add_failed",
+   "threat": "malicious"
+  },
+  "u0235": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "M7_sp_credential_add_then_vault_reads",
+   "threat": "malicious"
+  },
+  "u0236": {
+   "chains": [
+    {
+     "call": "call-u0236-0",
+     "process": "{u0236-p0}"
+    },
+    {
+     "call": "call-u0236-1",
+     "process": "{u0236-p1}"
+    }
+   ],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "B8_developer_ai_assistant",
+   "threat": "benign"
+  },
+  "u0237": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B9_background_ai_traffic",
+   "threat": "benign"
+  },
+  "u0238": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M8_web_shell",
+   "threat": "malicious"
+  },
+  "u0239": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "M1_fast_guessing",
+   "threat": "malicious"
+  },
+  "u0240": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "M2_slow_guessing",
+   "threat": "malicious"
+  },
+  "u0241": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M3_guessing_interleaved_user",
+   "threat": "malicious"
+  },
+  "u0242": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "M4_rotating_sources",
+   "threat": "malicious"
+  },
+  "u0243": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M5_rotating_and_interleaved",
+   "threat": "malicious"
+  },
+  "u0244": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "M9_password_spray",
+   "threat": "malicious"
+  },
+  "u0245": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M10_slow_guess_no_source_field",
+   "threat": "malicious"
+  },
+  "u0246": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "N1_tool_only_automation",
+   "threat": "benign"
+  },
+  "u0247": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "N2_model_only",
+   "threat": "benign"
+  },
+  "u0248": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "N3_mismatched_call_ids",
+   "threat": "benign"
+  },
+  "u0249": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "N4_independent_collectors_reuse_ids",
+   "threat": "benign"
+  },
+  "u0250": {
+   "chains": [
+    {
+     "call": "call-u0250-ok",
+     "process": "{u0250-p-ok}"
+    }
+   ],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "N5_mixed_valid_chain_and_unrelated_execution",
+   "threat": "benign"
+  },
+  "u0251": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B1_typo_then_success",
+   "threat": "benign"
+  },
+  "u0252": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B2_many_typos_known_device",
+   "threat": "benign"
+  },
+  "u0253": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B3_multi_device_intermittent",
+   "threat": "benign"
+  },
+  "u0254": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B4_stale_credential_device",
+   "threat": "benign"
+  },
+  "u0255": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B10_incomplete_telemetry",
+   "threat": "benign"
+  },
+  "u0256": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B5_shared_egress",
+   "threat": "benign"
+  },
+  "u0257": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "B6_service_automation",
+   "threat": "benign"
+  },
+  "u0258": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B7_admin_credential_rotation",
+   "threat": "benign"
+  },
+  "u0259": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M6_sp_credential_add_failed",
+   "threat": "malicious"
+  },
+  "u0260": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M7_sp_credential_add_then_vault_reads",
+   "threat": "malicious"
+  },
+  "u0261": {
+   "chains": [
+    {
+     "call": "call-u0261-0",
+     "process": "{u0261-p0}"
+    },
+    {
+     "call": "call-u0261-1",
+     "process": "{u0261-p1}"
+    }
+   ],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "B8_developer_ai_assistant",
+   "threat": "benign"
+  },
+  "u0262": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B9_background_ai_traffic",
+   "threat": "benign"
+  },
+  "u0263": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M8_web_shell",
+   "threat": "malicious"
+  },
+  "u0264": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M1_fast_guessing",
+   "threat": "malicious"
+  },
+  "u0265": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M2_slow_guessing",
+   "threat": "malicious"
+  },
+  "u0266": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "M3_guessing_interleaved_user",
+   "threat": "malicious"
+  },
+  "u0267": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "M4_rotating_sources",
+   "threat": "malicious"
+  },
+  "u0268": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M5_rotating_and_interleaved",
+   "threat": "malicious"
+  },
+  "u0269": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M9_password_spray",
+   "threat": "malicious"
+  },
+  "u0270": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M10_slow_guess_no_source_field",
+   "threat": "malicious"
+  },
+  "u0271": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "N1_tool_only_automation",
+   "threat": "benign"
+  },
+  "u0272": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "N2_model_only",
+   "threat": "benign"
+  },
+  "u0273": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "N3_mismatched_call_ids",
+   "threat": "benign"
+  },
+  "u0274": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "N4_independent_collectors_reuse_ids",
+   "threat": "benign"
+  },
+  "u0275": {
+   "chains": [
+    {
+     "call": "call-u0275-ok",
+     "process": "{u0275-p-ok}"
+    }
+   ],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "N5_mixed_valid_chain_and_unrelated_execution",
+   "threat": "benign"
+  },
+  "u0276": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B1_typo_then_success",
+   "threat": "benign"
+  },
+  "u0277": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B2_many_typos_known_device",
+   "threat": "benign"
+  },
+  "u0278": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B3_multi_device_intermittent",
+   "threat": "benign"
+  },
+  "u0279": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B4_stale_credential_device",
+   "threat": "benign"
+  },
+  "u0280": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B10_incomplete_telemetry",
+   "threat": "benign"
+  },
+  "u0281": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B5_shared_egress",
+   "threat": "benign"
+  },
+  "u0282": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "B6_service_automation",
+   "threat": "benign"
+  },
+  "u0283": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B7_admin_credential_rotation",
+   "threat": "benign"
+  },
+  "u0284": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M6_sp_credential_add_failed",
+   "threat": "malicious"
+  },
+  "u0285": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "M7_sp_credential_add_then_vault_reads",
+   "threat": "malicious"
+  },
+  "u0286": {
+   "chains": [
+    {
+     "call": "call-u0286-0",
+     "process": "{u0286-p0}"
+    },
+    {
+     "call": "call-u0286-1",
+     "process": "{u0286-p1}"
+    }
+   ],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "B8_developer_ai_assistant",
+   "threat": "benign"
+  },
+  "u0287": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "B9_background_ai_traffic",
+   "threat": "benign"
+  },
+  "u0288": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "M8_web_shell",
+   "threat": "malicious"
+  },
+  "u0289": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M1_fast_guessing",
+   "threat": "malicious"
+  },
+  "u0290": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M2_slow_guessing",
+   "threat": "malicious"
+  },
+  "u0291": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M3_guessing_interleaved_user",
+   "threat": "malicious"
+  },
+  "u0292": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M4_rotating_sources",
+   "threat": "malicious"
+  },
+  "u0293": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M5_rotating_and_interleaved",
+   "threat": "malicious"
+  },
+  "u0294": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "M9_password_spray",
+   "threat": "malicious"
+  },
+  "u0295": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "M10_slow_guess_no_source_field",
+   "threat": "malicious"
+  },
+  "u0296": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "N1_tool_only_automation",
+   "threat": "benign"
+  },
+  "u0297": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "N2_model_only",
+   "threat": "benign"
+  },
+  "u0298": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "N3_mismatched_call_ids",
+   "threat": "benign"
+  },
+  "u0299": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "N4_independent_collectors_reuse_ids",
+   "threat": "benign"
+  },
+  "u0300": {
+   "chains": [
+    {
+     "call": "call-u0300-ok",
+     "process": "{u0300-p-ok}"
+    }
+   ],
+   "framework": null,
+   "origin": "script",
+   "scenario": "N5_mixed_valid_chain_and_unrelated_execution",
+   "threat": "benign"
+  },
+  "u0301": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "H_same_trace_hidden_origin",
+   "threat": "malicious",
+   "triplet": 0
+  },
+  "u0302": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "H_same_trace_hidden_origin",
+   "threat": "malicious",
+   "triplet": 0
+  },
+  "u0303": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "H_same_trace_hidden_origin",
+   "threat": "malicious",
+   "triplet": 0
+  },
+  "u0304": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "H_same_trace_hidden_origin",
+   "threat": "malicious",
+   "triplet": 1
+  },
+  "u0305": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "H_same_trace_hidden_origin",
+   "threat": "malicious",
+   "triplet": 1
+  },
+  "u0306": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "H_same_trace_hidden_origin",
+   "threat": "malicious",
+   "triplet": 1
+  },
+  "u0307": {
+   "chains": [],
+   "framework": null,
+   "origin": "human",
+   "scenario": "H_same_trace_hidden_origin",
+   "threat": "malicious",
+   "triplet": 2
+  },
+  "u0308": {
+   "chains": [],
+   "framework": null,
+   "origin": "script",
+   "scenario": "H_same_trace_hidden_origin",
+   "threat": "malicious",
+   "triplet": 2
+  },
+  "u0309": {
+   "chains": [],
+   "framework": null,
+   "origin": "llm_agent",
+   "scenario": "H_same_trace_hidden_origin",
+   "threat": "malicious",
+   "triplet": 2
+  }
+ }
+}

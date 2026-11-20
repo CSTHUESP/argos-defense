@@ -83,7 +83,7 @@ PROVENANCE_LEVELS = ["unverified", "analyst_attested"]
 # Every normalized event has exactly these keys. Missing values are None, never invented.
 EVENT_FIELDS = [
     "schema_version", "event_id", "case_id", "input_id", "record_no", "event_time", "event_epoch",
-    "original_timestamp", "timestamp_note", "ingested_at", "source_type", "source_format",
+    "original_timestamp", "timestamp_note", "ingested_at", "source_type", "source_format", "collector_id",
     "observation_vantage", "event_kind", "action", "outcome",
     "tenant_id", "host", "user", "account_type", "app_id",
     "process_guid", "process_id", "process_image", "process_command_line",

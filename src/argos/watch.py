@@ -6,13 +6,19 @@ Behaviour
 - Only line-oriented formats (native_jsonl, splunk_json, zeek_jsonl) are tailed. Source files are
   opened read-only and never modified, moved or executed.
 - Partial writes: only complete lines (ending in "\\n") are consumed; a trailing partial line waits.
-- File identity: SHA-256 of the first complete line plus its length, so a renamed/rotated file keeps
-  its checkpoint and a new file at the same path starts at offset 0. A file that shrinks below its
-  checkpoint (truncate-in-place) is reported and re-read from 0 as a new identity.
+- File identity (v0.3.1): device + inode where available, first-line fingerprint and a hash of the
+  consumed tail. A renamed/rotated file keeps its checkpoint; a truncated, copy-truncated or rewritten
+  file starts a new generation at offset 0; two different files never share a checkpoint, even with
+  identical first lines and sizes.
+- Namespace: all segments of one watched source carry the declared collector id `watch:<source id>`.
 - Each new chunk of complete lines is written to an owner-private segment file and imported through
   the normal pipeline (hash, original retention, rejects, unverified provenance). The checkpoint is
   advanced only after the import commits. A crash between the two re-imports the same bytes, which
   the pipeline recognises as already imported (same content hash) -> no duplicate events.
+- A segment that is not durably imported (error or non-imported status) does not advance the checkpoint.
+- Content deduplication: a byte-identical segment already imported in the same case is treated as
+  duplicate delivery and reported in `duplicate_segments`; segments that differ in any byte are always
+  imported, so distinct events from distinct files are never dropped.
 - Backpressure: at most `max_chunk_bytes` per file and `max_cycle_bytes` per poll cycle.
 - Freshness: last poll, last import, newest event time and last error are stored per source.
 """
@@ -50,9 +56,12 @@ def add_source(store: Store, case: dict, directory: Path, pattern: str, fmt: str
     if row:
         return dict(row)
     sid = "ws-" + uuid.uuid4().hex[:12]
+    options = dict(options or {})
+    # all segments of one watched source share an explicit collector namespace (R04)
+    options.setdefault("collector_id", f"watch:{sid}")
     with store.tx() as c:
         c.execute("INSERT INTO watch_sources(source_id,case_id,directory,pattern,format,options,created_at) VALUES(?,?,?,?,?,?,?)",
-                  (sid, case["case_id"], str(d), pattern, fmt, json.dumps(options or {}, sort_keys=True), now_iso()))
+                  (sid, case["case_id"], str(d), pattern, fmt, json.dumps(options, sort_keys=True), now_iso()))
     return dict(store.conn.execute("SELECT * FROM watch_sources WHERE source_id=?", (sid,)).fetchone())
 
 
@@ -73,13 +82,24 @@ def list_sources(store: Store, case_id: str | None = None) -> list[dict]:
     return out
 
 
-def _file_identity(path: Path) -> tuple[str | None, int]:
-    """Identity from the first complete line; None while no complete line exists."""
+TAIL = 4096
+
+
+def _head_fp(path: Path) -> str | None:
+    """Fingerprint of the first complete line (one component of identity, never sufficient alone)."""
     with open(path, "rb") as fh:
         first = fh.readline(1 << 20)
     if not first.endswith(b"\n"):
-        return None, 0
-    return hashlib.sha256(first).hexdigest()[:32] + f":{len(first)}", len(first)
+        return None
+    return hashlib.sha256(first).hexdigest()[:32] + f":{len(first)}"
+
+
+def _tail_sha(path: Path, offset: int) -> str:
+    """Hash of the (up to) 4 KiB that end at the checkpoint offset: detects truncation/rewrite of the
+    consumed prefix without re-hashing the whole file."""
+    with open(path, "rb") as fh:
+        fh.seek(max(0, offset - TAIL))
+        return hashlib.sha256(fh.read(min(offset, TAIL))).hexdigest()
 
 
 def _complete_chunk(path: Path, offset: int, limit: int) -> bytes:
@@ -88,6 +108,57 @@ def _complete_chunk(path: Path, offset: int, limit: int) -> bytes:
         data = fh.read(limit)
     cut = data.rfind(b"\n")
     return data[:cut + 1] if cut >= 0 else b""
+
+
+def _continues(path: Path, size: int, cp) -> bool:
+    if cp["offset"] > size:
+        return False
+    if cp["tail_sha"] is None:
+        return cp["offset"] == 0
+    return _tail_sha(path, cp["offset"]) == cp["tail_sha"]
+
+
+def _resolve_generation(store: Store, sid: str, path: Path, st, head: str, summary: dict):
+    """Find the checkpoint generation this file instance continues, or start a new one.
+
+    Identity = (device, inode) where the platform provides it (POSIX; NTFS file index on Windows) AND
+    the first-line fingerprint AND a hash of the consumed tail. A matching inode whose consumed bytes
+    changed (copy-truncate, rewrite, inode reuse) starts a NEW generation from offset 0. Without inode
+    support, identity falls back to file name + first line + tail hash. Two distinct files never share
+    a generation, even when their first lines and sizes are equal (R03)."""
+    dev, ino = st.st_dev, st.st_ino
+    rows = store.conn.execute("SELECT * FROM watch_checkpoints WHERE source_id=?", (sid,)).fetchall()
+    if ino:
+        for cp in rows:
+            if cp["ino"] == ino and cp["dev"] == dev and not cp["legacy"]:
+                if cp["head_fp"] == head and _continues(path, st.st_size, cp):
+                    return cp["file_id"], cp["offset"], cp["segments"]
+                summary["rotations"] += 1
+                summary["errors"].append(f"{path.name}: consumed content changed (truncate/rewrite); reading as a new generation")
+                with store.tx() as c:  # retire the old generation's claim on this inode
+                    c.execute("UPDATE watch_checkpoints SET dev=NULL, ino=NULL WHERE source_id=? AND file_id=?", (sid, cp["file_id"]))
+                break
+    for cp in rows:
+        claimed = cp["ino"] is not None and not cp["legacy"]
+        if claimed or cp["path"] != path.name or cp["head_fp"] not in (head, None):
+            continue
+        if cp["legacy"]:
+            # v0.3.0 checkpoint (first-line identity only): adopt only for the same file name and first line,
+            # and only if the file is not shorter than the checkpoint; the tail cannot be verified.
+            if cp["file_id"].split(":")[0] == head.split(":")[0] and cp["offset"] <= st.st_size:
+                summary["errors"].append(f"{path.name}: legacy v0.3.0 checkpoint adopted (tail not verifiable)")
+                with store.tx() as c:
+                    c.execute("UPDATE watch_checkpoints SET dev=?, ino=?, head_fp=?, legacy=0 WHERE source_id=? AND file_id=?",
+                              (dev, ino or None, head, sid, cp["file_id"]))
+                return cp["file_id"], cp["offset"], cp["segments"]
+            continue
+        if not ino and _continues(path, st.st_size, cp):
+            return cp["file_id"], cp["offset"], cp["segments"]
+    fid = "gen-" + uuid.uuid4().hex[:16]
+    with store.tx() as c:
+        c.execute("INSERT INTO watch_checkpoints(source_id,file_id,path,offset,size,mtime,segments,updated_at,dev,ino,head_fp,tail_sha,legacy) "
+                  "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,0)", (sid, fid, path.name, 0, st.st_size, st.st_mtime, 0, now_iso(), dev, ino or None, head, None))
+    return fid, 0, 0
 
 
 def poll_once(store: Store, settings: Settings, source: dict, max_chunk_bytes: int = 8 << 20,
@@ -99,7 +170,7 @@ def poll_once(store: Store, settings: Settings, source: dict, max_chunk_bytes: i
     make_private_dir(seg_dir.parent)
     make_private_dir(seg_dir)
     summary = {"files_seen": 0, "segments_imported": 0, "bytes": 0, "accepted": 0, "rejected": 0, "duplicates": 0,
-               "waiting_partial": 0, "rotations": 0, "errors": [], "backpressure": False}
+               "duplicate_segments": [], "waiting_partial": 0, "rotations": 0, "errors": [], "backpressure": False}
     cycle_bytes = 0
     newest = source.get("last_event_time")
     try:
@@ -111,18 +182,11 @@ def poll_once(store: Store, settings: Settings, source: dict, max_chunk_bytes: i
         summary["files_seen"] += 1
         try:
             st = p.stat()
-            fid, _ = _file_identity(p)
-            if fid is None:
+            head = _head_fp(p)
+            if head is None:
                 summary["waiting_partial"] += 1
                 continue
-            cp = store.conn.execute("SELECT * FROM watch_checkpoints WHERE source_id=? AND file_id=?", (sid, fid)).fetchone()
-            offset = cp["offset"] if cp else 0
-            segments = cp["segments"] if cp else 0
-            if cp and st.st_size < offset:
-                # truncated in place: content behind the checkpoint is gone; restart this identity
-                summary["rotations"] += 1
-                summary["errors"].append(f"{p.name}: file shrank below checkpoint ({st.st_size} < {offset}); re-reading from start")
-                offset = 0
+            fid, offset, segments = _resolve_generation(store, sid, p, st, head, summary)
             while offset < st.st_size:
                 if cycle_bytes >= max_cycle_bytes:
                     summary["backpressure"] = True
@@ -131,23 +195,27 @@ def poll_once(store: Store, settings: Settings, source: dict, max_chunk_bytes: i
                 chunk = _complete_chunk(p, offset, budget)
                 if not chunk:
                     if budget < max_chunk_bytes:
-                        summary["backpressure"] = True  # cycle budget exhausted; continue next cycle
+                        summary["backpressure"] = True
                     elif st.st_size - offset >= max_chunk_bytes:
                         summary["errors"].append(f"{p.name}@{offset}: line longer than {max_chunk_bytes} bytes; source paused")
                     else:
                         summary["waiting_partial"] += 1
                     break
-                seg = seg_dir / f"{sid}-{fid[:16]}-{offset:012d}-{offset + len(chunk):012d}.jsonl"
-                if not seg.exists():
-                    fd = os.open(seg, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-                    with os.fdopen(fd, "wb") as fh:
-                        fh.write(chunk)
-                res = ingest_file(store, settings, case, seg, source["format"], options,
-                                  original_name=f"{p.name}@{offset}-{offset + len(chunk)}",
-                                  source_ref={"watch_source": sid, "file": p.name, "file_id": fid, "byte_start": offset,
-                                              "byte_end": offset + len(chunk)})
+                seg = seg_dir / f"{sid}-{fid}-{offset:012d}-{offset + len(chunk):012d}.jsonl"
+                fd = os.open(seg, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+                with os.fdopen(fd, "wb") as fh:
+                    fh.write(chunk)
+                try:
+                    res = ingest_file(store, settings, case, seg, source["format"], options,
+                                      original_name=f"{p.name}@{offset}-{offset + len(chunk)}",
+                                      source_ref={"watch_source": sid, "file": p.name, "generation": fid, "byte_start": offset,
+                                                  "byte_end": offset + len(chunk)})
+                finally:
+                    seg.unlink(missing_ok=True)  # the pipeline retained its own private copy when it succeeded
                 if res["status"] == "already_imported":
+                    # byte-identical segment already imported in this case: duplicate delivery (documented); reported, not hidden
                     summary["duplicates"] += 1
+                    summary["duplicate_segments"].append(f"{p.name}@{offset}-{offset + len(chunk)}")
                 elif res["status"] in ("imported", "reprocessed"):
                     summary["segments_imported"] += 1
                     summary["accepted"] += res.get("accepted", 0)
@@ -158,17 +226,17 @@ def poll_once(store: Store, settings: Settings, source: dict, max_chunk_bytes: i
                         if not newest or t > newest:
                             newest = t
                 else:
-                    summary["errors"].append(f"{p.name}@{offset}: {res['status']} {res.get('error', '')}")
+                    # not durably imported: do NOT advance the checkpoint; the same bytes are retried next poll
+                    summary["errors"].append(f"{p.name}@{offset}: {res['status']} {res.get('error', '')}".strip())
+                    break
                 offset += len(chunk)
                 cycle_bytes += len(chunk)
                 summary["bytes"] += len(chunk)
                 segments += 1
-                seg.unlink(missing_ok=True)  # the pipeline retained its own private copy of the segment
                 with store.tx() as c:
-                    c.execute("INSERT INTO watch_checkpoints(source_id,file_id,path,offset,size,mtime,segments,updated_at) VALUES(?,?,?,?,?,?,?,?) "
-                              "ON CONFLICT(source_id,file_id) DO UPDATE SET path=excluded.path, offset=excluded.offset, size=excluded.size, "
-                              "mtime=excluded.mtime, segments=excluded.segments, updated_at=excluded.updated_at",
-                              (sid, fid, p.name, offset, st.st_size, st.st_mtime, segments, now_iso()))
+                    c.execute("UPDATE watch_checkpoints SET path=?, offset=?, size=?, mtime=?, segments=?, updated_at=?, tail_sha=? "
+                              "WHERE source_id=? AND file_id=?",
+                              (p.name, offset, st.st_size, st.st_mtime, segments, now_iso(), _tail_sha(p, offset), sid, fid))
         except (OSError, ImportError_, ValueError) as exc:
             summary["errors"].append(f"{p.name}: {type(exc).__name__}: {exc}"[:500])
     with store.tx() as c:

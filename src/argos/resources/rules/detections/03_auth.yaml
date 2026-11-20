@@ -81,7 +81,7 @@ sources: ["Microsoft Security blog 2026-10-21 (self-assignment of Global Adminis
 recommendation: Review the sensitive action and the successful sign-in context with the account owner before any change; preserve logs first.
 ---
 id: ARG-AUTH-003
-version: 2
+version: 3
 title: Uninterrupted failed sign-ins from one source, then success from that source
 description: |
   The same tenant+account had an uninterrupted run of failed sign-ins from one
@@ -127,7 +127,8 @@ source_history:
   where: {all: [{field: event_kind, op: eq, value: authentication}, {field: outcome, op: eq, value: success}]}
   join_fields: [tenant_id, user]
 absence_check:
-  where: {any: [{field: action, op: in, value: [secret_read, file_read, mailbox_read, blob_read, data_download, graph_read]}]}
+  # v3 (v0.3.1/R05): the event family is explicit, so declared coverage can be matched to it
+  where: {all: [{field: event_kind, op: eq, value: cloud_operation}, {field: action, op: in, value: [secret_read, file_read, mailbox_read, blob_read, data_download, graph_read]}]}
   within_s: 7200
   label: data access by the same identity (any source) after the successful sign-in
   vantage: identity_cloud

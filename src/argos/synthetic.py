@@ -282,3 +282,55 @@ def generate_bulk(path: Path, n: int = 12000, seed: int = 7) -> int:
                          parent_process_guid="{P-root}", parent_image="C:\\Windows\\System32\\services.exe")
             fh.write(json.dumps(r) + "\n")
     return n
+
+
+def generate_stress(path: Path, n: int, seed: int = 11) -> dict:
+    """Representative STRESS profile for capacity measurement (R08): larger records (long URIs, user agents,
+    command lines), high entity cardinality (thousands of users/hosts/apps), seven event kinds including cloud
+    audit and agent/model records, and timestamps spread over 7 days. SYNTHETIC; returns its shape."""
+    rng = random.Random(seed)
+    kinds = ["http", "authentication", "dns", "network_connection", "process_start", "cloud_operation", "model_interaction",
+             "tool_execution", "file_create"]
+    users, hosts, apps = max(50, n // 20), max(20, n // 60), max(10, n // 300)
+    ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Safari/537.36 "
+    total = 0
+    with open(path, "w", encoding="utf-8") as fh:
+        for i in range(n):
+            k = kinds[i % len(kinds)] if i % 7 else rng.choice(kinds)
+            t = ts(rng.uniform(0, 7 * 86400))
+            u, h = f"user{rng.randint(1, users)}@corp.example", f"ws-{rng.randint(1, hosts):05d}"
+            r = {"event_time": t, "event_kind": k, "src_ip": f"10.{rng.randint(0, 255)}.{rng.randint(0, 255)}.{rng.randint(1, 254)}"}
+            if k == "http":
+                r.update(http_host=f"svc{rng.randint(1, 400)}.corp.example", http_method=rng.choice(["GET", "POST"]),
+                         http_uri="/api/v2/" + "/".join(f"seg{rng.randint(1, 9999)}" for _ in range(6)) + f"?q={rng.getrandbits(128):x}",
+                         http_status=rng.choice([200, 200, 200, 302, 401, 404, 500]), http_user_agent=ua + str(rng.randint(1, 9999)))
+            elif k == "authentication":
+                r.update(tenant_id=f"tenant-{rng.randint(1, 5)}", user=u, outcome=rng.choice(["success"] * 4 + ["failure"]))
+            elif k == "dns":
+                r.update(dns_query=f"h{rng.getrandbits(40):x}.cdn{rng.randint(1, 50)}.example", host=h)
+            elif k == "network_connection":
+                r.update(host=h, process_guid=f"{{P-{rng.randint(1, n)}}}", dst_ip=f"203.0.113.{rng.randint(1, 254)}",
+                         dst_port=rng.choice([443, 443, 80, 22, 3389]), observation_vantage="managed_endpoint")
+            elif k == "process_start":
+                r.update(host=h, user=u, process_guid=f"{{P-{i}}}", parent_process_guid=f"{{P-{rng.randint(1, max(1, i))}}}",
+                         process_image=rng.choice(["C:\\Windows\\System32\\svchost.exe", "C:\\Program Files\\App\\app.exe", "/usr/bin/python3"]),
+                         parent_image="C:\\Windows\\explorer.exe",
+                         process_command_line="app.exe --config C:\\cfg\\" + "x" * rng.randint(50, 400) + f" --id {i}")
+            elif k == "cloud_operation":
+                r.update(tenant_id=f"tenant-{rng.randint(1, 5)}", app_id=f"app-{rng.randint(1, apps)}", account_type="service_principal",
+                         action=rng.choice(["secret_read", "list_keys", "role_assignment", "blob_read"]), resource=f"kv-{rng.randint(1, 200)}",
+                         outcome="success")
+            elif k in ("model_interaction", "tool_execution"):
+                call = f"c-{rng.randint(1, n // 4 or 1)}"
+                r.update(host=h, session_id=f"s-{rng.randint(1, n // 40 or 1)}", tool_call_id=call, tenant_id="tenant-1")
+                if k == "model_interaction":
+                    r.update(model_tool_name=rng.choice(["bash", "read_file"]))
+                else:
+                    r.update(tool_name=rng.choice(["bash", "read_file"]), linked_process_guid=f"{{P-{rng.randint(1, n)}}}")
+            else:
+                r.update(host=h, file_path=f"C:\\Users\\{u.split('@')[0]}\\AppData\\Local\\Temp\\{rng.getrandbits(64):x}.tmp")
+            line = json.dumps(r) + "\n"
+            total += len(line)
+            fh.write(line)
+    return {"events": n, "bytes": total, "mean_record_bytes": round(total / max(1, n), 1), "users": users, "hosts": hosts,
+            "apps": apps, "kinds": kinds}

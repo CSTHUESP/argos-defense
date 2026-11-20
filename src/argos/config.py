@@ -113,6 +113,9 @@ class Settings:
     # Analysis holds a case's active events in memory (measured: ~0.85 GiB peak RSS at 100,000 events;
     # 1,000,000 events exceeded a 7 GiB machine). Larger cases are refused with a clear error.
     max_analysis_events: int = int(os.environ.get("ARGOS_MAX_ANALYSIS_EVENTS", 300_000))
+    # Global admission control for background analyses in the (single) server process (R08).
+    max_concurrent_jobs: int = int(os.environ.get("ARGOS_MAX_CONCURRENT_JOBS", 1))
+    max_queued_jobs: int = int(os.environ.get("ARGOS_MAX_QUEUED_JOBS", 8))
     host: str = "127.0.0.1"
     port: int = 8789
     # Optional LLM layer: disabled unless explicitly configured.

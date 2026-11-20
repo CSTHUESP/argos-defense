@@ -345,10 +345,10 @@ def update_backup_restore_checks(exe: Path, base: Path, work: Path, out: Path):
     r = run(exe, ["--data-dir", str(old), "backup", "--output", str(bk)], work)
     record("backup: created", r.returncode == 0 and bk.is_file(), r.stdout[-200:])
     r = run(exe, ["verify-backup", str(bk)], work)
-    record("backup: verified", r.returncode == 0 and r.stdout.startswith("OK"), r.stdout[-200:] + r.stderr[-200:])
+    record("backup: verified", r.returncode == 0 and "evidence completeness: complete" in r.stdout and "OK:" in r.stdout, r.stdout[-200:] + r.stderr[-200:])
     new = base / "restored data é"
     r = run(exe, ["--data-dir", str(new), "restore", str(bk)], work)
-    record("restore: into new directory", r.returncode == 0 and '"schema_version": 3' in r.stdout, r.stdout[-300:] + r.stderr[-300:])
+    record("restore: into new directory", r.returncode == 0 and '"schema_version": 4' in r.stdout, r.stdout[-300:] + r.stderr[-300:])
     r = run(exe, ["--data-dir", str(new), "alerts", "--case", "demo-synthetic"], work)
     record("restore: restored case and alerts readable", r.returncode == 0 and "ARG-" in r.stdout, r.stdout[-200:])
     r = run(exe, ["--data-dir", str(new), "restore", str(bk)], work)

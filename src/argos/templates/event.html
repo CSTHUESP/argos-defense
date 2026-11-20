@@ -7,7 +7,7 @@
 <table class="kv">{% for k, v in ev.items() %}{% if v is not none and v != [] %}<tr><th>{{ k }}</th><td class="mono small">{% if raw %}{{ v|string }}{% else %}{{ v|string|redact }}{% endif %}</td></tr>{% endif %}{% endfor %}</table>
 {% if orig %}<h2>Original record</h2>
 <p class="small">{{ orig.original_name }} · {{ orig.format }} · revision {{ orig.revision }} · {{ orig.location or '' }} · sha256 <span class="mono">{{ orig.sha256 }}</span> · trust {{ orig.provenance_trust }}</p>
-<p class="small">Lookup: <b>{{ orig.status }}</b>{% if orig.detail %} — {{ orig.detail }}{% endif %}</p>
-<pre class="mono small">{% if orig.record_text is none %}(not available){% elif raw %}{{ orig.record_text }}{% else %}{{ orig.record_text|redact }}{% endif %}</pre>{% endif %}
+<p class="small">Lookup: <b>{{ orig.status }}</b>{% if orig.detail %} — {{ orig.detail }}{% endif %}{% if orig.redaction %} · redaction: {{ orig.redaction }}{% endif %}</p>
+<pre class="mono small">{% if orig.record_text is none %}(not available){% elif raw %}{{ orig.record_text }}{% else %}{{ orig.record_text }}{% endif %}</pre>{% endif %}
 <p><a href="/cases/{{ ev.case_id }}">Back to case</a></p>
 {% endblock %}

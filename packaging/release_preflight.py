@@ -49,8 +49,30 @@ def ci_errors(sha: str, runs: list[dict]) -> list[str]:
     return [] if ok else [f"no successful completed CI (ci.yml) run for {sha}"]
 
 
+def git_env() -> dict:
+    """Environment for git remote reads (R09, v0.3.1).
+
+    Actions checkouts run with persist-credentials: false, and GH_TOKEN alone only authenticates `gh`;
+    plain `git fetch`/`ls-remote` over HTTPS would be anonymous, which works for a public repository and
+    fails for a private one. When GH_TOKEN is set, an Authorization header for https://github.com/ is
+    passed through git's GIT_CONFIG_COUNT/KEY/VALUE environment variables: it never appears in argv, in a
+    remote URL, in .git/config or in logs (Actions masks the token value), and it is scoped to this
+    process tree. Interactive prompts are disabled so a missing credential fails fast."""
+    env = dict(os.environ)
+    env["GIT_TERMINAL_PROMPT"] = "0"
+    tok = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
+    if tok:
+        import base64
+        basic = base64.b64encode(f"x-access-token:{tok}".encode()).decode()
+        n = int(env.get("GIT_CONFIG_COUNT", "0") or 0)  # keep any entries the runner already configured
+        env[f"GIT_CONFIG_KEY_{n}"] = "http.https://github.com/.extraheader"
+        env[f"GIT_CONFIG_VALUE_{n}"] = f"AUTHORIZATION: basic {basic}"
+        env["GIT_CONFIG_COUNT"] = str(n + 1)
+    return env
+
+
 def git(*args, check=True) -> str:
-    r = subprocess.run(["git", *args], capture_output=True, text=True)
+    r = subprocess.run(["git", *args], capture_output=True, text=True, env=git_env())
     if check and r.returncode != 0:
         raise SystemExit(f"git {' '.join(args)} failed: {r.stderr.strip()}")
     return r.stdout.strip()
@@ -63,7 +85,7 @@ def remote_tag_sha(tag: str) -> str | None:
 
 
 def file_at(sha: str, path: str) -> str | None:
-    r = subprocess.run(["git", "show", f"{sha}:{path}"], capture_output=True, text=True)
+    r = subprocess.run(["git", "show", f"{sha}:{path}"], capture_output=True, text=True, env=git_env())
     return r.stdout if r.returncode == 0 else None
 
 
@@ -144,7 +166,7 @@ def main(argv=None):
         if git("cat-file", "-t", sha, check=False) != "commit":
             errs.append(f"{sha} is not a commit in this repository")
         else:
-            if subprocess.run(["git", "merge-base", "--is-ancestor", sha, "origin/main"]).returncode != 0:
+            if subprocess.run(["git", "merge-base", "--is-ancestor", sha, "origin/main"], env=git_env()).returncode != 0:
                 errs.append(f"{sha} is not an ancestor of origin/main")
             errs += version_errors(version, versions_at(sha), file_at(sha, f"docs/release-notes/v{version}.md") is not None)
             errs += ci_errors(sha, ci_runs(sha))

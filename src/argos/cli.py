@@ -74,6 +74,14 @@ def cmd_doctor(args, settings):
     return 0 if ok else 1
 
 
+MUTATING = {"demo", "ingest", "analyze", "activate", "coverage", "status", "attest", "note", "watch"}
+
+
+def _server_running(settings) -> bool:
+    from argos.jobs import DataDirLock
+    return settings.home.exists() and DataDirLock.held_by_other(settings.home)
+
+
 def cmd_demo(args, settings):
     from argos.analysis import run_analysis
     from argos.ingest.pipeline import ingest_file
@@ -100,10 +108,11 @@ def cmd_ingest(args, settings):
         return 2
     case = existing or st.create_case(args.case, synthetic=args.synthetic)
     opts = {k: v for k, v in {"profile": args.profile, "mapping": args.mapping, "assume_tz": args.assume_tz,
-                              "zeek_log": args.zeek_log}.items() if v}
+                              "zeek_log": args.zeek_log, "collector_id": args.collector_id}.items() if v}
     cov = None
     if args.coverage_start or args.coverage_end:
-        cov = {"start": args.coverage_start, "end": args.coverage_end, "scope": args.coverage_scope or "all", "note": args.coverage_note or ""}
+        cov = {"start": args.coverage_start, "end": args.coverage_end, "scope": args.coverage_scope or "all", "note": args.coverage_note or "",
+               "event_kinds": args.coverage_kinds or ""}
     try:
         r = ingest_file(st, settings, case, args.file, args.format, opts, reprocess=args.reprocess, coverage=cov)
     except ValueError as exc:
@@ -178,6 +187,14 @@ def cmd_serve(args, settings):
         print(f"error: port {port} on {args.host} is already in use (another ARGOS instance?). "
               f"Use --port <other> or --port 0 to pick a free port.", file=sys.stderr)
         return 3
+    from argos.jobs import DataDirBusy, DataDirLock
+    dlock = DataDirLock(settings.home)
+    try:
+        dlock.acquire()
+    except DataDirBusy:
+        print(f"error: another ARGOS server is already using the data directory {settings.home}. "
+              "One server process per data directory is supported.", file=sys.stderr)
+        return 5
     tok = ensure_token(settings, rotate=args.rotate_token)
     app = create_app(settings, tok, port)
     server = uvicorn.Server(uvicorn.Config(app, host=args.host, port=port, log_level="warning", server_header=False))
@@ -210,6 +227,7 @@ def cmd_serve(args, settings):
     finally:
         runtime.unlink(missing_ok=True)
         app.state.argos.store.close()
+        dlock.release()
         print("ARGOS Defense stopped.", flush=True)
     return 0
 
@@ -302,7 +320,7 @@ def cmd_coverage(args, settings):
     if not st.get_input(args.input_id):
         print("unknown input", file=sys.stderr)
         return 2
-    cov = validate_coverage({"start": args.start, "end": args.end, "scope": args.scope, "note": args.note or ""})
+    cov = validate_coverage({"start": args.start, "end": args.end, "scope": args.scope, "note": args.note or "", "event_kinds": args.kinds or ""})
     st.set_input_coverage(args.input_id, cov)
     print(json.dumps(cov, indent=2))
     return 0
@@ -343,8 +361,16 @@ def cmd_status(args, settings):
 
 def cmd_backup(args, settings):
     from argos.backup import create_backup
-    res = create_backup(settings, Path(args.output) if args.output else None)
+    from argos.backup import BackupError
+    try:
+        res = create_backup(settings, Path(args.output) if args.output else None, allow_incomplete=args.allow_incomplete)
+    except BackupError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
     print(json.dumps(res, indent=2))
+    if res["evidence_completeness"] != "complete":
+        print(f"WARNING: INCOMPLETE backup — {len(res['missing_originals'])} referenced original(s) missing or altered", file=sys.stderr)
+        return 6
     return 0
 
 
@@ -366,6 +392,11 @@ def cmd_verify_backup(args, settings):
     except BackupError as exc:
         print(f"INVALID: {exc}", file=sys.stderr)
         return 2
+    print(f"database consistency: {m['database_consistency']}; evidence completeness: {m['evidence_completeness']} "
+          f"({m['archived_originals']}/{m['expected_originals']} referenced originals archived)")
+    if m["evidence_completeness"] != "complete":
+        print(f"INCOMPLETE: missing {m['missing_archive_names'][:10]}", file=sys.stderr)
+        return 6
     print(f"OK: {len(m['files'])} files, created {m['created_at']} by ARGOS {m['argos_version']} (schema {m['schema_version']})")
     return 0
 
@@ -442,6 +473,10 @@ def build_parser():
     i.add_argument("--coverage-end", dest="coverage_end")
     i.add_argument("--coverage-scope", dest="coverage_scope", help="all | tenant:<id> | host:<name> | app_id:<id>")
     i.add_argument("--coverage-note", dest="coverage_note", help="how completeness was established")
+    i.add_argument("--coverage-kinds", dest="coverage_kinds",
+                   help="comma-separated event kinds the export is complete for (default: only the kinds present in the file)")
+    i.add_argument("--collector-id", dest="collector_id",
+                   help="declared collector namespace: inputs with the same id share session/call identifiers")
     a = sub.add_parser("analyze", help="(re)analyse a case")
     a.add_argument("--case", required=True)
     a.add_argument("--quiet", action="store_true", help="no progress output")
@@ -464,6 +499,7 @@ def build_parser():
     x.add_argument("--start", required=True)
     x.add_argument("--end", required=True)
     x.add_argument("--scope", default="all")
+    x.add_argument("--kinds", help="comma-separated event kinds covered (default: kinds present in the input)")
     x.add_argument("--note")
     x = sub.add_parser("runs", help="list analysis runs of a case")
     x.add_argument("--case", required=True)
@@ -476,6 +512,8 @@ def build_parser():
     x.add_argument("--rationale")
     x = sub.add_parser("backup", help="write a verified backup zip (database snapshot, originals, config)")
     x.add_argument("--output")
+    x.add_argument("--allow-incomplete", action="store_true",
+                   help="write an explicitly INCOMPLETE backup when referenced originals are missing (never verifies as complete)")
     x = sub.add_parser("verify-backup", help="verify a backup zip without restoring")
     x.add_argument("backup")
     x = sub.add_parser("restore", help="restore a backup into an EMPTY data directory (use --data-dir)")
@@ -543,6 +581,10 @@ def main(argv=None):
     settings = Settings()
     if args.home:
         settings.home = Path(args.home).expanduser().resolve()
+    if args.cmd in MUTATING and _server_running(settings):
+        print(f"error: an ARGOS server is running on {settings.home}; use the web UI/API for '{args.cmd}' or stop the server first "
+              "(job admission and per-case serialization are enforced by that server process).", file=sys.stderr)
+        return 5
     try:
         return globals()["cmd_" + args.cmd.replace("-", "_")](args, settings)
     except KeyboardInterrupt:

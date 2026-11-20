@@ -60,16 +60,31 @@ def redact(value):
     return s
 
 
+def _mask_all(v):
+    """Everything below a sensitive key is secret material: keep the structure (keys, list length,
+    null/boolean markers) so the analyst can see what was present, but mask every value."""
+    if isinstance(v, dict):
+        return {k: _mask_all(x) for k, x in v.items()}
+    if isinstance(v, list):
+        return [_mask_all(x) for x in v]
+    if v is None or isinstance(v, bool):
+        return v
+    return MASK
+
+
+def is_secret_key(k) -> bool:
+    return isinstance(k, str) and bool(SECRET_KEY_RE.match(k.strip()))
+
+
 def redact_obj(obj, _key: str | None = None):
+    """Default output policy (v0.3.1): a sensitive key masks its whole value, including list items and
+    nested objects (R01); other values are redacted by pattern, recursively."""
     if isinstance(obj, dict):
         out = {}
         for k, v in obj.items():
-            if isinstance(k, str) and SECRET_KEY_RE.match(k) and v not in (None, "", [], {}):
-                out[k] = MASK if not isinstance(v, (dict, list)) else redact_obj(v, k)
-            else:
-                out[k] = redact_obj(v, k)
+            out[k] = _mask_all(v) if is_secret_key(k) else redact_obj(v, k)
         return out
-    if isinstance(obj, list):
+    if isinstance(obj, (list, tuple)):
         return [redact_obj(v, _key) for v in obj]
     return redact(obj)
 

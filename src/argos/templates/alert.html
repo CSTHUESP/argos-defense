@@ -14,7 +14,7 @@
 <tr><th>When (event time, UTC)</th><td>{{ a.when.first }} → {{ a.when.last }} ({{ a.event_count }} records)</td></tr>
 <tr><th>Why it alerted</th><td>{{ a.why }}</td></tr>
 <tr><th>Reference</th><td>{{ a.reference.type }} — {{ a.reference.description }}</td></tr>
-{% if a.baseline %}<tr><th>Baseline</th><td class="small">{{ a.baseline|tojson }}</td></tr>{% endif %}
+{% if a.baseline %}<tr><th>Baseline</th><td class="small"><b>{{ a.baseline.status }}</b>: current {{ a.baseline.current_count }} vs history max {{ a.baseline.history_max }} over {{ a.baseline.history_windows }} usable window(s) (min {{ a.baseline.min_history_windows }}); basis {{ a.baseline.covered_window_basis }}; zero-count windows supported by declared coverage: {{ a.baseline.covered_zero_windows }}; gap windows excluded: {{ a.baseline.gap_windows_excluded }}{% if a.baseline.uncertainty %}<br><span class="warn">{{ a.baseline.uncertainty }}</span>{% endif %}<br>{{ a.baseline.note }}</td></tr>{% endif %}
 {% if a.registry %}<tr><th>Authorized automation</th><td>{{ a.registry.entry_id }} — {{ a.registry.description }} (owner: {{ a.registry.owner }}, expires {{ a.registry.expires }}); matched {{ a.registry.matched_events }}/{{ a.registry.total_events }} events</td></tr>{% endif %}
 {% for ab in a.absence_checks %}<tr><th>Follow-up check</th><td>{{ ab.label }}: <b>{{ ab.status }}</b> {{ ab.detail or '' }}</td></tr>{% endfor %}
 {% for i in a.ioc_matches[:5] %}<tr><th>IOC</th><td>{{ i.value }} — {{ i.source }}, observed {{ i.observed_date }}, valid {{ i.valid_from }}→{{ i.valid_until }}; <b>{{ 'valid' if i.valid_at_event_time else 'EXPIRED' }} at event time</b> (cutoff: {{ i.cutoff_used }}); {{ i.context }}</td></tr>{% endfor %}

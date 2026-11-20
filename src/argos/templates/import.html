@@ -3,13 +3,13 @@
 <h1>Import telemetry file</h1>
 <p class="small">Imports are batch file analysis — not a live sensor or product integration. Each import records SHA-256, parser version, options and rejected records. Imported provenance starts as <b>unverified</b>.</p>
 {% if result %}
-  {% if result.status == 'error' %}<div class="error">Import failed: {{ result.error }}</div>
+  {% if result.status == 'error' %}<div class="error">Import failed: {{ result.error|redact }}</div>
   {% else %}<div class="{{ 'ok' if result.status=='imported' else 'warnbox' }}">
     <b>{{ result.status }}</b>{% if result.revision %} (revision {{ result.revision }}){% endif %}{% if result.status == 'different_options_require_reprocess' %} — this content was already imported with other options; tick “Reprocess” to create a new revision{% endif %} — accepted {{ result.accepted }}, rejected {{ result.rejected }} of {{ result.total }} records; new events {{ result.new_events }}; sha256 <span class="mono">{{ result.sha256 }}</span>
-    {% if result.error %}<br>Error: {{ result.error }}{% endif %}
+    {% if result.error %}<br>Error: {{ result.error|redact }}{% endif %}
     <br><a href="/cases/{{ result.case_id }}">Open case</a></div>
     {% if result.rejects_sample %}<h3>Rejected records (actual errors)</h3><table><thead><tr><th>Record</th><th>Reason</th></tr></thead><tbody>
-    {% for r in result.rejects_sample %}<tr><td>{{ r.record_no }}</td><td>{{ r.reason }}</td></tr>{% endfor %}</tbody></table>{% endif %}
+    {% for r in result.rejects_sample %}<tr><td>{{ r.record_no }}</td><td>{{ r.reason|redact }}</td></tr>{% endfor %}</tbody></table>{% endif %}
   {% endif %}
 {% endif %}
 <form method="post" action="/import" enctype="multipart/form-data" class="stack">
@@ -30,7 +30,10 @@ constants: {event_kind: http, observation_vantage: victim_network}"></textarea><
 <fieldset><legend>Declared collection coverage (optional, analyst-declared, not verified by ARGOS)</legend>
 <label>start <input name="coverage_start" placeholder="2026-11-01T00:00:00Z"></label> <label>end <input name="coverage_end"></label>
 <label>scope <input name="coverage_scope" placeholder="all | tenant:&lt;id&gt; | host:&lt;name&gt; | app_id:&lt;id&gt;"></label>
+<label>event kinds <input name="coverage_kinds" placeholder="e.g. authentication,cloud_operation (default: kinds present in the file)"></label>
 <label>basis <input name="coverage_note" placeholder="how you know the export is complete for this window"></label></fieldset>
+<label>Collector id (optional) <input name="collector_id" placeholder="e.g. model-gateway-prod"></label>
+<p class="small">Session and tool-call identifiers are only linked inside one input file, or across inputs that you declare with the same collector id here.</p>
 <label><input type="checkbox" name="reprocess"> Reprocess: this file was imported before with different options — create a new revision</label>
 <label>File <input type="file" name="file" required></label>
 <button type="submit">Import</button>

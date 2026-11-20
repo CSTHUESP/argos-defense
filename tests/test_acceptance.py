@@ -171,7 +171,7 @@ def test_13_success_without_data_access_not_exfiltration(env):
     # F02: without declared collection coverage, absence is only "not observed in supplied records"
     c0 = env.run("noexf-nocov", rows)
     assert env.alerts(c0, "ARG-AUTH-003")[0]["absence_checks"][0]["status"] == "not_observed_in_supplied_records"
-    cov = {"start": ts(-3600), "end": ts(30000), "scope": "tenant:t", "vantages": ["identity_provider", "cloud_control_plane"]}
+    cov = {"start": ts(-3600), "end": ts(30000), "scope": "tenant:t", "event_kinds": ["authentication", "cloud_operation"]}
     c = env.run("noexf", rows, coverage=cov)
     a = env.alerts(c, "ARG-AUTH-003")[0]
     assert a["purpose"]["hypothesis"] == "credential_access"

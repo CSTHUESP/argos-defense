@@ -45,7 +45,7 @@
 <h3>Sources (this run)</h3>
 <table><thead><tr><th>Input</th><th>Rev / status</th><th>Trust</th><th>Events</th><th>Rejected</th><th>Vantages</th><th>Missing key fields</th><th>Declared coverage</th></tr></thead><tbody>
 {% for x in d.sources or [] %}<tr><td>{{ x.original_name }}</td><td>{{ x.revision }} / {{ x.status }}</td><td>{{ x.trust }}</td><td>{{ x.events }}</td><td>{{ x.rejected }}</td><td class="small">{{ x.vantages }}</td><td class="small">{{ x.missing_fields }}</td>
-<td class="small">{% if x.declared_coverage %}{{ x.declared_coverage.start }} → {{ x.declared_coverage.end }} ({{ x.declared_coverage.scope }}; {{ x.declared_coverage.basis }}){% else %}<span class="warn">none declared — absence cannot be demonstrated</span>{% endif %}</td></tr>{% endfor %}
+<td class="small">{% if x.declared_coverage %}{{ x.declared_coverage.start }} → {{ x.declared_coverage.end }} ({{ x.declared_coverage.scope }}; kinds: {{ (x.declared_coverage.event_kinds or ['only kinds present in this input'])|join(', ') }}; {{ x.declared_coverage.basis }}){% else %}<span class="warn">none declared — absence cannot be demonstrated</span>{% endif %}</td></tr>{% endfor %}
 </tbody></table>
 {% if d.observation_gaps %}<h3>Observation gaps (&gt; 6 h without records)</h3><ul class="small">{% for g in d.observation_gaps %}<li>{{ g.vantage }}: {{ g.from }} → {{ g.to }} ({{ g.hours }} h)</li>{% endfor %}</ul>{% endif %}
 <h3>Limitations</h3><ul>{% for l in a.limitations %}<li>{{ l }}</li>{% endfor %}</ul>
@@ -62,6 +62,7 @@
 <p class="small">The original bytes are reparsed into a new revision. The previous revision stays available; if reprocessing fails it remains active.</p></details>
 <details><summary>Declare collection coverage</summary>{% if i.coverage %}<p class="small">current: {{ i.coverage }}</p>{% endif %}<form method="post" action="/inputs/{{ i.input_id }}/coverage"><input type="hidden" name="csrf" value="{{ csrf }}">
 <label>start <input name="start" placeholder="2026-11-01T00:00:00Z" required></label> <label>end <input name="end" required></label> <label>scope <input name="scope" placeholder="all | tenant:&lt;id&gt; | host:&lt;name&gt; | app_id:&lt;id&gt;"></label>
+<label>event kinds <input name="event_kinds" placeholder="default: kinds present in this input"></label>
 <label>basis <input name="note" placeholder="how completeness was established"></label><button type="submit">Save</button></form>
 <p class="small">Analyst-declared; ARGOS does not verify it. Without it, absence is reported only as "not observed in supplied records".</p></details></td>
 <td>{{ i.format }}<br><span class="small">{{ i.parser_version }} {{ i.options }}</span></td>
@@ -75,7 +76,7 @@
 
 <h2>Data quality: rejected records</h2>
 {% if rejects %}<table><thead><tr><th>Input</th><th>Record</th><th>Reason</th><th>Excerpt</th></tr></thead><tbody>
-{% for r in rejects %}<tr><td class="small">{{ r.input_id }}</td><td>{{ r.record_no }}</td><td>{{ r.reason }}</td><td class="mono small">{{ (r.excerpt or '')|redact }}</td></tr>{% endfor %}
+{% for r in rejects %}<tr><td class="small">{{ r.input_id }}</td><td>{{ r.record_no }}</td><td>{{ r.reason|redact }}</td><td class="mono small">{{ (r.excerpt or '')|redact }}</td></tr>{% endfor %}
 </tbody></table>{% else %}<p>No rejected records.</p>{% endif %}
 
 <h2>Analysis runs</h2>

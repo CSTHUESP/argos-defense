@@ -39,10 +39,10 @@ from argos.models import CONF_ORDER, SEVERITY_ORDER
 from argos.normalize.mappers import BUILTIN_PROFILES, MappingError
 from argos.reporting.export import alerts_csv, build_case_export, jinja_env, render_html
 from argos.store import Store
-from argos.jobs import CaseBusy, JobRunner
+from argos.jobs import CaseBusy, JobRunner, QueueFull
 from argos.reporting.compare import compare_runs
 from argos.ingest.pipeline import validate_coverage
-from argos.evidence.redact import redact_obj
+from argos.evidence.redact import redact, redact_obj
 
 STATIC = static_dir()
 UNSAFE = {"POST", "PUT", "PATCH", "DELETE"}
@@ -238,6 +238,8 @@ async def case_analyze(request: Request):
             jid = st.jobs.submit_analysis(st.store, c["case_id"])
         except CaseBusy as exc:
             return _err(request, str(exc), 409)
+        except QueueFull as exc:
+            return _err(request, str(exc), 429)
     is_api = request.url.path.startswith("/api/")
     if is_api and request.query_params.get("wait", "1") == "0":
         return JSONResponse({"job_id": jid, "status": "queued"}, status_code=202)
@@ -264,7 +266,7 @@ async def job_page(request: Request):
     if j.get("result"):
         j["result"] = json.loads(j["result"])
     if request.url.path.startswith("/api/"):
-        return JSONResponse(j)
+        return JSONResponse(redact_obj(j))
     return render(request, "job.html", job=j)
 
 
@@ -322,12 +324,12 @@ async def input_action(request: Request):
                 st.store.activate_revision(iid)
         elif action == "coverage":
             cov = validate_coverage({"start": form.get("start"), "end": form.get("end"), "scope": form.get("scope") or "all",
-                                     "note": form.get("note", "")})
+                                     "note": form.get("note", ""), "event_kinds": str(form.get("event_kinds", "") or "")})
             with st.lock:
                 st.store.set_input_coverage(iid, cov)
         elif action == "reprocess":
             options = {}
-            for k in ("profile", "assume_tz", "zeek_log"):
+            for k in ("profile", "assume_tz", "zeek_log", "collector_id"):
                 if form.get(k):
                     options[k] = str(form[k]).strip()
             mapping_text = str(form.get("mapping_yaml", "") or "").strip()
@@ -434,7 +436,7 @@ async def attest_input(request: Request):
 
 def _err(request, msg, code):
     if request.url.path.startswith("/api/"):
-        return JSONResponse({"error": msg}, status_code=code)
+        return JSONResponse({"error": redact(msg)}, status_code=code)
     return render(request, "error.html", status=code, message=msg)
 
 
@@ -462,6 +464,8 @@ async def _do_import(request: Request, case_ref: str | None):
         options["assume_tz"] = str(form.get("assume_tz")).strip()
     if form.get("zeek_log"):
         options["zeek_log"] = str(form.get("zeek_log"))
+    if form.get("collector_id"):
+        options["collector_id"] = str(form.get("collector_id")).strip()
     with st.lock:
         case = st.store.get_case(case_ref)
     if not case:
@@ -494,7 +498,8 @@ async def _do_import(request: Request, case_ref: str | None):
         cov = None
         if form.get("coverage_start") or form.get("coverage_end"):
             cov = {"start": str(form.get("coverage_start", "")).strip(), "end": str(form.get("coverage_end", "")).strip(),
-                   "scope": str(form.get("coverage_scope", "") or "all").strip(), "note": str(form.get("coverage_note", ""))}
+                   "scope": str(form.get("coverage_scope", "") or "all").strip(), "note": str(form.get("coverage_note", "")),
+                   "event_kinds": str(form.get("coverage_kinds", "") or "")}
         reprocess = form.get("reprocess") == "on"
 
         def work():
@@ -598,7 +603,7 @@ async def alert_explain(request: Request):
         return JSONResponse({"error": str(exc)}, status_code=422)
     except Exception as exc:  # noqa: BLE001 - network/timeouts of optional layer
         return JSONResponse({"error": f"LLM provider error: {type(exc).__name__}"}, status_code=502)
-    return JSONResponse(res)
+    return JSONResponse(redact_obj(res))
 
 
 def _original_record(st: AppState, ev: dict, raw: bool = False):
@@ -689,9 +694,9 @@ async def api_cases(request: Request):
                 c = st.store.create_case(str(body.get("name", "")), bool(body.get("synthetic", False)), str(body.get("description", ""))[:2000])
         except ValueError as exc:
             return JSONResponse({"error": str(exc)}, status_code=400)
-        return JSONResponse(c, status_code=201)
+        return JSONResponse(redact_obj(c), status_code=201)
     with st.lock:
-        return JSONResponse({"cases": st.store.list_cases()})
+        return JSONResponse(redact_obj({"cases": st.store.list_cases()}))
 
 
 async def api_import(request: Request):
@@ -699,7 +704,7 @@ async def api_import(request: Request):
         res = await _do_import(request, request.path_params["cid"])
     except (ImportError_, MappingError, ValueError) as exc:
         return JSONResponse({"status": "error", "error": str(exc)}, status_code=400)
-    return JSONResponse(res, status_code=200 if res["status"] != "rejected" else 422)
+    return JSONResponse(redact_obj(res), status_code=200 if res["status"] != "rejected" else 422)
 
 
 async def api_assessment(request: Request):

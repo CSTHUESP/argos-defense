@@ -153,7 +153,12 @@ def test_f04_declared_coverage_enables_absence_but_gaps_and_other_hosts_do_not(e
     c = env.run("f04-c", fails + succ, coverage={"start": ts(-3600), "end": ts(400), "scope": "tenant:t"})
     assert env.alerts(c, "ARG-AUTH-003")[0]["absence_checks"][0]["status"] != "absent_within_declared_coverage"
     # (d) matching declared coverage -> absence within declared coverage, labelled as declared
-    c = env.run("f04-d", fails + succ, coverage={"start": ts(-3600), "end": ts(30000), "scope": "tenant:t", "note": "SYNTHETIC export"})
+    # (d0) v0.3.1/R05: a declaration without event kinds covers only the kinds present in that input
+    #      (authentication), so the absence of later data access is still not demonstrated
+    c = env.run("f04-d0", fails + succ, coverage={"start": ts(-3600), "end": ts(30000), "scope": "tenant:t"})
+    assert env.alerts(c, "ARG-AUTH-003")[0]["absence_checks"][0]["status"] != "absent_within_declared_coverage"
+    c = env.run("f04-d", fails + succ, coverage={"start": ts(-3600), "end": ts(30000), "scope": "tenant:t", "note": "SYNTHETIC export",
+                                                 "event_kinds": ["authentication", "cloud_operation"]})
     chk = env.alerts(c, "ARG-AUTH-003")[0]["absence_checks"][0]
     assert chk["status"] == "absent_within_declared_coverage"
     src = env.assessment(c)["diagnostics"]["sources"][0]
@@ -209,24 +214,9 @@ def test_f05_original_record_view_redacts_unless_raw(env):
     assert not raw["redacted"] and "SYNTHETIC_SECRET_123" in raw["record_text"]
 
 
-def test_f05_llm_input_is_redacted(env):
-    from argos.llm import explain as ex
-    c = env.run("f05c", _secret_rows())
-    a = env.alerts(c)[0]
-    seen = {}
-
-    class P:
-        name = "fake"
-
-        def generate(self, prompt, **kw):
-            seen["prompt"] = prompt
-            return json.dumps({"summary": "x", "evidence_refs": [], "caveats": []})
-    try:
-        ex.explain(a, env.store.get_events(a["event_ids"]), P())
-    except Exception:  # noqa: BLE001 - only the prompt matters here
-        pass
-    if "prompt" in seen:
-        assert not any(s in seen["prompt"] for s in SECRETS)
+# test_f05_llm_input_is_redacted was removed in v0.3.1 (R07): it called explain() with an incompatible
+# signature, swallowed the resulting TypeError and only checked a prompt if one existed. The replacement
+# tests are tests/test_v031.py::test_r07_* (provider invocation and full payload asserted unconditionally).
 
 
 def test_f05_csv_formula_and_xss_protection_preserved():
@@ -257,7 +247,7 @@ def test_f06_migration_backup_includes_committed_wal_after_unclean_exit(tmp_path
     _unclean_db(db, 3)
     assert (tmp_path / "argos.sqlite3-wal").exists()
     st = Store(db)
-    assert st.schema_version() == 3
+    assert st.schema_version() == 4
     live = st.conn.execute("SELECT COUNT(*) FROM cases").fetchone()[0]
     st.close()
     bk = next(tmp_path.glob("argos.v*-backup.sqlite3"))
@@ -270,7 +260,7 @@ def test_f06_migration_backup_includes_committed_wal_after_unclean_exit(tmp_path
         assert stat.S_IMODE(bk.stat().st_mode) & 0o077 == 0
     # idempotent restart: no second migration, data intact
     st = Store(db)
-    assert st.schema_version() == 3 and st.conn.execute("SELECT COUNT(*) FROM cases").fetchone()[0] == 3
+    assert st.schema_version() == 4 and st.conn.execute("SELECT COUNT(*) FROM cases").fetchone()[0] == 3
     st.close()
 
 
@@ -292,7 +282,7 @@ def test_f06_failed_migration_rolls_back_and_keeps_backup(tmp_path, monkeypatch)
     c.close()
     assert next(tmp_path.glob("argos.v*-backup.sqlite3"))
     st = Store(db)  # retry succeeds
-    assert st.schema_version() == 3
+    assert st.schema_version() == 4
     st.close()
 
 

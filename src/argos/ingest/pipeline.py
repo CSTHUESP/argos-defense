@@ -95,6 +95,9 @@ def _copy_and_hash(src: Path, dest_dir: Path, max_bytes: int) -> tuple[str, Path
     return digest, final, n
 
 
+COLLECTOR_RE = re.compile(r"^[A-Za-z0-9._:-]{1,128}$")
+
+
 def effective_options(fmt: str, options: dict | None) -> tuple[dict, dict | None]:
     """Canonical options used for parsing (custom mapping content inlined; file paths dropped)."""
     options = dict(options or {})
@@ -113,6 +116,9 @@ def effective_options(fmt: str, options: dict | None) -> tuple[dict, dict | None
             parse_timestamp("2000-01-01T00:00:00", assume_tz)
         except TimestampError as exc:
             raise ImportError_(str(exc)) from exc
+    cid = options.get("collector_id")
+    if cid not in (None, "") and not COLLECTOR_RE.match(str(cid)):
+        raise ImportError_("collector_id must be 1-128 characters of letters, digits and . _ : -")
     return {k: v for k, v in options.items() if v not in (None, "")}, profile
 
 
@@ -132,7 +138,15 @@ def validate_coverage(cov: dict | None) -> dict | None:
         raise ImportError_("coverage end must be after start")
     if not COVERAGE_SCOPE_RE.match(scope):
         raise ImportError_("coverage scope must be 'all', 'tenant:<id>', 'host:<name>' or 'app_id:<id>'")
+    kinds = cov.get("event_kinds") or []
+    if isinstance(kinds, str):
+        kinds = [k.strip() for k in kinds.split(",") if k.strip()]
+    from argos.models import EVENT_KINDS
+    bad = [k for k in kinds if k not in EVENT_KINDS]
+    if bad:
+        raise ImportError_(f"coverage event_kinds not recognised: {bad}; known: {', '.join(EVENT_KINDS)}")
     return {"start": iso(s), "end": iso(e), "start_epoch": s.timestamp(), "end_epoch": e.timestamp(), "scope": scope,
+            "event_kinds": sorted(set(kinds)),
             "basis": "analyst-declared (not verified by ARGOS)", "note": (cov.get("note") or "")[:500]}
 
 
@@ -234,6 +248,8 @@ def ingest_file(store: Store, settings: Settings, case: dict, path: str | Path, 
                 )
                 if ev["source_type"] is None:
                     ev["source_type"] = fmt
+                # explicit collector namespace from the ingestion configuration (R04); absent -> per-input namespace
+                ev["collector_id"] = opts.get("collector_id")
                 chunk.append(ev)
             if len(chunk) + len(rej_chunk) >= settings.chunk_size:
                 flush()

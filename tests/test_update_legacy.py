@@ -24,7 +24,7 @@ def test_v020_demo_database_migrates_and_reanalyses(tmp_path):
     s.ensure()
     st = Store(s.db_path)
     try:
-        assert st.schema_version() == 3
+        assert st.schema_version() == 4
         b = sqlite3.connect(home / "argos.v2-backup.sqlite3")
         assert b.execute("SELECT COUNT(*) FROM events").fetchone()[0] == 425
         assert b.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
@@ -49,5 +49,5 @@ def test_v020_demo_database_migrates_and_reanalyses(tmp_path):
     finally:
         st.close()
     st = Store(s.db_path)  # idempotent restart
-    assert st.schema_version() == 3
+    assert st.schema_version() == 4
     st.close()

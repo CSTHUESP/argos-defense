@@ -203,31 +203,39 @@ def _sequence(rule, group, evs, ev_fn):
 
 
 def _baseline(rule, group, evs, traces, cov_ctx):
-    """Compare the evaluated window with the entity's OWN prior windows - but only windows in which
-    collection is evidenced (analyst-declared coverage, or other records of the same entity from the
-    rule's vantage). Windows without such evidence are gaps, never zero-count history."""
+    """Compare the evaluated window with the entity's OWN prior windows of the SAME event family (R05).
+
+    A prior window counts only if (a) analyst-declared coverage of this entity scope, event family and
+    interval establishes completeness -- then a zero is a real zero -- or (b) relevant events were observed in
+    it, in which case its count is a lower bound. Windows with neither are gaps and are never zero-count
+    history; activity of other event families, other entities or other inputs is not coverage."""
     agg = rule.aggregate
     out = []
     for m in _threshold(rule, group, evs, Evaluator(), traces):
         start = m.events[0]["event_epoch"]
         w = rule.window_s
-        hist_counts, kinds, gaps = [], Counter(), 0
+        hist_counts, kinds, gaps, zeros = [], Counter(), 0, 0
         k = 1
         while k * w <= agg.history_lookback_s:
             ws, we = start - k * w, start - (k - 1) * w
-            status = cov_ctx.window_status(rule, group, ws, we) if cov_ctx is not None else "gap"
+            n = sum(1 for e in evs if ws <= e["event_epoch"] < we)
+            status = cov_ctx.window_status(rule, group, ws, we, n) if cov_ctx is not None else ("observed_activity" if n else "gap")
             if status == "gap":
                 gaps += 1
             else:
                 kinds[status] += 1
-                hist_counts.append(sum(1 for e in evs if ws <= e["event_epoch"] < we))
+                hist_counts.append(n)
+                zeros += (n == 0)
             k += 1
         info = {"reference": "observed_history", "history_windows": len(hist_counts), "window_s": w,
-                "covered_window_basis": dict(kinds), "gap_windows_excluded": gaps,
+                "covered_window_basis": dict(kinds), "covered_zero_windows": zeros, "gap_windows_excluded": gaps,
                 "min_history_windows": agg.min_history_windows, "factor": agg.factor,
                 "current_count": len(m.events), "history_max": max(hist_counts) if hist_counts else None,
                 "history_counts": hist_counts[:50], "uses_only_prior_events": True,
-                "note": "windows count only when collection for this entity is evidenced (declared coverage or the entity's own records)"}
+                "note": ("zero-count windows only where analyst-declared coverage of this entity, event family and interval exists; "
+                         "windows with observed activity are lower bounds; other windows are gaps")}
+        if kinds.get("observed_activity") and not kinds.get("declared_complete"):
+            info["uncertainty"] = "history consists only of windows with observed activity (lower bounds); completeness not declared"
         if len(hist_counts) < agg.min_history_windows:
             info["status"] = "insufficient_baseline"
             m.baseline = info

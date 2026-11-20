@@ -58,41 +58,71 @@ def load_context(settings: Settings):
     return rules, rules_hash, errors, registry, iocs, disabled
 
 
+def predicate_kinds(cond) -> set | None:
+    """Event kinds a rule/absence predicate can match (from event_kind eq/in predicates); None = not determinable."""
+    found: set = set()
+
+    def walk(c):
+        if c is None:
+            return
+        if hasattr(c, "op"):
+            if c.field == "event_kind" and c.op in ("eq", "in"):
+                found.update(c.value if isinstance(c.value, list) else [c.value])
+            return
+        for part in (getattr(c, "all", None) or []) + (getattr(c, "any", None) or []):
+            walk(part)
+    walk(cond)
+    return found or None
+
+
+def rule_kinds(rule) -> set | None:
+    kinds = predicate_kinds(rule.select)
+    agg = getattr(rule, "aggregate", None)
+    if kinds is None and agg is not None and getattr(agg, "steps", None):
+        ks = set()
+        for st in agg.steps:
+            k = predicate_kinds(st.where)
+            if k is None:
+                return None
+            ks |= k
+        kinds = ks or None
+    return kinds
+
+
 class CoverageContext:
-    """Answers 'was collection evidently operating for this entity in [t0, t1)?' without guessing."""
+    """Answers 'was collection COMPLETE for this entity, event family and interval?' without guessing (R05).
+
+    Only analyst-declared coverage establishes completeness. A declaration applies to its interval, its
+    scope (all / tenant / host / app_id) and its event kinds: explicitly declared `event_kinds`, or -- for
+    declarations without them (including all v0.3.0 declarations) -- only the event kinds actually present
+    in that input. Seeing some events of an entity in a window shows activity in that window, not that
+    collection was complete, and never turns other event families or other entities into zero counts."""
 
     def __init__(self, events: list[dict], inputs: dict):
         self.declared = []
-        input_vantages = defaultdict(set)
+        input_vantages, input_kinds = defaultdict(set), defaultdict(set)
         for e in events:
             input_vantages[e["input_id"]].add(e["observation_vantage"])
+            if e.get("event_kind"):
+                input_kinds[e["input_id"]].add(e["event_kind"])
         for iid, inp in inputs.items():
             if inp.get("coverage"):
                 cov = json.loads(inp["coverage"])
                 cov["vantages"] = sorted(input_vantages.get(iid, set()))
                 cov["input_id"] = iid
+                explicit = cov.get("event_kinds")
+                cov["kinds"] = set(explicit) if explicit else set(input_kinds.get(iid, set()))
+                cov["kinds_basis"] = "declared" if explicit else "event kinds present in the input (no kinds declared)"
                 self.declared.append(cov)
         self.events = events
-        self._index: dict = {}
 
-    def _entity_index(self, fields: tuple, vantages: tuple):
-        key = (fields, vantages)
-        if key not in self._index:
-            idx = defaultdict(list)
-            for e in self.events:
-                if e["observation_vantage"] not in vantages:
-                    continue
-                k = tuple(key_value(f, e.get(f)) for f in fields)
-                if all(v is not None for v in k):
-                    idx[k].append(e["event_epoch"])
-            for v in idx.values():
-                v.sort()
-            self._index[key] = idx
-        return self._index[key]
-
-    def declared_cover(self, entity: dict, vantages, t0: float, t1: float):
+    def declared_cover(self, entity: dict, vantages, t0: float, t1: float, kinds: set | None = None):
+        if not kinds:
+            return None  # the relevant event family is unknown -> completeness cannot be established
         for c in self.declared:
             if not set(c["vantages"]) & set(vantages):
+                continue
+            if not set(kinds) <= c["kinds"]:
                 continue
             if not (c["start_epoch"] <= t0 and t1 <= c["end_epoch"]):
                 continue
@@ -106,17 +136,13 @@ class CoverageContext:
                 return c
         return None
 
-    def entity_observed(self, fields: tuple, group_vals: tuple, vantages: tuple, t0: float, t1: float) -> int:
-        epochs = self._entity_index(fields, vantages).get(group_vals, [])
-        return bisect.bisect_left(epochs, t1) - bisect.bisect_left(epochs, t0)
-
-    def window_status(self, rule, group: dict, t0: float, t1: float) -> str:
-        fields = tuple(f for f in rule.group_by)
-        vals = tuple(key_value(f, group[f]) for f in fields)
-        if self.declared_cover(group, rule.observation_vantage, t0, t1):
-            return "declared"
-        if fields and self.entity_observed(fields, vals, tuple(rule.observation_vantage), t0, t1):
-            return "entity_observed"
+    def window_status(self, rule, group: dict, t0: float, t1: float, observed_count: int = 0) -> str:
+        """declared_complete: a zero (or any) count is supported by declared coverage of this family;
+        observed_activity: relevant events were seen, the count is a lower bound; gap: unknown."""
+        if self.declared_cover(group, rule.observation_vantage, t0, t1, rule_kinds(rule)):
+            return "declared_complete"
+        if observed_count > 0:
+            return "observed_activity"
         return "gap"
 
 
@@ -234,7 +260,7 @@ def run_analysis(store: Store, settings: Settings, case_ref: str, progress=None,
                 return {**base, "status": "present", "event_ids": [e["event_id"] for e in hits[:20]]}
             if not coverage.get(ac.vantage, {}).get("event_count"):
                 return {**base, "status": "not_assessable_telemetry_unavailable", "vantage": ac.vantage}
-            decl = cov_ctx.declared_cover({**last, **join}, [ac.vantage], last["event_epoch"], end)
+            decl = cov_ctx.declared_cover({**last, **join}, [ac.vantage], last["event_epoch"], end, predicate_kinds(ac.where))
             if decl:
                 return {**base, "status": "absent_within_declared_coverage",
                         "detail": f"no matching records; collection for scope '{decl['scope']}' {decl['start']}..{decl['end']} "

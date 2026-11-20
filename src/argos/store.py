@@ -104,10 +104,12 @@ CREATE TABLE IF NOT EXISTS watch_sources (
   last_event_time TEXT, last_error TEXT);
 CREATE TABLE IF NOT EXISTS watch_checkpoints (
   source_id TEXT NOT NULL, file_id TEXT NOT NULL, path TEXT NOT NULL, offset INTEGER NOT NULL, size INTEGER NOT NULL,
-  mtime REAL NOT NULL, segments INTEGER NOT NULL DEFAULT 0, updated_at TEXT NOT NULL, PRIMARY KEY(source_id, file_id));
+  mtime REAL NOT NULL, segments INTEGER NOT NULL DEFAULT 0, updated_at TEXT NOT NULL,
+  dev INTEGER, ino INTEGER, head_fp TEXT, tail_sha TEXT, legacy INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY(source_id, file_id));
 """
 
-SCHEMA_VERSION = 3
+SCHEMA_VERSION = 4
 CASE_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$")
 VERIFY_TABLES = ("cases", "inputs", "events", "rejects", "notes", "alerts", "assessments", "runs", "alert_state", "alert_state_history",
                  "run_alerts", "run_snapshots", "entities", "jobs", "watch_sources", "watch_checkpoints")
@@ -204,6 +206,8 @@ class Store:
             c.execute("CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
             if current < 3:
                 self._migrate_2_to_3(c)
+            if current < 4:
+                self._migrate_3_to_4(c)
             c.execute("INSERT OR REPLACE INTO meta VALUES('schema_version', ?)", (str(SCHEMA_VERSION),))
             c.execute("INSERT OR REPLACE INTO meta VALUES('migrated_from', ?)", (str(current),))
             c.execute("INSERT OR REPLACE INTO meta VALUES('migrated_at', ?)", (now_iso(),))
@@ -239,6 +243,23 @@ class Store:
         for stmt in V3_EXTRA.split(";"):
             if stmt.strip():
                 c.execute(stmt)
+
+    @staticmethod
+    def _migrate_3_to_4(c):
+        """v0.3.1: watcher checkpoints gain file-instance identity (device/inode, head fingerprint, tail hash).
+        Existing v0.3.0 checkpoints were keyed by a first-line fingerprint only; they are kept but marked
+        legacy so the watcher re-establishes identity conservatively instead of trusting them (R03).
+        Declared coverage JSON is unchanged; declarations without `event_kinds` are interpreted narrowly
+        (only the event kinds present in that input) at analysis time (R05)."""
+        cols = [r[1] for r in c.execute("PRAGMA table_info(watch_checkpoints)")]
+        if cols and "dev" not in cols:
+            for col, typ in (("dev", "INTEGER"), ("ino", "INTEGER"), ("head_fp", "TEXT"), ("tail_sha", "TEXT"),
+                             ("legacy", "INTEGER NOT NULL DEFAULT 0")):
+                c.execute(f"ALTER TABLE watch_checkpoints ADD COLUMN {col} {typ}")  # noqa: S608 - constant names
+            c.execute("UPDATE watch_checkpoints SET legacy=1")
+        c.execute("INSERT OR REPLACE INTO meta VALUES('coverage_semantics', ?)",
+                  ("v4: declared coverage applies to its scope, interval and event kinds; declarations without event kinds "
+                   "cover only the kinds present in that input",))
 
     def schema_version(self) -> int:
         return self._version()
@@ -337,15 +358,20 @@ class Store:
             c.execute("UPDATE inputs SET active=1 WHERE input_id=?", (input_id,))
 
     def rebase_originals(self, cases_dir: Path) -> int:
-        """After restore into another data directory: point stored_path at the restored originals."""
+        """After restore into another data directory: point EVERY original reference at the location the
+        original has (or would have) under the restored data directory. References are never left pointing
+        at the previous installation, even when the original itself is missing (R02)."""
         n = 0
         with self.tx() as c:
             for r in c.execute("SELECT input_id, case_id, stored_path FROM inputs").fetchall():
                 new = Path(cases_dir) / r[1] / "originals" / Path(r[2].replace("\\", "/")).name
-                if new.is_file() and str(new) != r[2]:
+                if str(new) != r[2]:
                     c.execute("UPDATE inputs SET stored_path=? WHERE input_id=?", (str(new), r[0]))
                     n += 1
         return n
+
+    def list_inputs_all(self) -> list[dict]:
+        return [dict(r) for r in self.conn.execute("SELECT * FROM inputs ORDER BY case_id, input_id")]
 
     def get_input(self, input_id: str) -> dict | None:
         r = self.conn.execute("SELECT * FROM inputs WHERE input_id=?", (input_id,)).fetchone()

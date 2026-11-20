@@ -1,0 +1,75 @@
+{
+  "root": "/home/claude/argos-defense",
+  "R01": {
+    "reproduced": false,
+    "detail": {
+      "case_create": false,
+      "case_list": false
+    }
+  },
+  "R02": {
+    "reproduced": false,
+    "detail": "backup refused: BackupError: backup refused: retained originals referenced by the database are missing or altered: cases/case-e60793b43fc6/originals/85451496bc2c1172b0b2ca80da108cb68b344f8eeade4a3796b"
+  },
+  "R03": {
+    "reproduced": false,
+    "detail": {
+      "events": [
+        "only-in-a.example",
+        "only-in-b.example",
+        "shared.example",
+        "shared.example"
+      ],
+      "errors": []
+    }
+  },
+  "R04": {
+    "reproduced": false,
+    "detail": {
+      "delimiter_collision_linked": false,
+      "independent_collectors_linked": false
+    }
+  },
+  "R05": {
+    "reproduced": false,
+    "detail": [
+      {
+        "abstained": true,
+        "baseline": {
+          "status": "insufficient_baseline",
+          "windows": null,
+          "covered_window_basis": {}
+        }
+      }
+    ]
+  },
+  "R06": {
+    "reproduced": true,
+    "detail": "directly_observed allowance derived from any model_interaction/tool_execution record in the unit"
+  },
+  "R07": {
+    "reproduced": false,
+    "detail": {
+      "explain_params": [
+        "alert",
+        "provider"
+      ],
+      "test_calls_with_3_args": false,
+      "provider_method_in_test": "complete"
+    }
+  },
+  "R08": {
+    "reproduced": false,
+    "detail": {
+      "jobs_running_simultaneously": 1,
+      "cases": 4
+    }
+  },
+  "R09": {
+    "reproduced": false,
+    "detail": {
+      "anonymous_https_remote_reads": true,
+      "explicit_git_auth_configured": true
+    }
+  }
+}

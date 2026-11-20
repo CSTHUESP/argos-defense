@@ -1,0 +1,92 @@
+{
+  "root": "/tmp/wt030",
+  "R01": {
+    "reproduced": true,
+    "detail": {
+      "case_create": true,
+      "case_list": true,
+      "event_api:SYNTH_LIST_SECRET": true,
+      "event_api:SYNTH_LIST_SECRET:labelled_redacted": false,
+      "event_api:SYNTH_NESTED_SECRET": true,
+      "event_api:SYNTH_NESTED_SECRET:labelled_redacted": false,
+      "event_api:SYNTH_CSV_SECRET": true,
+      "event_api:SYNTH_CSV_SECRET:labelled_redacted": false
+    }
+  },
+  "R02": {
+    "reproduced": true,
+    "detail": {
+      "backup": "created+verified despite missing original",
+      "restored_reference": "/tmp/r031-cg36k8wr/home/cases/case-ba4701513151/originals/85451496bc2c1172b0b2ca80da108cb68b344f8eeade4a3796b637a7f867d302.jsonl",
+      "points_to_old_home": true,
+      "restore_result_keys": [
+        "backup_created_at",
+        "originals_rebased",
+        "restored_to",
+        "schema_version",
+        "table_counts"
+      ]
+    }
+  },
+  "R03": {
+    "reproduced": true,
+    "detail": {
+      "events": [
+        "only-in-a.example",
+        "shared.example"
+      ],
+      "errors": []
+    }
+  },
+  "R04": {
+    "reproduced": true,
+    "detail": {
+      "delimiter_collision_linked": true,
+      "independent_collectors_linked": true
+    }
+  },
+  "R05": {
+    "reproduced": true,
+    "detail": [
+      {
+        "abstained": false,
+        "baseline": {
+          "status": "exceeds_history",
+          "windows": null,
+          "covered_window_basis": {
+            "entity_observed": 30
+          }
+        }
+      }
+    ]
+  },
+  "R06": {
+    "reproduced": true,
+    "detail": "directly_observed allowance derived from any model_interaction/tool_execution record in the unit"
+  },
+  "R07": {
+    "reproduced": true,
+    "detail": {
+      "explain_params": [
+        "alert",
+        "provider"
+      ],
+      "test_calls_with_3_args": true,
+      "provider_method_in_test": "generate"
+    }
+  },
+  "R08": {
+    "reproduced": true,
+    "detail": {
+      "jobs_running_simultaneously": 4,
+      "cases": 4
+    }
+  },
+  "R09": {
+    "reproduced": true,
+    "detail": {
+      "anonymous_https_remote_reads": true,
+      "explicit_git_auth_configured": false
+    }
+  }
+}

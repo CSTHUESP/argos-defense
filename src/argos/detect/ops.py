@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import ipaddress
+import json
 import re
 from functools import lru_cache
 
@@ -54,10 +55,20 @@ def derive(ev: dict) -> dict:
     d = ev.get("dns_query") or ev.get("http_host")
     ev["domain"] = d.lower().rstrip(".") if d else None
     ev["remote"] = ev.get("dst_ip") or ev["domain"] or ev.get("src_ip")
-    # Opaque session ids are only meaningful inside the collection source and tenant that issued them.
+    # Opaque session/call ids are only meaningful inside the namespace that issued them (R04, v0.3.1):
+    # - namespace = the collector declared in the ingestion configuration (`collector_id`), otherwise the
+    #   single input file the record came from; a format label or a placeholder is never a namespace;
+    # - the key is a canonical JSON array, so delimiters inside ids cannot collide and missing (null),
+    #   empty ("") and literal placeholder ("-") values stay distinct; ids keep their case;
+    # - without a namespace or without a session id there is no key, so no linkage is made (abstain).
+    ev["session_key"] = ev["call_key"] = None
     sid = ev.get("session_id")
-    ev["session_key"] = f"{ev.get('source_type') or '?'}|{ev.get('tenant_id') or '-'}|{sid}" if sid else None
-    ev["call_key"] = f"{ev['session_key']}|{ev['tool_call_id']}" if sid and ev.get("tool_call_id") else None
+    ns = ["collector", ev["collector_id"]] if ev.get("collector_id") else (["input", ev["input_id"]] if ev.get("input_id") else None)
+    if sid not in (None, "") and ns is not None:
+        ev["session_key"] = json.dumps([ns, ev.get("source_type"), ev.get("tenant_id"), sid], ensure_ascii=False, separators=(",", ":"))
+        tc = ev.get("tool_call_id")
+        if tc not in (None, ""):
+            ev["call_key"] = json.dumps([ns, ev.get("source_type"), ev.get("tenant_id"), sid, tc], ensure_ascii=False, separators=(",", ":"))
     # proc_link joins an agent/model audit record to the endpoint process it names
     ev["proc_link"] = ev.get("linked_process_guid") if ev.get("event_kind") in ("model_interaction", "tool_execution") else ev.get("process_guid")
     return ev

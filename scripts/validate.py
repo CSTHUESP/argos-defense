@@ -43,7 +43,7 @@ SCENARIOS = {
     "web01_webshell": (lambda a: "web-01" in g(a, "host"),
                        lambda al, asm: {"ARG-EP-001", "ARG-EP-002", "ARG-PERS-001"} <= {a["rule_id"] for a in al}),
     "dev-ws-07_artex_agent": (lambda a: "dev-ws-07" in g(a, "host") or g(a, "session_id") == "exp12-worker-i3"
-                              or "|exp12-worker-i3|" in g(a, "call_key") or g(a, "domain") == "api.deepseek.com",
+                              or "\"exp12-worker-i3\"" in g(a, "call_key") or g(a, "domain") == "api.deepseek.com",
                               lambda al, asm: asm["framework"]["level"] == "corroborated_presence"
                               and any(a["llm"]["level"] == "directly_observed" for a in al)
                               and asm["automation"]["level"] == "mixed"),
