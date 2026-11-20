@@ -10,6 +10,22 @@
 - **Immutable releases:** v0.3.0 is not immutable (`immutable: false`). Changing the repository setting was refused from this session.
 - **Protections:** `main` is unprotected and there is no tag ruleset. Settings writes are refused from this session.
 
+## v0.3.1 published (2026-11-20 18:49 UTC)
+- Release: https://github.com/CSTHUESP/argos-defense/releases/tag/v0.3.1 — tag `v0.3.1` (annotated, `4a442de`) → commit `a9d8105f90b22660ac552707a3678f97ba73cd6e`; 27 assets; `immutable: false` (setting not changeable from this session).
+- CI on that commit: [44794296126](https://github.com/CSTHUESP/argos-defense/actions/runs/44794296126), 7/7 jobs passed. Tag: [44795467865](https://github.com/CSTHUESP/argos-defense/actions/runs/44795467865). Release: [44795496461](https://github.com/CSTHUESP/argos-defense/actions/runs/44795496461), with preflight, wheel+sdist, 4 native builds, contract gate, draft + uploaded-byte verification, attestation verification and publish all passing.
+- Native smoke tests on the extracted archives:
+
+| Target | Runner OS | Checks | Signing |
+|---|---|---|---|
+| windows-x86_64 | Windows Server 2022 10.0.20348 (win22 20261116.370.1) | 48/48 | not Authenticode-signed |
+| linux-x86_64 | Ubuntu 22.04, glibc 2.35 (ubuntu22 20261116.365.1) | 50/50 | not applicable |
+| macos-arm64 | macOS 15.8.2 arm64 (macos15 20261118.0550.1) | 50/50 | ad-hoc only; not Developer ID signed, not notarized |
+| macos-x86_64 | macOS 15.7.9 x86_64 (macos15 20260824.0482.1) | 50/50 | ad-hoc only; not Developer ID signed, not notarized |
+
+- GitHub build-provenance attestations exist for the 4 archives, the wheel and the sdist, and were verified by the workflow on the downloaded draft assets. Local `gh attestation verify` from the build sandbox could not initialise Sigstore (no network route); the attestation records were confirmed through the GitHub API.
+- Independent check after publication: all 27 assets were downloaded from the public URLs; `sha256sum -c SHA256SUMS` passed (26 entries); all 25 `release-manifest.json` file entries matched by hash and size. The downloaded wheel installs and runs `demo`, and the Linux executable reports `frozen=True`, version 0.3.1.
+- Not done: real desktop acceptance, OS code signing/notarization, real Ollama, Sigma/SPL backends, EVTX, pilot.
+
 ## Mandatory gates
 1. Source tests on Linux (Python 3.11/3.12/3.13), Windows, macOS arm64 and macOS x86_64 (`ci.yml`), plus rule validation, `doctor`, `scripts/validate.py` and wheel/sdist installation outside the checkout.
 2. Shared preflight (`packaging/release_preflight.py`): tag → one full SHA, semantic version, version agreement, release notes, `main` ancestry, successful CI for that SHA.

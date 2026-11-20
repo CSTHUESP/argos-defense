@@ -1,4 +1,4 @@
-# BUILD_STATE — current decision (2026-11-20 ~19:15 CET, owner)
+# BUILD_STATE — v0.3.1 PUBLISHED (2026-11-20); current decision (owner)
 
 ```text
 REPOSITORY_VISIBILITY: public
@@ -11,6 +11,7 @@ The owner explicitly chose a public, open project. This supersedes all earlier "
 - Release work: community docs committed on `v0.3.1-local` on top of `a048ae3`, fast-forwarded to `main`, then CI + `create-tag.yml` (version 0.3.1, publish=true) on the final SHA. Results are recorded below once known.
 - CI run [44791375680](https://github.com/CSTHUESP/argos-defense/actions/runs/44791375680) on `5ffc0dd` (first Windows run of the v0.3.1 watcher tests): Linux/macOS/package jobs passed; Windows failed 10 watcher tests. Cause was **test-only**: the tests wrote JSONL in text mode, so Windows produced CRLF lines while expected byte offsets / first-line fingerprints were computed from LF strings. Product offsets were correct (real bytes). Fix: the tests write bytes exactly (`newline=""`); no product code changed. `5ffc0dd` is therefore not the release SHA.
 - CI run [44793342476](https://github.com/CSTHUESP/argos-defense/actions/runs/44793342476) on `85db5a2`: all 7 jobs passed (Windows 263 passed, 2 skipped). create-tag run [44793871532](https://github.com/CSTHUESP/argos-defense/actions/runs/44793871532) for 0.3.1 / `85db5a2` **failed closed in the preflight** (git fetch: HTTP 400 "Duplicate header: Authorization"): R09's header plus the checkout's persisted credential. No tag was created. Fixed in `packaging/release_preflight.py` with a real-git regression test, so `85db5a2` is not the release SHA either.
+- create-tag run [44795467865](https://github.com/CSTHUESP/argos-defense/actions/runs/44795467865) created `v0.3.1` → `a9d8105`, and release run [44795496461](https://github.com/CSTHUESP/argos-defense/actions/runs/44795496461) **published v0.3.1** (details in docs/RELEASE_VALIDATION.md). Contribution issues #1–#6 were created and the `detection` label added.
 - Repository settings writes (description, topics, Discussions, private vulnerability reporting, protections, immutable releases) are refused for this session ("Repository settings writes are not permitted through this proxy"); labels and issues can be created.
 
 ---
