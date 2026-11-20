@@ -110,6 +110,9 @@ class Settings:
     max_record_bytes: int = 1024 * 1024
     max_events_per_case: int = int(os.environ.get("ARGOS_MAX_EVENTS", 2_000_000))
     chunk_size: int = 1000
+    # Analysis holds a case's active events in memory (measured: ~0.85 GiB peak RSS at 100,000 events;
+    # 1,000,000 events exceeded a 7 GiB machine). Larger cases are refused with a clear error.
+    max_analysis_events: int = int(os.environ.get("ARGOS_MAX_ANALYSIS_EVENTS", 300_000))
     host: str = "127.0.0.1"
     port: int = 8789
     # Optional LLM layer: disabled unless explicitly configured.

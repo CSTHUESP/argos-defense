@@ -179,6 +179,11 @@ def run_analysis(store: Store, settings: Settings, case_ref: str, progress=None,
     rules, rules_hash, rule_errors, registry, iocs, disabled = load_context(settings)
     if rule_errors:
         raise AnalysisError("rule validation failed: " + "; ".join(rule_errors))
+    n_events = store.count_events(case["case_id"])
+    if n_events > settings.max_analysis_events:
+        raise AnalysisError(f"case has {n_events:,} active events; the supported analysis limit is {settings.max_analysis_events:,} "
+                            "(memory-bound; see docs/PERFORMANCE.md). Split the case by time range or source, or raise "
+                            "ARGOS_MAX_ANALYSIS_EVENTS on a machine with more memory at your own risk.")
     inputs = {i["input_id"]: i for i in store.list_inputs(case["case_id"])}
     manifest = sorted([{"input_id": i["input_id"], "sha256": i["sha256"], "format": i["format"], "parser_version": i["parser_version"],
                         "options": json.loads(i["options"]), "options_hash": i.get("options_hash"), "revision": i.get("revision", 1),

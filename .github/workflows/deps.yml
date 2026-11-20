@@ -45,7 +45,7 @@ jobs:
           for f in out/*.hashed.txt; do
             echo "===== pip-audit $f ====="
             pip-audit --disable-pip --no-deps --require-hashes -r "$f" --format json -o "$f.audit.json"; r=$?
-            python -c "import json,sys; d=json.load(open(sys.argv[1])); v=[(x['name'],x['version'],[y['id'] for y in x.get('vulns',[])]) for x in d['dependencies'] if x.get('vulns')]; print('AUDIT', sys.argv[1], 'packages', len(d['dependencies']), 'with findings', v)" "$f.audit.json"
+            python -c "import json,sys; d=json.load(open(sys.argv[1])); v=[(x['name'],x['version'],[(y['id'],y.get('fix_versions')) for y in x.get('vulns',[])]) for x in d['dependencies'] if x.get('vulns')]; print('AUDIT', sys.argv[1], 'packages', len(d['dependencies']), 'with findings', v)" "$f.audit.json"
             [ $r -ne 0 ] && rc=$r
           done
           echo "pip-audit exit status: $rc (non-zero means findings or errors; review required)"

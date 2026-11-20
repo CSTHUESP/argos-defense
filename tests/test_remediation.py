@@ -644,3 +644,13 @@ def test_watch_backpressure(env, tmp_path):
         if not poll_once(env.store, env.settings, src, max_chunk_bytes=4096, max_cycle_bytes=8192)["backpressure"]:
             break
     assert env.store.count_events(c["case_id"]) == 400
+
+
+def test_analysis_size_limit_refuses_cleanly_and_keeps_previous(env):
+    from argos.analysis import AnalysisError
+    c = env.run("big", [{"event_time": ts(i), "event_kind": "dns", "dns_query": f"q{i}"} for i in range(30)])
+    before = env.store.latest_successful_run(c["case_id"])["run_id"]
+    env.settings.max_analysis_events = 10
+    with pytest.raises(AnalysisError, match="supported analysis limit"):
+        run_analysis(env.store, env.settings, c["case_id"])
+    assert env.store.latest_successful_run(c["case_id"])["run_id"] == before
