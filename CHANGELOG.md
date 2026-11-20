@@ -20,9 +20,12 @@ Corrective pass for review findings R01–R09 (docs/V031_REMEDIATION.md). Experi
 - **FU3** Watcher delivery identity (source, generation, byte range) is separate from content identity; occurrence counts are independent of chunk size; repeated polls/restarts are reported as `redelivered`.
 - **FU4** One cleanup invariant for every job terminal path; a failed job can no longer block the FIFO.
 - **FU5** Evaluation protocol eval-v2.2 scores LLM attribution against exact source records; eval-v2.1 metrics are superseded.
+- **Recovery A** Import finalization (counts, final status, revision activation/deactivation) is one transaction; a completed status is certified only with `finalized=1`; an interrupted finalization is re-run, never reported as done.
+- **Recovery B** Watcher recovery re-delivers the exact byte range of an earlier delivery at the checkpoint offset (hash-verified) before reading appended data, so growth or a changed chunk budget cannot duplicate committed records.
 - **R09** The release preflight authenticates Git remote reads with GH_TOKEN through environment-scoped Git configuration (needed for private repositories); the token never appears in argv or URLs.
 
 ### Changed / migration
+- `inputs.finalized` is added when a database is opened; existing rows are classified (active, kept-previous and superseded revisions are certified; an imported-but-never-activated input is not and is re-run).
 - Watcher results: `duplicates`/`duplicate_segments` are replaced by `redelivered`/`redelivered_segments`; identical lines at different offsets or in different files are kept as distinct occurrences.
 - Database schema v4 (from v3: watcher identity columns; v0.3.0 checkpoints marked legacy). Migration is transactional after a verified `argos.v3-backup.sqlite3`.
 - A coverage declaration without event kinds covers only the event kinds present in that input. Declare `--coverage-kinds` to cover other families.

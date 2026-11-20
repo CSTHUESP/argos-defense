@@ -1,3 +1,13 @@
+# BUILD_STATE — latest checkpoint (2026-11-20 ~19:40 CET): v0.3.1 follow-up 2 (recovery A/B)
+
+- Branch `v0.3.1-local` (local only). Recovery fixes `2efbdae`; final SHA after docs is recorded in `dist-v031/HANDOVER.txt`.
+- A: atomic `finalize_input` + `inputs.finalized`; B: exact-range watcher recovery (`find_delivery_attempt`).
+- `tests/test_v031_recovery.py`: 10 pass; 8/10 fail on `abe0ebb` on persisted state (2 are the control and upgrade cases).
+- Full suite 264 passed, 1 skipped (Windows ACL on Linux); `scripts/validate.py` OK; eval-v2.2 dev results unchanged.
+- Remote: still **public** (intended **private**) -> no push/tag/CI/release; `v0.3.0` untouched; `v0.3.1` unused.
+
+---
+
 # BUILD_STATE — latest checkpoint (2026-11-20 ~18:40 CET): v0.3.1 follow-up FU1–FU5
 
 - Branch `v0.3.1-local` (local only). FU code + frozen eval-v2.2: `844b3cf`; docs/packaging commits follow (final SHA in the handover report and `dist-v031/HANDOVER.txt`).
