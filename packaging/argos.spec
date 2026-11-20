@@ -20,7 +20,9 @@ hiddenimports = (
     + ["python_multipart", "multipart", "yaml", "defusedxml.ElementTree", "zoneinfo"]
 )
 if os.name == "nt":
+    from PyInstaller.utils.hooks import collect_data_files
     hiddenimports += ["tzdata"] + collect_submodules("tzdata")
+    datas += collect_data_files("tzdata")  # (src, dest) pairs belong in Analysis(datas=...)
 
 a = Analysis(
     [os.path.join(SPECPATH, "argos_entry.py")],
@@ -30,9 +32,6 @@ a = Analysis(
     excludes=["tkinter", "pytest", "playwright", "IPython", "numpy"],
     noarchive=False,
 )
-if os.name == "nt":
-    from PyInstaller.utils.hooks import collect_data_files
-    a.datas += collect_data_files("tzdata")
 pyz = PYZ(a.pure)
 exe = EXE(
     pyz, a.scripts, [],

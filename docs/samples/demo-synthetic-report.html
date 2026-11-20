@@ -14,16 +14,16 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
 </style></head><body>
 <div class="banner">DEMO/SYNTHETIC — data and all derived findings are synthetic</div>
 <h1>ARGOS Defense case report: demo-synthetic</h1>
-<p class="small">DEMO/SYNTHETIC DATA - not real activity · generated 2026-11-20T09:04:50.193470Z · case case-6c9050d48534 · status open</p>
-<p class="small">Versions: argos 0.1.0, argos-engine/0.1.0, schema argos-event/1, rules hash 48ac7ba2f8ccef22, manifest 7c527753a49898d7, config ff6f50dfd02d6882, registry 4f0f6e2064ef6c50, ioc 425a70690680e296.</p>
-<h2>Limitations</h2><ul><li>Batch analysis of supplied files; not a real-time sensor or EDR.</li><li>Heuristic evidence scores are not calibrated probabilities.</li><li>Real-world detection accuracy NOT MEASURED; validation is synthetic only.</li><li>SHA-256 values support local integrity checks; they are not a certified chain of custody.</li><li>Secrets are redacted in this export; originals are retained locally.</li><li>1 input records were rejected (see data quality); they were not analysed</li><li>synthetic or prototype validation only; real-world detection accuracy NOT MEASURED</li></ul>
+<p class="small">DEMO/SYNTHETIC DATA - not real activity · generated 2026-11-20T10:07:32.381289Z · case case-eb5cf15efefc · status open</p>
+<p class="small">Versions: argos 0.2.0, argos-engine/0.2.0, schema argos-event/1, rules hash 7ea82ef919e3eb7d, manifest af277da693b56d23, config ff6f50dfd02d6882, registry 4f0f6e2064ef6c50, ioc 425a70690680e296.</p>
+<h2>Limitations</h2><ul><li>Batch analysis of supplied files; not a real-time sensor or EDR.</li><li>Heuristic evidence scores are not calibrated probabilities.</li><li>Real-world detection accuracy NOT MEASURED; validation is synthetic only.</li><li>SHA-256 values support local integrity checks; they are not a certified chain of custody.</li><li>Secrets are redacted in this export; originals are retained locally.</li><li>1 input records were rejected (see data quality); they were not analysed</li><li>ARG-AUTH-002: 6 candidate records lacked required fields and were not evaluated</li><li>ARG-AUTH-003: 1 candidate records lacked required fields and were not evaluated</li><li>ARG-AUTH-004: 1 candidate records lacked required fields and were not evaluated</li><li>ARG-COLL-001: 30 candidate records lacked required fields and were not evaluated</li><li>ARG-SP-001: 27 candidate records lacked required fields and were not evaluated</li><li>synthetic or prototype validation only; real-world detection accuracy NOT MEASURED</li></ul>
 
 <h2>Case assessment</h2>
 <div class="dims">
 <div class="dim"><h3>A · Threat activity</h3>max severity <b>high</b>; 25 open alerts; 4 authorized automation; 0 abstentions</div>
 <div class="dim"><h3>B · Automation</h3><b>mixed</b><br><span class="small">heuristic evidence score 4.4</span></div>
 <div class="dim"><h3>C · LLM involvement</h3><b>directly_observed</b><br><span class="small">heuristic evidence score 1.7; heuristic evidence score = sum over DISTINCT evidence families (duplicates count once); not a probability</span></div>
-<div class="dim"><h3>D · Framework</h3><b>corroborated_presence</b><br>ARTEX: corroborated_presence (controller_process, model_session_naming, recording_proxy_ca); responsibility: not established (presence is not responsibility)</div>
+<div class="dim"><h3>D · Framework</h3><b>corroborated_presence</b><br>ARTEX: corroborated_presence (controller_process, model_session_naming); responsibility: not established (presence is not responsibility)</div>
 <div class="dim"><h3>E · Purpose hypotheses</h3>collection (observed_success) ×1<br>command_and_control (indicator) ×1<br>credential_access (attempt/observed_success) ×2<br>execution (indicator/observed_success) ×3<br>initial_access (attempt) ×1<br>persistence (observed_success) ×2<br>possible_exfiltration (indicator) ×1<br>privilege_escalation (observed_success) ×1<br>reconnaissance (attempt/indicator) ×3<br>unknown (indicator/observed_success) ×10<br></div>
 <div class="dim"><h3>F · Attribution</h3>model: not assessed unless verifiable model-audit records name it; declared names are labelled as declared<br>person: not assessed (out of scope: telemetry does not identify persons)<br>threat_group: not assessed (no attribution from IPs, language, speed or style)<br></div>
 </div>
@@ -33,7 +33,7 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
 <h2>Alerts</h2>
 
 <h3>HTTP request burst from one source <span class="badge sev-informational">informational</span> <span class="badge">confidence medium</span> <span class="badge">authorized_automation</span></h3>
-<p class="small">al-944f57fcd7d9753bdccb · ARG-AUTO-001@1 · 2026-11-03T08:01:40.000000Z → 2026-11-03T08:02:09.800000Z · analyst status new</p>
+<p class="small">al-a7e1184e990b3df086e6 · ARG-AUTO-001@1 · 2026-11-03T08:01:40.000000Z → 2026-11-03T08:02:09.800000Z · analyst status new</p>
 <p><b>Why:</b> 150 HTTP requests from src_ip=198.51.100.10 within 60s window; timing is consistent with automation.</p>
 <p class="small">automation: observed_automation · LLM: unknown · framework: unknown  · purpose: unknown (indicator)</p>
 <p class="small"><b>Confidence rationale:</b> rule base confidence &#39;medium&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39; | all 150 events match authorized automation entry AA-001 within scope/schedule</p>
@@ -42,7 +42,7 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
 <p class="small mono">evidence: ev:afbd7b7bcb4ab772:10 ev:afbd7b7bcb4ab772:96 ev:afbd7b7bcb4ab772:165 ev:afbd7b7bcb4ab772:95 ev:afbd7b7bcb4ab772:76 ev:afbd7b7bcb4ab772:234 ev:afbd7b7bcb4ab772:65 ev:afbd7b7bcb4ab772:245 ev:afbd7b7bcb4ab772:259 ev:afbd7b7bcb4ab772:328 ev:afbd7b7bcb4ab772:138 ev:afbd7b7bcb4ab772:43 ev:afbd7b7bcb4ab772:194 ev:afbd7b7bcb4ab772:317 ev:afbd7b7bcb4ab772:86 ev:afbd7b7bcb4ab772:302 ev:afbd7b7bcb4ab772:168 ev:afbd7b7bcb4ab772:333 ev:afbd7b7bcb4ab772:267 ev:afbd7b7bcb4ab772:30 ev:afbd7b7bcb4ab772:327 ev:afbd7b7bcb4ab772:133 ev:afbd7b7bcb4ab772:114 ev:afbd7b7bcb4ab772:205 ev:afbd7b7bcb4ab772:243 ev:afbd7b7bcb4ab772:155 ev:afbd7b7bcb4ab772:264 ev:afbd7b7bcb4ab772:343 ev:afbd7b7bcb4ab772:101 ev:afbd7b7bcb4ab772:73 …</p>
 
 <h3>Broad HTTP path enumeration with mostly failing responses <span class="badge sev-low">low</span> <span class="badge">confidence medium</span> <span class="badge">authorized_automation</span></h3>
-<p class="small">al-6d07b26552ebef2ca2b0 · ARG-ENUM-001@1 · 2026-11-03T08:01:40.000000Z → 2026-11-03T08:02:09.800000Z · analyst status new</p>
+<p class="small">al-0837b0d1dd72a20d8cbd · ARG-ENUM-001@1 · 2026-11-03T08:01:40.000000Z → 2026-11-03T08:02:09.800000Z · analyst status new</p>
 <p><b>Why:</b> 150 requests to 150 distinct paths from src_ip=198.51.100.10, http_host=portal.demo.example within 300s; 4xx ratio 1.0.</p>
 <p class="small">automation: observed_automation · LLM: unknown · framework: unknown  · purpose: reconnaissance (attempt)</p>
 <p class="small"><b>Confidence rationale:</b> rule base confidence &#39;medium&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39; | all 150 events match authorized automation entry AA-001 within scope/schedule</p>
@@ -51,7 +51,7 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
 <p class="small mono">evidence: ev:afbd7b7bcb4ab772:10 ev:afbd7b7bcb4ab772:96 ev:afbd7b7bcb4ab772:165 ev:afbd7b7bcb4ab772:95 ev:afbd7b7bcb4ab772:76 ev:afbd7b7bcb4ab772:234 ev:afbd7b7bcb4ab772:65 ev:afbd7b7bcb4ab772:245 ev:afbd7b7bcb4ab772:259 ev:afbd7b7bcb4ab772:328 ev:afbd7b7bcb4ab772:138 ev:afbd7b7bcb4ab772:43 ev:afbd7b7bcb4ab772:194 ev:afbd7b7bcb4ab772:317 ev:afbd7b7bcb4ab772:86 ev:afbd7b7bcb4ab772:302 ev:afbd7b7bcb4ab772:168 ev:afbd7b7bcb4ab772:333 ev:afbd7b7bcb4ab772:267 ev:afbd7b7bcb4ab772:30 ev:afbd7b7bcb4ab772:327 ev:afbd7b7bcb4ab772:133 ev:afbd7b7bcb4ab772:114 ev:afbd7b7bcb4ab772:205 ev:afbd7b7bcb4ab772:243 ev:afbd7b7bcb4ab772:155 ev:afbd7b7bcb4ab772:264 ev:afbd7b7bcb4ab772:343 ev:afbd7b7bcb4ab772:101 ev:afbd7b7bcb4ab772:73 …</p>
 
 <h3>HTTP request burst from one source <span class="badge sev-informational">informational</span> <span class="badge">confidence medium</span> <span class="badge">authorized_automation</span></h3>
-<p class="small">al-10ca49a6edf092e72f0c · ARG-AUTO-001@1 · 2026-11-03T08:06:40.000000Z → 2026-11-03T08:07:18.700000Z · analyst status new</p>
+<p class="small">al-6e4164969b4e96c307fe · ARG-AUTO-001@1 · 2026-11-03T08:06:40.000000Z → 2026-11-03T08:07:18.700000Z · analyst status new</p>
 <p><b>Why:</b> 130 HTTP requests from src_ip=198.51.100.20 within 60s window; timing is consistent with automation.</p>
 <p class="small">automation: observed_automation · LLM: unknown · framework: unknown  · purpose: unknown (indicator)</p>
 <p class="small"><b>Confidence rationale:</b> rule base confidence &#39;medium&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39; | all 130 events match authorized automation entry AA-002 within scope/schedule</p>
@@ -60,7 +60,7 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
 <p class="small mono">evidence: ev:afbd7b7bcb4ab772:4 ev:afbd7b7bcb4ab772:177 ev:afbd7b7bcb4ab772:268 ev:afbd7b7bcb4ab772:338 ev:afbd7b7bcb4ab772:142 ev:afbd7b7bcb4ab772:23 ev:afbd7b7bcb4ab772:299 ev:afbd7b7bcb4ab772:154 ev:afbd7b7bcb4ab772:16 ev:afbd7b7bcb4ab772:334 ev:afbd7b7bcb4ab772:70 ev:afbd7b7bcb4ab772:261 ev:afbd7b7bcb4ab772:308 ev:afbd7b7bcb4ab772:104 ev:afbd7b7bcb4ab772:294 ev:afbd7b7bcb4ab772:190 ev:afbd7b7bcb4ab772:45 ev:afbd7b7bcb4ab772:145 ev:afbd7b7bcb4ab772:192 ev:afbd7b7bcb4ab772:220 ev:afbd7b7bcb4ab772:38 ev:afbd7b7bcb4ab772:3 ev:afbd7b7bcb4ab772:160 ev:afbd7b7bcb4ab772:275 ev:afbd7b7bcb4ab772:9 ev:afbd7b7bcb4ab772:68 ev:afbd7b7bcb4ab772:179 ev:afbd7b7bcb4ab772:331 ev:afbd7b7bcb4ab772:346 ev:afbd7b7bcb4ab772:201 …</p>
 
 <h3>Broad HTTP path enumeration with mostly failing responses <span class="badge sev-low">low</span> <span class="badge">confidence medium</span> <span class="badge">open</span></h3>
-<p class="small">al-2f1d7ad46bf12d122a99 · ARG-ENUM-001@1 · 2026-11-03T08:33:20.000000Z → 2026-11-03T08:35:46.617981Z · analyst status new</p>
+<p class="small">al-f095bcb452c35dbae8f8 · ARG-ENUM-001@1 · 2026-11-03T08:33:20.000000Z → 2026-11-03T08:35:46.617981Z · analyst status new</p>
 <p><b>Why:</b> 61 requests to 33 distinct paths from src_ip=203.0.113.50, http_host=portal.demo.example within 300s; 4xx ratio 0.984.</p>
 <p class="small">automation: consistent_with_automation · LLM: unknown · framework: unknown  · purpose: reconnaissance (attempt)</p>
 <p class="small"><b>Confidence rationale:</b> rule base confidence &#39;medium&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
@@ -69,7 +69,7 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
 <p class="small mono">evidence: ev:afbd7b7bcb4ab772:309 ev:afbd7b7bcb4ab772:157 ev:afbd7b7bcb4ab772:221 ev:afbd7b7bcb4ab772:269 ev:afbd7b7bcb4ab772:107 ev:afbd7b7bcb4ab772:332 ev:afbd7b7bcb4ab772:203 ev:afbd7b7bcb4ab772:150 ev:afbd7b7bcb4ab772:130 ev:afbd7b7bcb4ab772:217 ev:afbd7b7bcb4ab772:33 ev:afbd7b7bcb4ab772:71 ev:afbd7b7bcb4ab772:260 ev:afbd7b7bcb4ab772:188 ev:afbd7b7bcb4ab772:19 ev:afbd7b7bcb4ab772:254 ev:afbd7b7bcb4ab772:199 ev:afbd7b7bcb4ab772:49 ev:afbd7b7bcb4ab772:117 ev:afbd7b7bcb4ab772:176 ev:afbd7b7bcb4ab772:35 ev:afbd7b7bcb4ab772:44 ev:afbd7b7bcb4ab772:11 ev:afbd7b7bcb4ab772:91 ev:afbd7b7bcb4ab772:144 ev:afbd7b7bcb4ab772:262 ev:afbd7b7bcb4ab772:241 ev:afbd7b7bcb4ab772:14 ev:afbd7b7bcb4ab772:272 ev:afbd7b7bcb4ab772:306 …</p>
 
 <h3>Repeated failures followed by success on a new path (adaptation hypothesis) <span class="badge sev-low">low</span> <span class="badge">confidence low</span> <span class="badge">open</span></h3>
-<p class="small">al-386b6e0ee9162385a537 · ARG-ENUM-002@1 · 2026-11-03T08:33:20.000000Z → 2026-11-03T08:35:46.617981Z · analyst status new</p>
+<p class="small">al-f281e5b2ef77eb84ab74 · ARG-ENUM-002@1 · 2026-11-03T08:33:20.000000Z → 2026-11-03T08:35:46.617981Z · analyst status new</p>
 <p><b>Why:</b> Failures then success from src_ip=203.0.113.50, http_host=portal.demo.example within 900s. Observed: response codes. Not observed: the requester&#39;s intent or decision process.</p>
 <p class="small">automation: unknown · LLM: unknown · framework: unknown  · purpose: initial_access (attempt)</p>
 <p class="small"><b>Confidence rationale:</b> rule base confidence &#39;low&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
@@ -78,7 +78,7 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
 <p class="small mono">evidence: ev:afbd7b7bcb4ab772:309 ev:afbd7b7bcb4ab772:157 ev:afbd7b7bcb4ab772:221 ev:afbd7b7bcb4ab772:269 ev:afbd7b7bcb4ab772:107 ev:afbd7b7bcb4ab772:332 ev:afbd7b7bcb4ab772:203 ev:afbd7b7bcb4ab772:150 ev:afbd7b7bcb4ab772:130 ev:afbd7b7bcb4ab772:217 ev:afbd7b7bcb4ab772:33 ev:afbd7b7bcb4ab772:71 ev:afbd7b7bcb4ab772:260 ev:afbd7b7bcb4ab772:188 ev:afbd7b7bcb4ab772:19 ev:afbd7b7bcb4ab772:216</p>
 
 <h3>Password spray pattern (many accounts, one source) <span class="badge sev-medium">medium</span> <span class="badge">confidence medium</span> <span class="badge">open</span></h3>
-<p class="small">al-aa253d930f5ccbda5d32 · ARG-AUTH-001@1 · 2026-11-03T08:50:00.000000Z → 2026-11-03T08:53:40.000000Z · analyst status new</p>
+<p class="small">al-4565a46924b70aee34f4 · ARG-AUTH-001@1 · 2026-11-03T08:50:00.000000Z → 2026-11-03T08:53:40.000000Z · analyst status new</p>
 <p><b>Why:</b> 12 distinct accounts failed authentication from src_ip=203.0.113.50 within 3600s.</p>
 <p class="small">automation: consistent_with_automation · LLM: unknown · framework: unknown  · purpose: credential_access (attempt)</p>
 <p class="small"><b>Confidence rationale:</b> rule base confidence &#39;medium&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
@@ -87,7 +87,7 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
 <p class="small mono">evidence: ev:fb385fb1e59fb9f0:1 ev:fb385fb1e59fb9f0:2 ev:fb385fb1e59fb9f0:3 ev:fb385fb1e59fb9f0:4 ev:fb385fb1e59fb9f0:5 ev:fb385fb1e59fb9f0:6 ev:fb385fb1e59fb9f0:7 ev:fb385fb1e59fb9f0:8 ev:fb385fb1e59fb9f0:9 ev:fb385fb1e59fb9f0:10 ev:fb385fb1e59fb9f0:11 ev:fb385fb1e59fb9f0:12</p>
 
 <h3>Port sweep from one source <span class="badge sev-low">low</span> <span class="badge">confidence medium</span> <span class="badge">open</span></h3>
-<p class="small">al-20adfc9fc3b2a4ae2221 · ARG-ENUM-003@1 · 2026-11-03T09:06:40.000000Z → 2026-11-03T09:06:54.500000Z · analyst status new</p>
+<p class="small">al-1b479894eb0bdcb65176 · ARG-ENUM-003@1 · 2026-11-03T09:06:40.000000Z → 2026-11-03T09:06:54.500000Z · analyst status new</p>
 <p><b>Why:</b> 30 distinct destination ports contacted by src_ip=203.0.113.50 within 60s.</p>
 <p class="small">automation: consistent_with_automation · LLM: unknown · framework: unknown  · purpose: reconnaissance (attempt)</p>
 <p class="small"><b>Confidence rationale:</b> rule base confidence &#39;medium&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
@@ -96,7 +96,7 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
 <p class="small mono">evidence: ev:1de0b46ccb704f34:1 ev:1de0b46ccb704f34:2 ev:1de0b46ccb704f34:3 ev:1de0b46ccb704f34:4 ev:1de0b46ccb704f34:5 ev:1de0b46ccb704f34:6 ev:1de0b46ccb704f34:7 ev:1de0b46ccb704f34:8 ev:1de0b46ccb704f34:9 ev:1de0b46ccb704f34:10 ev:1de0b46ccb704f34:11 ev:1de0b46ccb704f34:12 ev:1de0b46ccb704f34:13 ev:1de0b46ccb704f34:14 ev:1de0b46ccb704f34:15 ev:1de0b46ccb704f34:16 ev:1de0b46ccb704f34:17 ev:1de0b46ccb704f34:18 ev:1de0b46ccb704f34:19 ev:1de0b46ccb704f34:20 ev:1de0b46ccb704f34:21 ev:1de0b46ccb704f34:22 ev:1de0b46ccb704f34:23 ev:1de0b46ccb704f34:24 ev:1de0b46ccb704f34:25 ev:1de0b46ccb704f34:26 ev:1de0b46ccb704f34:27 ev:1de0b46ccb704f34:28 ev:1de0b46ccb704f34:29 ev:1de0b46ccb704f34:30</p>
 
 <h3>Connection to an AI model provider <span class="badge sev-informational">informational</span> <span class="badge">confidence medium</span> <span class="badge">open</span></h3>
-<p class="small">al-5a0c88a9028b015148f8 · ARG-LLM-001@1 · 2026-11-03T09:15:00.000000Z → 2026-11-03T09:15:00.000000Z · analyst status new</p>
+<p class="small">al-f27e6e495683b78817bc · ARG-LLM-001@1 · 2026-11-03T09:15:00.000000Z → 2026-11-03T09:15:00.000000Z · analyst status new</p>
 <p><b>Why:</b> 1 connection record(s) to domain=api.openai.com. Observation of a connection only.</p>
 <p class="small">automation: unknown · LLM: possible · framework: unknown  · purpose: unknown (indicator)</p>
 <p class="small"><b>Confidence rationale:</b> rule base confidence &#39;medium&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
@@ -105,7 +105,7 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
 <p class="small mono">evidence: ev:6b383f67e9d8dcf0:1</p>
 
 <h3>[WEAK] Text mentioning ARTEX in User-Agent, URL or file name <span class="badge sev-informational">informational</span> <span class="badge">confidence low</span> <span class="badge">open</span></h3>
-<p class="small">al-2efb0a275c2838cd1b4c · ARG-ARTEX-W01@1 · 2026-11-03T09:23:20.000000Z → 2026-11-03T10:13:15.000000Z · analyst status new</p>
+<p class="small">al-974cbc65c215b53e42d6 · ARG-ARTEX-W01@1 · 2026-11-03T09:23:20.000000Z → 2026-11-03T10:13:15.000000Z · analyst status new</p>
 <p><b>Why:</b> 2 record(s) contain the text &#39;artex&#39;.</p>
 <p class="small">automation: unknown · LLM: unknown · framework: consistent_with ARTEX · purpose: unknown (indicator)</p>
 <p class="small"><b>Confidence rationale:</b> rule base confidence &#39;low&#39; (rule status experimental) | experimental rule: confidence capped at &#39;low&#39; until validated | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
@@ -114,7 +114,7 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
 <p class="small mono">evidence: ev:afbd7b7bcb4ab772:5 ev:4802ec220c58dfa3:7</p>
 
 <h3>Indicator list match (validity evaluated at event time) <span class="badge sev-medium">medium</span> <span class="badge">confidence medium</span> <span class="badge">open</span></h3>
-<p class="small">al-46be26abc7fc7bde9834 · ARG-IOC-001@1 · 2026-11-03T09:40:00.000000Z → 2026-11-03T09:56:50.000000Z · analyst status new</p>
+<p class="small">al-95e6737d6876015da42e · ARG-IOC-001@1 · 2026-11-03T09:40:00.000000Z → 2026-11-03T09:56:50.000000Z · analyst status new</p>
 <p><b>Why:</b> 2 record(s) matched configured indicators.</p>
 <p class="small">automation: unknown · LLM: unknown · framework: unknown  · purpose: unknown (indicator)</p>
 <p class="small"><b>Confidence rationale:</b> rule base confidence &#39;medium&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
@@ -123,7 +123,7 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
 <p class="small mono">evidence: ev:afbd7b7bcb4ab772:292 ev:4802ec220c58dfa3:2</p>
 
 <h3>Indicator list match (validity evaluated at event time) <span class="badge sev-informational">informational</span> <span class="badge">confidence low</span> <span class="badge">open</span></h3>
-<p class="small">al-f30c5a67aed1bb07d094 · ARG-IOC-001@1 · 2026-11-03T09:41:40.000000Z → 2026-11-03T09:41:40.000000Z · analyst status new</p>
+<p class="small">al-9424cd8f5d15c268dab7 · ARG-IOC-001@1 · 2026-11-03T09:41:40.000000Z → 2026-11-03T09:41:40.000000Z · analyst status new</p>
 <p><b>Why:</b> 1 record(s) matched configured indicators.</p>
 <p class="small">automation: unknown · LLM: unknown · framework: unknown  · purpose: unknown (indicator)</p>
 <p class="small"><b>Confidence rationale:</b> rule base confidence &#39;medium&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39; | only expired/out-of-validity IOC matches: historical context, not attribution or a blocking instruction</p>
@@ -132,7 +132,7 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
 <p class="small mono">evidence: ev:afbd7b7bcb4ab772:223</p>
 
 <h3>Server or office process spawned a command shell <span class="badge sev-high">high</span> <span class="badge">confidence medium</span> <span class="badge">open</span></h3>
-<p class="small">al-1b4d70770bdbbfa3a437 · ARG-EP-001@1 · 2026-11-03T09:56:40.000000Z → 2026-11-03T09:56:40.000000Z · analyst status new</p>
+<p class="small">al-afb8ee81068f30afc4ad · ARG-EP-001@1 · 2026-11-03T09:56:40.000000Z → 2026-11-03T09:56:40.000000Z · analyst status new</p>
 <p><b>Why:</b> Shell started under host=web-01.demo.example, parent_process_guid={aaaa0001-0000-0000-0000-0000000000aa} (1 event(s)).</p>
 <p class="small">automation: unknown · LLM: unknown · framework: unknown  · purpose: execution (observed_success)</p>
 <p class="small"><b>Confidence rationale:</b> rule base confidence &#39;medium&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
@@ -141,7 +141,7 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
 <p class="small mono">evidence: ev:4802ec220c58dfa3:1</p>
 
 <h3>Shell child process followed by external connection from the same process <span class="badge sev-medium">medium</span> <span class="badge">confidence medium</span> <span class="badge">open</span></h3>
-<p class="small">al-6f4d173bf19606cf939c · ARG-EP-002@1 · 2026-11-03T09:56:40.000000Z → 2026-11-03T09:56:50.000000Z · analyst status new</p>
+<p class="small">al-04a4abf07e26c6608ce3 · ARG-EP-002@1 · 2026-11-03T09:56:40.000000Z → 2026-11-03T09:56:50.000000Z · analyst status new</p>
 <p><b>Why:</b> Process host=web-01.demo.example, process_guid={aaaa0001-0000-0000-0000-000000000001} started then connected to a public address within 300s.</p>
 <p class="small">automation: unknown · LLM: unknown · framework: unknown  · purpose: command_and_control (indicator)</p>
 <p class="small"><b>Confidence rationale:</b> rule base confidence &#39;medium&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
@@ -150,7 +150,7 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
 <p class="small mono">evidence: ev:4802ec220c58dfa3:1 ev:4802ec220c58dfa3:2</p>
 
 <h3>Persistence mechanism created (scheduled task / service / Run key / web shell file) <span class="badge sev-high">high</span> <span class="badge">confidence medium</span> <span class="badge">open</span></h3>
-<p class="small">al-afb02c0d7f8e4c1916c8 · ARG-P[REDACTED]@1 · 2026-11-03T09:57:00.000000Z → 2026-11-03T09:57:00.000000Z · analyst status new</p>
+<p class="small">al-9f006f46ec3826515f40 · ARG-P[REDACTED]@1 · 2026-11-03T09:57:00.000000Z → 2026-11-03T09:57:00.000000Z · analyst status new</p>
 <p><b>Why:</b> 1 persistence-related event(s) on host=web-01.demo.example.</p>
 <p class="small">automation: unknown · LLM: unknown · framework: unknown  · purpose: persistence (observed_success)</p>
 <p class="small"><b>Confidence rationale:</b> rule base confidence &#39;medium&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
@@ -159,7 +159,7 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
 <p class="small mono">evidence: ev:4802ec220c58dfa3:3</p>
 
 <h3>[EXPERIMENTAL] ARTEX controller binary executed <span class="badge sev-medium">medium</span> <span class="badge">confidence low</span> <span class="badge">open</span></h3>
-<p class="small">al-4d21733b50c243028e1f · ARG-ARTEX-X01@1 · 2026-11-03T10:13:10.000000Z → 2026-11-03T10:13:10.000000Z · analyst status new</p>
+<p class="small">al-9fd14e9d81214018b198 · ARG-ARTEX-X01@1 · 2026-11-03T10:13:10.000000Z → 2026-11-03T10:13:10.000000Z · analyst status new</p>
 <p><b>Why:</b> Process image matching the ARTEX build output name on host=dev-ws-07.demo.example.</p>
 <p class="small">automation: unknown · LLM: unknown · framework: consistent_with ARTEX · purpose: unknown (indicator)</p>
 <p class="small"><b>Confidence rationale:</b> rule base confidence &#39;low&#39; (rule status experimental) | experimental rule: confidence capped at &#39;low&#39; until validated | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
@@ -168,7 +168,7 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
 <p class="small mono">evidence: ev:4802ec220c58dfa3:5</p>
 
 <h3>[EXPERIMENTAL] Recording-p[REDACTED] CA file created (mitmproxy naming) <span class="badge sev-low">low</span> <span class="badge">confidence low</span> <span class="badge">open</span></h3>
-<p class="small">al-30309747b8bdc1d7dcde · ARG-ARTEX-X03@1 · 2026-11-03T10:13:15.000000Z → 2026-11-03T10:13:15.000000Z · analyst status new</p>
+<p class="small">al-1d1305ff11fb531b0d04 · ARG-ARTEX-X03@2 · 2026-11-03T10:13:15.000000Z → 2026-11-03T10:13:15.000000Z · analyst status new</p>
 <p><b>Why:</b> CA file path consistent with ARTEX traffic recorder on host=dev-ws-07.demo.example.</p>
 <p class="small">automation: unknown · LLM: unknown · framework: consistent_with ARTEX · purpose: unknown (indicator)</p>
 <p class="small"><b>Confidence rationale:</b> rule base confidence &#39;low&#39; (rule status experimental) | experimental rule: confidence capped at &#39;low&#39; until validated | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
@@ -177,7 +177,7 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
 <p class="small mono">evidence: ev:4802ec220c58dfa3:7</p>
 
 <h3>Connection to an AI model provider <span class="badge sev-informational">informational</span> <span class="badge">confidence medium</span> <span class="badge">open</span></h3>
-<p class="small">al-3d77b63b3d03468ae527 · ARG-LLM-001@1 · 2026-11-03T10:13:19.000000Z → 2026-11-03T10:13:19.000000Z · analyst status new</p>
+<p class="small">al-74ec1784084756d309fd · ARG-LLM-001@1 · 2026-11-03T10:13:19.000000Z → 2026-11-03T10:13:19.000000Z · analyst status new</p>
 <p><b>Why:</b> 1 connection record(s) to domain=api.deepseek.com. Observation of a connection only.</p>
 <p class="small">automation: unknown · LLM: possible · framework: unknown  · purpose: unknown (indicator)</p>
 <p class="small"><b>Confidence rationale:</b> rule base confidence &#39;medium&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
@@ -186,7 +186,7 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
 <p class="small mono">evidence: ev:4802ec220c58dfa3:8</p>
 
 <h3>Model tool-call followed by agent tool execution in the same session <span class="badge sev-informational">informational</span> <span class="badge">confidence medium</span> <span class="badge">open</span></h3>
-<p class="small">al-07c35ac7e721d167d871 · ARG-LLM-002@1 · 2026-11-03T10:13:20.000000Z → 2026-11-03T10:13:24.000000Z · analyst status new</p>
+<p class="small">al-2d407e74ed06a2923ba9 · ARG-LLM-002@1 · 2026-11-03T10:13:20.000000Z → 2026-11-03T10:13:24.000000Z · analyst status new</p>
 <p><b>Why:</b> Session session_id=exp12-worker-i3: model tool call followed by tool execution within 600s.</p>
 <p class="small">automation: observed_automation · LLM: directly_observed · framework: unknown  · purpose: unknown (observed_success)</p>
 <p class="small"><b>Confidence rationale:</b> rule base confidence &#39;high&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
@@ -195,7 +195,7 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
 <p class="small mono">evidence: ev:9c99a8dd7a056c98:1 ev:9c99a8dd7a056c98:2</p>
 
 <h3>Model tool-call linked to an endpoint process (same ProcessGuid) <span class="badge sev-low">low</span> <span class="badge">confidence medium</span> <span class="badge">open</span></h3>
-<p class="small">al-08c7a6d3c24afcfd3ee8 · ARG-LLM-003@1 · 2026-11-03T10:13:20.000000Z → 2026-11-03T10:13:25.000000Z · analyst status new</p>
+<p class="small">al-1867f400485a291b9f6a · ARG-LLM-003@1 · 2026-11-03T10:13:20.000000Z → 2026-11-03T10:13:25.000000Z · analyst status new</p>
 <p><b>Why:</b> Audit record and endpoint process share host=dev-ws-07.demo.example, proc_link={bbbb0002-0000-0000-0000-000000000077} within 600s.</p>
 <p class="small">automation: observed_automation · LLM: directly_observed · framework: unknown  · purpose: execution (observed_success)</p>
 <p class="small"><b>Confidence rationale:</b> rule base confidence &#39;high&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
@@ -204,7 +204,7 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
 <p class="small mono">evidence: ev:9c99a8dd7a056c98:1 ev:4802ec220c58dfa3:4</p>
 
 <h3>[EXPERIMENTAL] Model-gateway session ids in ARTEX format <span class="badge sev-medium">medium</span> <span class="badge">confidence low</span> <span class="badge">open</span></h3>
-<p class="small">al-27d703984e6923721dbf · ARG-ARTEX-X04@1 · 2026-11-03T10:13:20.000000Z → 2026-11-03T10:13:20.000000Z · analyst status new</p>
+<p class="small">al-cd4040750a36bbe441b0 · ARG-ARTEX-X04@1 · 2026-11-03T10:13:20.000000Z → 2026-11-03T10:13:20.000000Z · analyst status new</p>
 <p><b>Why:</b> Session session_id=exp12-worker-i3 follows ARTEX session naming (1 record(s)).</p>
 <p class="small">automation: consistent_with_automation · LLM: directly_observed · framework: consistent_with ARTEX · purpose: unknown (indicator)</p>
 <p class="small"><b>Confidence rationale:</b> rule base confidence &#39;low&#39; (rule status experimental) | experimental rule: confidence capped at &#39;low&#39; until validated | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
@@ -213,7 +213,7 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
 <p class="small mono">evidence: ev:9c99a8dd7a056c98:1</p>
 
 <h3>[EXPERIMENTAL] Child process of an &#39;artex&#39; parent <span class="badge sev-medium">medium</span> <span class="badge">confidence low</span> <span class="badge">open</span></h3>
-<p class="small">al-1d59395e0521407cd36a · ARG-ARTEX-X02@1 · 2026-11-03T10:13:25.000000Z → 2026-11-03T10:13:25.000000Z · analyst status new</p>
+<p class="small">al-a27439cf653b26ddee91 · ARG-ARTEX-X02@1 · 2026-11-03T10:13:25.000000Z → 2026-11-03T10:13:25.000000Z · analyst status new</p>
 <p><b>Why:</b> 1 child process(es) of an &#39;artex&#39; parent on host=dev-ws-07.demo.example.</p>
 <p class="small">automation: consistent_with_automation · LLM: unknown · framework: consistent_with ARTEX · purpose: execution (indicator)</p>
 <p class="small"><b>Confidence rationale:</b> rule base confidence &#39;low&#39; (rule status experimental) | experimental rule: confidence capped at &#39;low&#39; until validated | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
@@ -222,7 +222,7 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
 <p class="small mono">evidence: ev:4802ec220c58dfa3:4</p>
 
 <h3>Dual-use offensive tool executed <span class="badge sev-medium">medium</span> <span class="badge">confidence low</span> <span class="badge">open</span></h3>
-<p class="small">al-ec51120271632b158a5d · ARG-EP-003@1 · 2026-11-03T10:13:26.000000Z → 2026-11-03T10:13:26.000000Z · analyst status new</p>
+<p class="small">al-a569e8da043ec9424a63 · ARG-EP-003@1 · 2026-11-03T10:13:26.000000Z → 2026-11-03T10:13:26.000000Z · analyst status new</p>
 <p><b>Why:</b> 1 dual-use tool execution(s) on host=dev-ws-07.demo.example.</p>
 <p class="small">automation: unknown · LLM: unknown · framework: unknown  · purpose: reconnaissance (indicator)</p>
 <p class="small"><b>Confidence rationale:</b> rule base confidence &#39;low&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
@@ -231,7 +231,7 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
 <p class="small mono">evidence: ev:4802ec220c58dfa3:6</p>
 
 <h3>Human approval recorded in agent audit <span class="badge sev-informational">informational</span> <span class="badge">confidence medium</span> <span class="badge">open</span></h3>
-<p class="small">al-b3931982426f32c20670 · ARG-LLM-004@1 · 2026-11-03T10:15:00.000000Z → 2026-11-03T10:15:00.000000Z · analyst status new</p>
+<p class="small">al-d879c8280dba2571a572 · ARG-LLM-004@1 · 2026-11-03T10:15:00.000000Z → 2026-11-03T10:15:00.000000Z · analyst status new</p>
 <p><b>Why:</b> 1 human decision record(s) in session session_id=exp12-worker-i3.</p>
 <p class="small">automation: observed_manual_component · LLM: unknown · framework: unknown  · purpose: unknown (observed_success)</p>
 <p class="small"><b>Confidence rationale:</b> rule base confidence &#39;high&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
@@ -240,7 +240,7 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
 <p class="small mono">evidence: ev:9c99a8dd7a056c98:3</p>
 
 <h3>Failures, then success, then sensitive action by the same identity <span class="badge sev-high">high</span> <span class="badge">confidence medium</span> <span class="badge">open</span></h3>
-<p class="small">al-019d8d0c1ceb2f284ea7 · ARG-AUTH-002@1 · 2026-11-03T10:46:40.000000Z → 2026-11-03T15:46:40.000000Z · analyst status new</p>
+<p class="small">al-3fc881bc15e64967c22f · ARG-AUTH-002@1 · 2026-11-03T10:46:40.000000Z → 2026-11-03T15:46:40.000000Z · analyst status new</p>
 <p><b>Why:</b> Ordered sequence for tenant_id=tenant-contoso-demo, user=alice@demo.example: failed sign-ins, success, then sensitive action within 86400s.</p>
 <p class="small">automation: unknown · LLM: unknown · framework: unknown  · purpose: privilege_escalation (observed_success)</p>
 <p class="small"><b>Confidence rationale:</b> rule base confidence &#39;high&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
@@ -248,17 +248,17 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
 
 <p class="small mono">evidence: ev:fb385fb1e59fb9f0:13 ev:fb385fb1e59fb9f0:14 ev:fb385fb1e59fb9f0:15 ev:fb385fb1e59fb9f0:17 ev:fb385fb1e59fb9f0:18</p>
 
-<h3>Failed sign-ins followed by a successful sign-in <span class="badge sev-medium">medium</span> <span class="badge">confidence medium</span> <span class="badge">open</span></h3>
-<p class="small">al-a04b3e02bff6a3de568e · ARG-AUTH-003@1 · 2026-11-03T13:33:20.000000Z → 2026-11-03T13:38:20.000000Z · analyst status new</p>
-<p><b>Why:</b> tenant_id=tenant-contoso-demo, user=bob@demo.example: failures followed by a success within 86400s. No claim of data access is made.</p>
+<h3>Uninterrupted failed sign-ins from one source, then success from that source <span class="badge sev-medium">medium</span> <span class="badge">confidence medium</span> <span class="badge">open</span></h3>
+<p class="small">al-bb4c455dba6d1e661cb2 · ARG-AUTH-003@2 · 2026-11-03T13:33:20.000000Z → 2026-11-03T13:38:20.000000Z · analyst status new</p>
+<p><b>Why:</b> tenant_id=tenant-contoso-demo, user=bob@demo.example, src_ip=192.0.2.10: uninterrupted failures then a success from the same source within 86400s. No claim of data access is made.</p>
 <p class="small">automation: unknown · LLM: unknown · framework: unknown  · purpose: credential_access (observed_success)</p>
-<p class="small"><b>Confidence rationale:</b> rule base confidence &#39;medium&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
-<p class="small"><b>Alternatives:</b> user forgot password then succeeded; password manager sync delay · <b>Missing visibility:</b> </p>
-<p class="small"><b>Follow-up:</b> data access by the same identity after the successful sign-in — absent_within_demonstrated_coverage no matching identity_cloud records within 7200s after 2026-11-03T13:38:20.000000Z (coverage 2026-11-03T08:50:00.000000Z..2026-11-03T16:53:20.000000Z)</p>
+<p class="small"><b>Confidence rationale:</b> rule base confidence &#39;medium&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39; | source history: no earlier records for this identity in the case; novelty of the source cannot be assessed</p>
+<p class="small"><b>Alternatives:</b> user mistyping repeatedly on their own device; device with a stale saved password that is later updated; password manager sync delay · <b>Missing visibility:</b> attacks rotating source addresses for every attempt are not matched by this rule (known gap, see AUTH_RULE_EVALUATION.md)</p>
+<p class="small"><b>Follow-up:</b> data access by the same identity (any source) after the successful sign-in — absent_within_demonstrated_coverage no matching identity_cloud records within 7200s after 2026-11-03T13:38:20.000000Z (coverage 2026-11-03T08:50:00.000000Z..2026-11-03T16:53:20.000000Z)</p>
 <p class="small mono">evidence: ev:fb385fb1e59fb9f0:19 ev:fb385fb1e59fb9f0:20 ev:fb385fb1e59fb9f0:21 ev:fb385fb1e59fb9f0:22 ev:fb385fb1e59fb9f0:23 ev:fb385fb1e59fb9f0:25</p>
 
 <h3>Service principal sign-in followed by credential or permission change <span class="badge sev-high">high</span> <span class="badge">confidence medium</span> <span class="badge">open</span></h3>
-<p class="small">al-10d949d8394882c5f358 · ARG-SP-001@1 · 2026-11-03T16:20:00.000000Z → 2026-11-03T16:30:00.000000Z · analyst status new</p>
+<p class="small">al-8d0c02a23d477bb58127 · ARG-SP-001@1 · 2026-11-03T16:20:00.000000Z → 2026-11-03T16:30:00.000000Z · analyst status new</p>
 <p><b>Why:</b> Service principal tenant_id=tenant-contoso-demo, app_id=app-1111-demo signed in then changed credentials/permissions within 7200s.</p>
 <p class="small">automation: unknown · LLM: unknown · framework: unknown  · purpose: persistence (observed_success)</p>
 <p class="small"><b>Confidence rationale:</b> rule base confidence &#39;high&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
@@ -267,7 +267,7 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
 <p class="small mono">evidence: ev:fb385fb1e59fb9f0:27 ev:fb385fb1e59fb9f0:28</p>
 
 <h3>Secret reads across several vaults in a short period <span class="badge sev-high">high</span> <span class="badge">confidence medium</span> <span class="badge">open</span></h3>
-<p class="small">al-811b16304612cd8b175c · ARG-COLL-002@1 · 2026-11-03T16:36:40.000000Z → 2026-11-03T16:39:40.000000Z · analyst status new</p>
+<p class="small">al-1e2ff224a75a7ab2aa03 · ARG-COLL-002@1 · 2026-11-03T16:36:40.000000Z → 2026-11-03T16:39:40.000000Z · analyst status new</p>
 <p><b>Why:</b> tenant_id=tenant-contoso-demo, app_id=app-1111-demo read secrets from 3 vaults within 600s.</p>
 <p class="small">automation: unknown · LLM: unknown · framework: unknown  · purpose: collection (observed_success)</p>
 <p class="small"><b>Confidence rationale:</b> rule base confidence &#39;medium&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
@@ -276,7 +276,7 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
 <p class="small mono">evidence: ev:fb385fb1e59fb9f0:29 ev:fb385fb1e59fb9f0:30 ev:fb385fb1e59fb9f0:31 ev:fb385fb1e59fb9f0:32</p>
 
 <h3>Archive created then large outbound transfer from the same host <span class="badge sev-high">high</span> <span class="badge">confidence medium</span> <span class="badge">open</span></h3>
-<p class="small">al-6570c9afcf85790e28ad · ARG-COLL-001@1 · 2026-11-03T19:06:40.000000Z → 2026-11-03T19:16:40.000000Z · analyst status new</p>
+<p class="small">al-93f208acb3b3c77e80c9 · ARG-COLL-001@1 · 2026-11-03T19:06:40.000000Z → 2026-11-03T19:16:40.000000Z · analyst status new</p>
 <p><b>Why:</b> Archive then &gt;=50MB outbound from host=fileserver-02.demo.example within 1800s. Data theft is NOT established.</p>
 <p class="small">automation: unknown · LLM: unknown · framework: unknown  · purpose: possible_exfiltration (indicator)</p>
 <p class="small"><b>Confidence rationale:</b> rule base confidence &#39;medium&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39;</p>
@@ -285,7 +285,7 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
 <p class="small mono">evidence: ev:6ba2323d7cba5c9b:1 ev:6ba2323d7cba5c9b:2</p>
 
 <h3>Archive created then large outbound transfer from the same host <span class="badge sev-high">high</span> <span class="badge">confidence medium</span> <span class="badge">authorized_automation</span></h3>
-<p class="small">al-99e8bd7f71bb13d416ad · ARG-COLL-001@1 · 2026-11-03T19:23:20.000000Z → 2026-11-03T19:25:00.000000Z · analyst status new</p>
+<p class="small">al-763f19bffad9c4a17271 · ARG-COLL-001@1 · 2026-11-03T19:23:20.000000Z → 2026-11-03T19:25:00.000000Z · analyst status new</p>
 <p><b>Why:</b> Archive then &gt;=50MB outbound from host=backup-01 within 1800s. Data theft is NOT established.</p>
 <p class="small">automation: observed_automation · LLM: unknown · framework: unknown  · purpose: possible_exfiltration (indicator)</p>
 <p class="small"><b>Confidence rationale:</b> rule base confidence &#39;medium&#39; (rule status test) | evidence comes from imported records with unverified provenance: statements are observations &#39;according to the supplied records&#39;; confidence capped at &#39;medium&#39; | all 2 events match authorized automation entry AA-002 within scope/schedule</p>
@@ -725,12 +725,12 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
 }</pre>
 <h2>Runs</h2><pre class="small">[
   {
-    &#34;case_id&#34;: &#34;case-6c9050d48534&#34;,
-    &#34;finished_at&#34;: &#34;2026-11-20T09:04:49.888876Z&#34;,
+    &#34;case_id&#34;: &#34;case-eb5cf15efefc&#34;,
+    &#34;finished_at&#34;: &#34;2026-11-20T10:07:32.067948Z&#34;,
     &#34;manifest&#34;: [
       {
         &#34;format&#34;: &#34;zeek_jsonl&#34;,
-        &#34;input_id&#34;: &#34;in-009573c8838bda92-36b5aa&#34;,
+        &#34;input_id&#34;: &#34;in-009573c8838bda92-e30668&#34;,
         &#34;options&#34;: {
           &#34;zeek_log&#34;: &#34;http&#34;
         },
@@ -740,7 +740,7 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
       },
       {
         &#34;format&#34;: &#34;zeek_jsonl&#34;,
-        &#34;input_id&#34;: &#34;in-1de0b46ccb704f34-36b5aa&#34;,
+        &#34;input_id&#34;: &#34;in-1de0b46ccb704f34-e30668&#34;,
         &#34;options&#34;: {
           &#34;zeek_log&#34;: &#34;conn&#34;
         },
@@ -750,7 +750,7 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
       },
       {
         &#34;format&#34;: &#34;sysmon_xml&#34;,
-        &#34;input_id&#34;: &#34;in-4802ec220c58dfa3-816510&#34;,
+        &#34;input_id&#34;: &#34;in-4802ec220c58dfa3-643edc&#34;,
         &#34;options&#34;: {},
         &#34;parser_version&#34;: &#34;sysmon_xml/1.0&#34;,
         &#34;provenance_trust&#34;: &#34;unverified&#34;,
@@ -758,7 +758,7 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
       },
       {
         &#34;format&#34;: &#34;zeek_jsonl&#34;,
-        &#34;input_id&#34;: &#34;in-6b383f67e9d8dcf0-36b5aa&#34;,
+        &#34;input_id&#34;: &#34;in-6b383f67e9d8dcf0-e30668&#34;,
         &#34;options&#34;: {
           &#34;zeek_log&#34;: &#34;dns&#34;
         },
@@ -768,7 +768,7 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
       },
       {
         &#34;format&#34;: &#34;native_jsonl&#34;,
-        &#34;input_id&#34;: &#34;in-6ba2323d7cba5c9b-efd0b5&#34;,
+        &#34;input_id&#34;: &#34;in-6ba2323d7cba5c9b-02fda1&#34;,
         &#34;options&#34;: {},
         &#34;parser_version&#34;: &#34;native_jsonl/1.0&#34;,
         &#34;provenance_trust&#34;: &#34;unverified&#34;,
@@ -776,7 +776,7 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
       },
       {
         &#34;format&#34;: &#34;native_jsonl&#34;,
-        &#34;input_id&#34;: &#34;in-9c99a8dd7a056c98-efd0b5&#34;,
+        &#34;input_id&#34;: &#34;in-9c99a8dd7a056c98-02fda1&#34;,
         &#34;options&#34;: {},
         &#34;parser_version&#34;: &#34;native_jsonl/1.0&#34;,
         &#34;provenance_trust&#34;: &#34;unverified&#34;,
@@ -784,7 +784,7 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
       },
       {
         &#34;format&#34;: &#34;splunk_csv&#34;,
-        &#34;input_id&#34;: &#34;in-afbd7b7bcb4ab772-30a717&#34;,
+        &#34;input_id&#34;: &#34;in-afbd7b7bcb4ab772-eed069&#34;,
         &#34;options&#34;: {
           &#34;profile&#34;: &#34;proxy&#34;
         },
@@ -794,31 +794,31 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
       },
       {
         &#34;format&#34;: &#34;native_jsonl&#34;,
-        &#34;input_id&#34;: &#34;in-fb385fb1e59fb9f0-efd0b5&#34;,
+        &#34;input_id&#34;: &#34;in-fb385fb1e59fb9f0-02fda1&#34;,
         &#34;options&#34;: {},
         &#34;parser_version&#34;: &#34;native_jsonl/1.0&#34;,
         &#34;provenance_trust&#34;: &#34;unverified&#34;,
         &#34;sha256&#34;: &#34;fb385fb1e59fb9f099542f7110dcf2c9107ce61934570eeafa3ef657095ef96e&#34;
       }
     ],
-    &#34;run_id&#34;: &#34;run-4a24cb07c48c74d5&#34;,
+    &#34;run_id&#34;: &#34;run-ca88043f215ef9d7&#34;,
     &#34;seq&#34;: 1,
-    &#34;started_at&#34;: &#34;2026-11-20T09:04:49.851295Z&#34;,
+    &#34;started_at&#34;: &#34;2026-11-20T10:07:32.031314Z&#34;,
     &#34;stats&#34;: {
       &#34;alerts&#34;: 29,
       &#34;events&#34;: 425,
       &#34;new&#34;: 29,
       &#34;no_longer_produced&#34;: 0,
-      &#34;rules_evaluated&#34;: 26,
+      &#34;rules_evaluated&#34;: 27,
       &#34;rules_not_evaluable&#34;: 0,
       &#34;updated&#34;: 0
     },
     &#34;versions&#34;: {
-      &#34;argos&#34;: &#34;0.1.0&#34;,
+      &#34;argos&#34;: &#34;0.2.0&#34;,
       &#34;config_hash&#34;: &#34;ff6f50dfd02d6882&#34;,
-      &#34;engine&#34;: &#34;argos-engine/0.1.0&#34;,
+      &#34;engine&#34;: &#34;argos-engine/0.2.0&#34;,
       &#34;ioc_hash&#34;: &#34;425a70690680e296&#34;,
-      &#34;manifest_hash&#34;: &#34;7c527753a49898d7&#34;,
+      &#34;manifest_hash&#34;: &#34;af277da693b56d23&#34;,
       &#34;parsers&#34;: [
         &#34;native_jsonl/1.0&#34;,
         &#34;splunk_csv/1.0&#34;,
@@ -830,11 +830,12 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
         &#34;ARG-ARTEX-W01@1&#34;,
         &#34;ARG-ARTEX-X01@1&#34;,
         &#34;ARG-ARTEX-X02@1&#34;,
-        &#34;ARG-ARTEX-X03@1&#34;,
+        &#34;ARG-ARTEX-X03@2&#34;,
         &#34;ARG-ARTEX-X04@1&#34;,
         &#34;ARG-AUTH-001@1&#34;,
         &#34;ARG-AUTH-002@1&#34;,
-        &#34;ARG-AUTH-003@1&#34;,
+        &#34;ARG-AUTH-003@2&#34;,
+        &#34;ARG-AUTH-004@1&#34;,
         &#34;ARG-AUTO-001@1&#34;,
         &#34;ARG-AUTO-002@1&#34;,
         &#34;ARG-COLL-001@1&#34;,
@@ -854,7 +855,7 @@ th{background:#f2f4f7}.small{font-size:12px;color:#444}.mono{font-family:ui-mono
         &#34;ARG-SP-001@1&#34;,
         &#34;ARG-SP-002@1&#34;
       ],
-      &#34;rules_hash&#34;: &#34;48ac7ba2f8ccef22&#34;,
+      &#34;rules_hash&#34;: &#34;7ea82ef919e3eb7d&#34;,
       &#34;schema&#34;: &#34;argos-event/1&#34;
     }
   }

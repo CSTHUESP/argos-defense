@@ -50,5 +50,12 @@ All windows use event time after sorting (file order irrelevant). Groups use str
 ## Reproducibility
 Event id = sha256(case, file sha256, format, record no). Alert id = sha256(case, rule id, rule version, group, first event id). Re-analysis updates alerts in place; alerts no longer produced (e.g. after a rule version change) are kept with `current=0`; notes and analyst status live in separate tables. Each run stores the input manifest and engine/schema/parser/rules/config/registry/IOC hashes.
 
-## Known false-positive pattern found in validation
-ARG-AUTH-003 (≥5 failures then success within 24 h) fired 27 times on 12k random background events where users fail intermittently. It is a "suspicious / medium" credential-access hypothesis, not a compromise verdict; tune `aggregate.steps.0.min_count` or the window for your environment.
+## v0.2.0 changes
+- **Authentication:** ARG-AUTH-003 v2 (per-source uninterrupted failure run → success from the same source; `source_history` caps confidence at low when the success source previously succeeded for the identity) and new ARG-AUTH-004 (uninterrupted run from ≥3 sources → success). Evaluation: `docs/AUTH_RULE_EVALUATION.md`.
+- **Engine:** sequence steps support `reset_where` (uninterrupted runs); rules may declare `source_history` (prior-events-only context) and `absence_check.join_fields`.
+- **Vantage defaults:** native `http`/`dns`/`network_connection` records without a declared vantage default to `victim_network` (warning `vantage_defaulted_conservatively:victim_network`); such records carrying endpoint process fields are rejected as ambiguous. Sysmon records are always `managed_endpoint`; Zeek records always `victim_network` (fields inside the record cannot change this).
+- **Missing telemetry:** candidate records lacking a rule's required fields are counted per rule (`missing_required_telemetry`) and reported as case limitations.
+- **Framework:** ARG-ARTEX-X03 v2 never corroborates (see ARTEX_SOURCE_REVIEW.md).
+
+## Known false-positive pattern found in validation (v0.1.0, superseded)
+ARG-AUTH-003 v1 (≥5 failures then success within 24 h) fired for 27 of 300 identities in a 12k-event random background set (not a validated false-positive rate). Fixed by v2; see AUTH_RULE_EVALUATION.md. It is a "suspicious / medium" credential-access hypothesis, not a compromise verdict; tune `aggregate.steps.0.min_count` or the window for your environment.

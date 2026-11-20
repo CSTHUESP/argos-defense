@@ -240,6 +240,11 @@ def main(argv=None):
         record("exe: analyze", r.returncode == 0 and '"alerts"' in r.stdout, r.stdout[-200:])
         r = run(exe, ["--data-dir", str(data), "alerts", "--case", "smoke-cli"], work)
         record("exe: alerts include EP-001/EP-002", "ARG-EP-001" in r.stdout and "ARG-EP-002" in r.stdout, r.stdout[-400:])
+        tzf = work / "naive times.jsonl"
+        tzf.write_text('{"event_time": "2026-11-03 10:00:00", "event_kind": "dns", "dns_query": "a.example"}\n', encoding="utf-8")
+        r = run(exe, ["--data-dir", str(data), "ingest", str(tzf), "--format", "native_jsonl", "--case", "smoke-tz", "--synthetic",
+                      "--assume-tz", "Europe/Budapest"], work)
+        record("exe: IANA time zone resolves (bundled tz database)", r.returncode == 0 and '"accepted": 1' in r.stdout, r.stdout[-200:] + r.stderr[-300:])
         rep = out / "report-smoke-demo.html"
         r = run(exe, ["--data-dir", str(data), "report", "--case", "demo-synthetic", "--format", "html", "--output", str(rep)], work)
         record("exe: HTML report export", r.returncode == 0 and "DEMO/SYNTHETIC" in rep.read_text("utf-8"), rep.name)

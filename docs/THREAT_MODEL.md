@@ -17,6 +17,9 @@ ARGOS is a local, single-analyst investigation tool that processes **hostile inp
 | Secret leakage | redaction of common secret patterns in UI/exports; no telemetry sent externally; LLM disabled by default, remote endpoints refused unless `ARGOS_LLM_ALLOW_REMOTE=1` | `test_redaction`, `test_secrets_redacted_in_export` |
 | Resource exhaustion | file and record size limits, max events per case, chunked inserts | `test_size_limit_enforced`, `test_record_size_limit` |
 | Evidence tampering | read-only local copies + SHA-256 for **integrity checks only**; not tamper-proof, not a certified chain of custody | documented |
+| Token disclosure via logs/CI | `serve`/`start` print only the token file path (`--show-token` opt-in); packaged smoke tests redact the token and assert it never appears in logs | `test_launcher.py`, `packaging/smoke_test.py` |
+| Abuse of shutdown endpoint | `POST /api/shutdown` requires the token (bearer) or cookie + Origin + CSRF; only available when started by the launcher | `test_shutdown_requires_auth` |
+| Writes into the application bundle | all mutable data in the user data dir; smoke test fingerprints the bundle before/after | `packaging/smoke_test.py` |
 | Synthetic/real confusion | case-level `synthetic` flag; cannot reuse a name across kinds; banners on UI pages and exports | `test_synthetic_and_real_not_mixed`, e2e |
 
 Out of scope / residual: a local user with access to the data directory or token; multi-user authorization; TLS (loopback only); denial of service by very large legitimate cases (limited by config); redaction is pattern-based and can miss secrets.

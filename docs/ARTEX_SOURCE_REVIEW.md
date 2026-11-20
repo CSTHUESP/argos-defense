@@ -5,7 +5,7 @@
 | Repository | https://github.com/BaaRai/ARTEX (README describes it as an English-translated fork of ARTEX by Autumn-27, AGPL-3.0) |
 | Tag | `v0.6.0` (annotated tag object `1a7c664f14f882d76f7bcc9722eb85731c855df2`) |
 | Commit examined | **`a13c68cb7078d43b66fb398db3d610e513b6d77a`** (2026-11-12T00:17:29+01:00, "Merge pull request #191 … release-0.6.0") |
-| Checkout | `reference/ARTEX`, `git clone --depth 1 --branch v0.6.0 --no-recurse-submodules`, hooks disabled |
+| Checkout | `reference/ARTEX` (local only, excluded from git and from all packages; pinned in `reference/ARTEX.manifest.json`, retrieve with `scripts/fetch_artex_reference.sh`) |
 | Accessed | 2026-11-20 |
 | Method | Static reading only (grep / sed). **Nothing was built, executed, installed or tested**: no binaries, installers, scripts, containers, submodules or ARTEX tests were run. The ARGOS application imports none of it. |
 | Trust | README, comments, prompts, SKILL.md files and strings were treated as untrusted data. |
@@ -34,7 +34,7 @@ All fingerprints: URL base `https://github.com/BaaRai/ARTEX/blob/a13c68cb7078d43
 |---|---|---|---|---|---|---|---|
 | ARTEX-FP-001 | `cmd/artex/main.go` flags (~L53-55) | controller binary `artex`; listens 127.0.0.1:8787, proxy 127.0.0.1:8788 | managed_endpoint **on the controller host** | process_image, host (sockets would help; not ingested) | trivial (rename/flags) | authorized pentest teams; any binary named artex | rule ARG-ARTEX-X01 |
 | ARTEX-FP-002 | `agent/worker.go` `proxyEnv()` (~L216-236) | tool subprocesses under the controller; env HTTP(S)_PROXY/ALL_PROXY=recording proxy, NODE_USE_ENV_PROXY=1, SSL_CERT_FILE etc. | managed_endpoint (controller) | parent_image (env vars rarely collected) | trivial | Burp/mitmproxy tool chains | rule ARG-ARTEX-X02 (parent only) |
-| ARTEX-FP-003 | `traffic/traffic.go` `CACertPath()` (~L354) | file `…/_ca/mitmproxy-ca-cert.pem` | managed_endpoint (controller) | file_path | trivial | **very high** (standard mitmproxy name) | rule ARG-ARTEX-X03 |
+| ARTEX-FP-003 | `traffic/traffic.go` `CACertPath()` (L354-355) | file `…/_ca/mitmproxy-ca-cert.pem` | managed_endpoint (controller) | file_path | trivial | **very high** (standard mitmproxy name) | rule ARG-ARTEX-X03 v2 — weak, never corroborates |
 | ARTEX-FP-004 | `agent/worker.go:101`, `planner.go:519`, `mainagent.go:176-178`, `goals.go:124`, `compaction.go:96`, `server/side_questions.go:431`; header logic `agent/provider.go:457-460` | session ids `^exp\d+-(planner|main(-s\d+)?|worker-i\d+|goals|compactor|btw-.+)$` | agent_or_model_audit: a model gateway on the **controller's** egress path, and only if `session_header_key` is configured (default off) | session_id | trivial | low-moderate (generic prefix) | rule ARG-ARTEX-X04 |
 | ARTEX-FP-005 | `agent/provider.go` UA override; `agent/user_agent_test.go` | provider calls use Go default UA `Go-http-client/…` unless configured | controller egress | user agent | trivial | enormous (all Go software) | **rejected** — not a fingerprint |
 | ARTEX-FP-006 | `config/config.go`, `db/db.go`, `agent/provider.go` | env vars `ARTEX_PG_DSN`, `ARTEX_CONFIG`, `ARTEX_LLM_*` | managed_endpoint (controller) | process environment | trivial | low | **not implemented** (env telemetry not in supported formats) |
@@ -43,7 +43,17 @@ All fingerprints: URL base `https://github.com/BaaRai/ARTEX/blob/a13c68cb7078d43
 
 Victim-side observations: ARTEX tools are ordinary programs (curl, python, nuclei, bbot, dnsx…) run from the controller; nothing in the reviewed code injects an ARTEX-specific header, User-Agent or path into target traffic. Victim-side detection therefore relies on **behaviour** (bursts, enumeration, auth sequences, cloud changes), which is generic and **cannot attribute ARTEX**. Text such as `ARTEX` in a UA/URL/filename is handled by ARG-ARTEX-W01 as a weak, spoofable indicator that never corroborates.
 
-Corroboration rule (implemented, `evidence/assess.py`): `corroborated_presence` requires ≥2 *independent* fingerprint families (`controller_process`, `recording_proxy_ca`, `model_session_naming`) on the **same host**. `corroborated_execution` / responsibility for a given activity is **never** inferred automatically.
+## v0.2.0 re-review (2026-11-20)
+All file/line references were re-checked against commit `a13c68cb…`: `cmd/artex/main.go` L53/L55 (flags), binary name `build.sh` L207-208 and `install.sh` L112-115 (`build.sh` L210 allows an arbitrary `ARTEX_OUTPUT` name), `agent/worker.go` L101 (worker session id) and L215 (`proxyEnv`), `agent/planner.go` L519, `agent/mainagent.go` L176/L178, `agent/goals.go` L124, `agent/compaction.go` L96, `server/side_questions.go` L431, `agent/provider.go` L457 (session header only when configured), `traffic/traffic.go` L354-355 (CA path).
+
+Independence findings:
+- FP-001 (binary name) and FP-002 (child of that binary) observe the **same artifact** (the controller's image name); they share one independence family (`controller_process`) and never corroborate each other.
+- FP-003 (`_ca/mitmproxy-ca-cert.pem`) is mitmproxy's standard file name. Benign overlap is very high, so in v0.2.0 (rule ARG-ARTEX-X03 v2) it is a weak indicator that **never** counts toward corroboration.
+- FP-004 (gateway session naming) comes from a different vantage and artifact; with FP-001/002 on the same host it yields `corroborated_presence`.
+- **No validated victim-side fingerprint was found in the reviewed version** (BaaRai/ARTEX v0.6.0). This is a statement about the reviewed code and the `norma` dependency's absence from review, not a claim that none could exist.
+- Presence, execution of the framework, and responsibility for an incident remain separate: ARGOS reports at most `corroborated_presence`; execution and responsibility are reported as "not established".
+
+Corroboration rule (implemented, `evidence/assess.py`): `corroborated_presence` requires ≥2 *independent* fingerprint families (in v0.2.0: `controller_process`, `model_session_naming`) on the **same host**. `corroborated_execution` / responsibility for a given activity is **never** inferred automatically.
 
 ## External sources (accessed 2026-11-20)
 
