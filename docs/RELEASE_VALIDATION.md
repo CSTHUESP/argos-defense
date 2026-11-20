@@ -50,7 +50,7 @@ A failure in any gate stops the workflow; no `continue-on-error`, no prerelease 
 CI and release run URLs for the final commit are listed in the release's handover and in `release-manifest.json` (`workflow_run`).
 
 ## Repository protection
-Branch protection and tag rulesets were not configured from this session: the session's GitHub access cannot change repository settings (the repository-description update was also refused). The workflow checks above therefore enforce release policy only for releases made through these workflows; they are not equivalent to enforced repository protection. Recommended owner settings: protect `main` (require the CI checks, no force-push) and add a tag ruleset for `v*` (no update/delete) — only where they do not lock out the sole maintainer.
+The workflow checks above enforce release policy for releases made through these workflows. Repository-level protection is separate: the `main` and `v*` rulesets, release immutability and the other repository settings are described, with owner instructions and dated observations, in [REPOSITORY_SETUP.md](REPOSITORY_SETUP.md).
 
 ## What these results do NOT establish
 - Packages are tested only on GitHub-hosted runner images (Windows Server 2022, Ubuntu 22.04, macOS 15 arm64/x86_64). Windows 10/11 desktop, other distributions and macOS versions, and downloads with quarantine attributes are not tested (procedure in docs/PACKAGING.md).

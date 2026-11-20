@@ -85,6 +85,9 @@ The current protocol is **eval-v2.2** ([docs/EVALUATION_PROTOCOL.md](docs/EVALUA
 
 If a change is tuned on the reserved set, that set becomes development data and a new reserved set (new seeds, new protocol version) is required. Report development results in the PR; maintainers decide when the reserved set is run.
 
+## Maintainer workflow
+`main` is protected by a ruleset (once an administrator has enabled it): changes reach it only through a pull request whose seven required CI checks pass and which is up to date with `main`. No approving review is required, so a single maintainer can merge their own pull request. The settings, the exact check names and the step-by-step process are in [docs/REPOSITORY_SETUP.md](docs/REPOSITORY_SETUP.md).
+
 ## Releases
 Releases are made by maintainers through `.github/workflows/create-tag.yml` and `release.yml` (shared preflight, native builds and smoke tests on each platform, release contract, uploaded-byte verification). Published tags are never moved and published assets are never replaced; a correction gets a new version.
 

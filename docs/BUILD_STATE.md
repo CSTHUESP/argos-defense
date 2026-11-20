@@ -18,6 +18,7 @@ The owner explicitly chose a public, open project. This supersedes all earlier "
   - immutable releases: "Resource not accessible by integration".
 
   Verified state: public; Issues on; Discussions off; no description or topics; private vulnerability reporting off; no rulesets; immutable releases off; v0.3.1 `immutable: false`. Added a neutral "Security contact request (no details)" issue form and the `security-contact` label; SECURITY.md now states the actual private-reporting status. v0.3.1 tag and assets untouched.
+- 2026-11-20 ~21:35 CET: settings re-read, unchanged (still blocked for the integration; no writes retried). Owner instructions and dated observations consolidated in docs/REPOSITORY_SETUP.md; SECURITY.md made conditional on whether private reporting is shown.
 - Repository settings writes (description, topics, Discussions, private vulnerability reporting, protections, immutable releases) are refused for this session ("Repository settings writes are not permitted through this proxy"); labels and issues can be created.
 
 ---
