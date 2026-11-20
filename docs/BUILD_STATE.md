@@ -51,3 +51,8 @@ pytest 75 passed · validate.py 15/15 scenarios · 12k events: ingest ~3.1 s, an
   benchmarks 12k/100k ok, 1M analysis OOM-killed → 300k limit; hashed locks from deps runs; Sigma `|re|i` fix; docs updated for 0.3.0.
   EVTX: BLOCKED (PyPI unreachable locally; executing a git-cloned parser was not permitted in the session; no genuine Sysmon EVTX sample).
 - Next: CI green on final main SHA → release.yml dry run (explicit sha) → create-tag.yml dispatch (tag push from session returns 403) with publish=true → verify.
+- 14:51 RELEASED v0.3.0: tag v0.3.0 (annotated, created by create-tag.yml run 44746672484) → d538dba9f16d1a109f2f5b446c5df3737024d4aa;
+  CI 44745620187 green (6 OS/Python jobs + wheel/sdist); release.yml 44746694912: 4 native builds (46/46 Windows, 48/48 Linux, 48/48 macOS arm64, 48/48 macOS x64),
+  contract gate 27 assets, draft + uploaded-byte verification, 6 build-provenance attestations verified, published 13:50:57Z, all 27 public download URLs HTTP 200.
+  Independently re-checked from the session: SHA256SUMS sha256 b080263f… equals the gate's pre-upload value; release-manifest.json matches it.
+- Open: desktop acceptance (no desktops), EVTX (blocked), Splunk/Sigma backend, real Ollama, genuine exports, repo description/branch+tag protection (settings writes refused).
