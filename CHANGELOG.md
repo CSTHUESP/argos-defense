@@ -3,6 +3,27 @@
 All notable changes. Versions follow semantic versioning; 0.x releases are experimental.
 **Detection is experimental; real-world accuracy is not measured.**
 
+## [0.3.1] - 2026-11-20
+Corrective pass for review findings R01–R09 (docs/V031_REMEDIATION.md). Experimental detection; real-world accuracy not measured.
+
+### Fixed
+- **R01** Redaction propagates through lists and nested objects under sensitive keys. Original-record excerpts are redacted structurally (JSON keys, CSV headers, XML Data names); an unparseable excerpt is withheld rather than labelled redacted. Case create/list API, import results, job records, explainer output and error messages are redacted.
+- **R02** Backups reconcile retained originals against the inventory in the database snapshot. Missing or altered evidence fails a normal backup (`--allow-incomplete` writes an explicitly incomplete one). Verification reports database consistency and evidence completeness separately. Restore rebases and verifies every reference.
+- **R03** The watcher identifies file generations by device/inode, first line and consumed-tail hash. Distinct files no longer share a checkpoint, truncation starts a new generation, and checkpoints advance only after a durable import.
+- **R04** LLM correlation keys are canonical JSON. The namespace is a declared collector id or the single input file, never a format label or placeholder. Ids are case-sensitive and delimiter-safe.
+- **R05** Zero-count baseline windows and absence conclusions need declared coverage of the relevant event family; other families, entities or inputs never become zeros. ARG-AUTH-003 v3 states its follow-up family.
+- **R06** New evaluation protocol eval-v2.1 with independent, alert-level attribution scoring and attribution-negative scenarios; injected errors are proven to be counted.
+- **R07** The explainer redaction test now uses the real interface and fails if the provider is not called or redaction is bypassed.
+- **R08** FIFO global job admission (default 1 running, 8 queued; HTTP 429 when full) and an OS-level lock enforcing one server per data directory. 300,000 events measured with a stress profile.
+- **R09** The release preflight authenticates Git remote reads with GH_TOKEN through environment-scoped Git configuration (needed for private repositories); the token never appears in argv or URLs.
+
+### Changed / migration
+- Database schema v4 (from v3: watcher identity columns; v0.3.0 checkpoints marked legacy). Migration is transactional after a verified `argos.v3-backup.sqlite3`.
+- A coverage declaration without event kinds covers only the event kinds present in that input. Declare `--coverage-kinds` to cover other families.
+- Session/tool-call chains across separately imported files require the same `--collector-id`.
+- `backup` exits 2 when evidence is missing (6 with `--allow-incomplete`); `verify-backup` exits 6 for an incomplete backup.
+- Mutating CLI commands refuse while a server runs on the same data directory (exit 5).
+
 ## [0.3.0] - 2026-11-20
 Correctness, data-safety and release-integrity pass (audit findings F01–F13, see docs/AUDIT_REMEDIATION.md).
 0.2.0 was never published; this is the first published release.

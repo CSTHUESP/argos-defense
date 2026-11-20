@@ -6,18 +6,18 @@
       "case_create": true,
       "case_list": true,
       "event_api:SYNTH_LIST_SECRET": true,
-      "event_api:SYNTH_LIST_SECRET:labelled_redacted": false,
+      "event_api:SYNTH_LIST_SECRET:labelled_redacted": true,
       "event_api:SYNTH_NESTED_SECRET": true,
-      "event_api:SYNTH_NESTED_SECRET:labelled_redacted": false,
+      "event_api:SYNTH_NESTED_SECRET:labelled_redacted": true,
       "event_api:SYNTH_CSV_SECRET": true,
-      "event_api:SYNTH_CSV_SECRET:labelled_redacted": false
+      "event_api:SYNTH_CSV_SECRET:labelled_redacted": true
     }
   },
   "R02": {
     "reproduced": true,
     "detail": {
       "backup": "created+verified despite missing original",
-      "restored_reference": "/tmp/r031-cg36k8wr/home/cases/case-ba4701513151/originals/85451496bc2c1172b0b2ca80da108cb68b344f8eeade4a3796b637a7f867d302.jsonl",
+      "restored_reference": "/tmp/r031-epia_ki2/home/cases/case-e92cd54bb6bd/originals/85451496bc2c1172b0b2ca80da108cb68b344f8eeade4a3796b637a7f867d302.jsonl",
       "points_to_old_home": true,
       "restore_result_keys": [
         "backup_created_at",

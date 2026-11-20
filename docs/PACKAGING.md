@@ -31,13 +31,13 @@ Pinned inputs: `requirements-ci.lock` — universal hashed resolution of runtime
 - Loopback only; `--port 0` picks a free port; an occupied port exits with code 3 and a clear message; `POST /api/shutdown` (authenticated) stops cleanly; Ctrl+C also works.
 
 ## Native smoke test (`packaging/smoke_test.py`) — release gate
-Runs on the build runner against the **extracted archive**, in a directory whose path contains spaces and non-ASCII characters, with `PYTHON*`, `VIRTUAL_ENV`, `ARGOS_*` removed from the environment and the harness venv removed from `PATH`. Every check must pass, and the release contract requires every check identity listed in `release_contract.required_checks(target)` (46 on Windows, 48 on POSIX targets):
+Runs on the build runner against the **extracted archive**, in a directory whose path contains spaces and non-ASCII characters, with `PYTHON*`, `VIRTUAL_ENV`, `ARGOS_*` removed from the environment and the harness venv removed from `PATH`. Every check must pass, and the release contract requires every check identity listed in `release_contract.required_checks(target)` (48 on Windows, 50 on POSIX targets in v0.3.1):
 - archive: executable present, executable bit (POSIX), `--version` reports `frozen=True`, `doctor`, `demo`, Sysmon XML ingest with a non-ASCII file name, `analyze`, alerts, IANA time zones, HTML + JSON reports, occupied-port error, authenticated / unauthenticated API;
 - **Playwright Chromium** against the native server: login form, create-case form (CSRF), multipart import form, analyze button → background job page → case, alert detail dimensions, note form, evidence page showing the exact original record, HTML export download, static assets, no console errors;
 - clean API shutdown, restart with the same data dir (cases/alerts/notes persist);
 - **distributed launcher** (`Start ARGOS Defense.cmd` / `.command` / `start-argos-defense.sh`) with `ARGOS_HOME` in a non-ASCII path: `--no-browser` start and clean shutdown; default start opens the browser through the `BROWSER` environment variable (a recorder script) with a loopback login URL;
 - **update**: a v0.2.0 database (synthetic demo, `packaging/fixtures/legacy-v0.2.0-demo.sql.gz`, produced by the v0.2.0 code) is migrated with a verified backup, legacy runs are labelled, re-analysis works;
-- **backup / verify / restore** into a new non-ASCII directory, restored alerts readable, restore into a non-empty directory refused;
+- **backup / verify / restore**: a backup of the migrated v0.2.0 fixture (database rows without retained originals) is refused as incomplete; a backup of the real data directory is complete, verifies, restores into a new non-ASCII directory, restored alerts are readable and the restored evidence can be re-analysed; restore into a non-empty directory is refused;
 - bundle unchanged (content hash of every file, modes and symlink targets), session tokens absent from logs.
 
 The harness and Playwright run in the runner's Python; the application under test is the native executable. The browser opening check uses `BROWSER`, so it verifies ARGOS's launch path, not a desktop's default-browser association.

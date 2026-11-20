@@ -56,3 +56,19 @@ pytest 75 passed · validate.py 15/15 scenarios · 12k events: ingest ~3.1 s, an
   contract gate 27 assets, draft + uploaded-byte verification, 6 build-provenance attestations verified, published 13:50:57Z, all 27 public download URLs HTTP 200.
   Independently re-checked from the session: SHA256SUMS sha256 b080263f… equals the gate's pre-upload value; release-manifest.json matches it.
 - Open: desktop acceptance (no desktops), EVTX (blocked), Splunk/Sigma backend, real Ollama, genuine exports, repo description/branch+tag protection (settings writes refused).
+
+## v0.3.1 corrective pass (2026-11-20, local only)
+- 15:35 Observed visibility PUBLIC vs configured INTENDED_REPOSITORY_VISIBILITY=private → no push/dispatch/upload in this pass.
+  Settings writes (description) refused again by the session proxy; main unprotected (no rulesets); v0.3.0 release immutable=false.
+- Baseline on 7673889: pytest 187 passed / 1 skipped; validate 15/15. R01–R09 all reproduced on a v0.3.0 worktree (docs/repro_v031_before.json).
+- Implemented R01–R09 (docs/V031_REMEDIATION.md); schema v4; version 0.3.1. Code/rules/evaluator/data frozen in local commit 8060244 before
+  the single eval-v2.1 reserved run (14:53:43Z). Stress benchmark 100k/300k at 8060244 (reports/benchmark_stress_v031.json).
+- Final local state: branch `v0.3.1-local`; pytest 235 passed / 1 skipped (Windows-only ACL test); validate 15/15;
+  repro_v031 after: none reproduced; native smoke harness against a non-frozen stand-in: 49/50 (only `frozen=True` fails, as expected).
+- NOT done (blocked by the audience mismatch): CI on the final SHA, 4 native builds/smoke, tag v0.3.1, draft, uploaded-byte verification, publication,
+  private-repository preflight run.
+- Continue after the owner resolves visibility (see the handover):
+  1. `git fetch origin && git merge-base --is-ancestor origin/main v0.3.1-local` (fast-forward check) and push `v0.3.1-local` to `main`.
+  2. Wait for CI (`ci.yml`) success on that exact SHA.
+  3. Dispatch `create-tag.yml` with version=0.3.1, commit=<full SHA>, publish=true (runs the shared preflight, tags, starts release.yml).
+  4. Verify the release run (4 native jobs, gate, draft + uploaded-byte verification, publish) and the published assets.

@@ -1,6 +1,14 @@
-# Release validation — v0.3.0
+# Release validation — v0.3.1 (prepared; see status below)
 
 **Experimental detection; real-world accuracy not measured.** This document describes the gates a release must pass and the results observed while preparing 0.3.0. Evidence for the final release commit itself (CI run, native runs, uploaded-byte verification) is produced by the workflows and published with the release (`release-manifest.json`, `smoke-<target>.json/.log`, the Actions logs); it cannot be committed here because this file is part of that commit.
+
+## v0.3.1 status
+- **Code:** complete locally on branch `v0.3.1-local`.
+- **Remote:** nothing was pushed, dispatched or uploaded. The repository is currently **public**, while the owner's configured audience is **private**; publishing into the conflicting audience was not authorized. CI runs, native builds, the v0.3.1 tag and the release therefore do **not** exist yet.
+- **Private-repository Git authentication (R09):** implemented and statically tested. A real private-repository run is pending until the repository is private.
+- **Attestations:** the release workflow generates them only for public repositories. For a private repository on the current plan, the manifest records "not generated".
+- **Immutable releases:** v0.3.0 is not immutable (`immutable: false`). Changing the repository setting was refused from this session.
+- **Protections:** `main` is unprotected and there is no tag ruleset. Settings writes are refused from this session.
 
 ## Mandatory gates
 1. Source tests on Linux (Python 3.11/3.12/3.13), Windows, macOS arm64 and macOS x86_64 (`ci.yml`), plus rule validation, `doctor`, `scripts/validate.py` and wheel/sdist installation outside the checkout.

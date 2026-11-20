@@ -316,7 +316,7 @@ def launcher_checks(top: Path, base: Path, work: Path):
         record(f"launcher: clean shutdown ({mode})", code == 0, code)
 
 
-def update_backup_restore_checks(exe: Path, base: Path, work: Path, out: Path):
+def update_backup_restore_checks(exe: Path, base: Path, work: Path, out: Path, data: Path):
     """Update path: a v0.2.0 data directory (synthetic demo DB fixture) is migrated by the new executable with a
     verified pre-migration backup; then backup -> verify -> restore into a new directory -> data present."""
     import gzip
@@ -341,9 +341,13 @@ def update_backup_restore_checks(exe: Path, base: Path, work: Path, out: Path):
     record("update: legacy run labelled (no invented snapshot)", r.returncode == 0 and "legacy-none" in r.stdout, r.stdout[-200:])
     r = run(exe, ["--data-dir", str(old), "analyze", "--case", "demo-synthetic", "--quiet"], work)
     record("update: re-analysis after migration", r.returncode == 0 and '"run_id"' in r.stdout, r.stdout[-200:] + r.stderr[-200:])
+    # the migrated v0.2.0 fixture has database rows but no retained original files: a complete backup must refuse
+    r = run(exe, ["--data-dir", str(old), "backup", "--output", str(base / "legacy.zip")], work)
+    record("backup: refuses when referenced evidence is missing", r.returncode == 2 and "missing" in r.stderr
+           and not (base / "legacy.zip").exists(), r.stderr[-200:])
     bk = base / "backup ü.zip"
-    r = run(exe, ["--data-dir", str(old), "backup", "--output", str(bk)], work)
-    record("backup: created", r.returncode == 0 and bk.is_file(), r.stdout[-200:])
+    r = run(exe, ["--data-dir", str(data), "backup", "--output", str(bk)], work)
+    record("backup: created", r.returncode == 0 and bk.is_file() and '"evidence_completeness": "complete"' in r.stdout, r.stdout[-200:])
     r = run(exe, ["verify-backup", str(bk)], work)
     record("backup: verified", r.returncode == 0 and "evidence completeness: complete" in r.stdout and "OK:" in r.stdout, r.stdout[-200:] + r.stderr[-200:])
     new = base / "restored data é"
@@ -351,6 +355,8 @@ def update_backup_restore_checks(exe: Path, base: Path, work: Path, out: Path):
     record("restore: into new directory", r.returncode == 0 and '"schema_version": 4' in r.stdout, r.stdout[-300:] + r.stderr[-300:])
     r = run(exe, ["--data-dir", str(new), "alerts", "--case", "demo-synthetic"], work)
     record("restore: restored case and alerts readable", r.returncode == 0 and "ARG-" in r.stdout, r.stdout[-200:])
+    r = run(exe, ["--data-dir", str(new), "analyze", "--case", "smoke-cli", "--quiet"], work)
+    record("restore: re-analysis of restored evidence", r.returncode == 0 and '"run_id"' in r.stdout, r.stdout[-200:] + r.stderr[-200:])
     r = run(exe, ["--data-dir", str(new), "restore", str(bk)], work)
     record("restore: refuses non-empty target", r.returncode == 2, r.stderr[-200:])
 
@@ -453,7 +459,7 @@ def main(argv=None):
         record("exe: persistence across restart (cases, alerts, notes)", ok, f"cases={len(cases)}")
         record("exe: second clean shutdown", srv2.stop() == 0, "")
         launcher_checks(top, base, work)
-        update_backup_restore_checks(exe, base, work, out)
+        update_backup_restore_checks(exe, base, work, out, data)
         record("bundle: no files written inside the application bundle", tree_fingerprint(top) == bundle_before, "")
         logs = "\n".join(LOG)
         record("logs: session token never printed", all(s not in logs for s in SECRETS), "")

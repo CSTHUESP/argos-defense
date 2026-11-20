@@ -67,7 +67,7 @@ def r01():
             for s in ("SYNTH_LIST_SECRET", "SYNTH_NESTED_SECRET", "SYNTH_CSV_SECRET"):
                 if s in body:
                     leaks[f"event_api:{s}"] = True
-                    leaks[f"event_api:{s}:labelled_redacted"] = '"redacted": true' in body
+                    leaks[f"event_api:{s}:labelled_redacted"] = bool(re.search(r'"redacted":\s*true', body))
     finally:
         srv.__exit__()
     bad = {k: v for k, v in leaks.items() if v and not k.endswith("labelled_redacted")}
@@ -147,6 +147,11 @@ def r05():
 
 
 def r06():
+    f = ROOT / "scripts" / "eval_v21.py"
+    if f.exists():  # current evaluator: alert-level, chain-based allowance
+        src = f.read_text()
+        independent = "def allowed_llm" in src and "has_chain |= tags" not in src
+        return not independent, "eval_v21.py scores each alert against labelled chains" if independent else "unit-level allowance"
     src = (ROOT / "scripts" / "eval_v2.py").read_text()
     weak = 'if e.get("event_kind") in ("model_interaction", "tool_execution"):' in src and "has_chain |= tags" in src
     return weak, "directly_observed allowance derived from any model_interaction/tool_execution record in the unit" if weak else "unit-level union not found"

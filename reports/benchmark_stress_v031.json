@@ -1,0 +1,177 @@
+{
+  "declared_budgets": {
+    "100000": {
+      "ingest": [
+        600,
+        2048
+      ],
+      "analyze": [
+        1200,
+        4096
+      ]
+    },
+    "300000": {
+      "ingest": [
+        1500,
+        2048
+      ],
+      "analyze": [
+        2400,
+        5120
+      ]
+    }
+  },
+  "profile": "stress",
+  "source": {
+    "commit": "8060244c092acb70ca33725da4a5fc6b0dcdc6df",
+    "src_modified_vs_commit": false
+  },
+  "packages": {
+    "starlette": "1.7.0",
+    "pydantic": "2.13.5",
+    "PyYAML": "6.0.3"
+  },
+  "container_memory_limit": null,
+  "hardware": {
+    "platform": "Linux-6.18.44-fc-v726-x86_64-with-glibc2.39",
+    "machine": "x86_64",
+    "cpus": 2,
+    "memory": "MemTotal:        8216636 kB",
+    "python": "3.13.18"
+  },
+  "dataset": "argos.synthetic.generate_stress: larger records, high cardinality, 9 event kinds incl. cloud audit and agent records",
+  "started_at": "2026-11-20T14:53:47Z",
+  "runs": [
+    {
+      "events": 100000,
+      "file_mib": 27.0,
+      "generate": {
+        "status": "ok",
+        "elapsed_s": 1.3,
+        "peak_rss_mib": 21.3,
+        "result": {
+          "events": 100000,
+          "bytes": 28332179,
+          "mean_record_bytes": 283.3,
+          "users": 5000,
+          "hosts": 1666,
+          "apps": 333,
+          "kinds": [
+            "http",
+            "authentication",
+            "dns",
+            "network_connection",
+            "process_start",
+            "cloud_operation",
+            "model_interaction",
+            "tool_execution",
+            "file_create"
+          ],
+          "seconds": 1.13
+        }
+      },
+      "ingest": {
+        "status": "ok",
+        "elapsed_s": 8.0,
+        "peak_rss_mib": 29.0,
+        "result": {
+          "status": "imported",
+          "accepted": 100000,
+          "rejected": 0,
+          "total": 100000,
+          "seconds": 7.75
+        }
+      },
+      "analyze": {
+        "status": "ok",
+        "elapsed_s": 20.3,
+        "peak_rss_mib": 936.7,
+        "result": {
+          "stats": {
+            "events": 100000,
+            "alerts": 2,
+            "rules_evaluated": 29,
+            "rules_not_evaluable": 0,
+            "rules_disabled": 0,
+            "rules_failed": 0,
+            "new": 2,
+            "updated": 0,
+            "no_longer_produced": 0
+          },
+          "run_status": "succeeded",
+          "alerts_stored": 2,
+          "entities": 164271,
+          "integrity": "ok",
+          "seconds": 20.01
+        }
+      },
+      "db_mib": 339.4
+    },
+    {
+      "events": 300000,
+      "file_mib": 81.3,
+      "generate": {
+        "status": "ok",
+        "elapsed_s": 4.3,
+        "peak_rss_mib": 21.4,
+        "result": {
+          "events": 300000,
+          "bytes": 85282909,
+          "mean_record_bytes": 284.3,
+          "users": 15000,
+          "hosts": 5000,
+          "apps": 1000,
+          "kinds": [
+            "http",
+            "authentication",
+            "dns",
+            "network_connection",
+            "process_start",
+            "cloud_operation",
+            "model_interaction",
+            "tool_execution",
+            "file_create"
+          ],
+          "seconds": 4.11
+        }
+      },
+      "ingest": {
+        "status": "ok",
+        "elapsed_s": 29.6,
+        "peak_rss_mib": 29.1,
+        "result": {
+          "status": "imported",
+          "accepted": 300000,
+          "rejected": 0,
+          "total": 300000,
+          "seconds": 29.44
+        }
+      },
+      "analyze": {
+        "status": "ok",
+        "elapsed_s": 69.4,
+        "peak_rss_mib": 2758.8,
+        "result": {
+          "stats": {
+            "events": 300000,
+            "alerts": 2,
+            "rules_evaluated": 29,
+            "rules_not_evaluable": 0,
+            "rules_disabled": 0,
+            "rules_failed": 0,
+            "new": 2,
+            "updated": 0,
+            "no_longer_produced": 0
+          },
+          "run_status": "succeeded",
+          "alerts_stored": 2,
+          "entities": 489213,
+          "integrity": "ok",
+          "seconds": 68.87
+        }
+      },
+      "db_mib": 1019.8
+    }
+  ],
+  "finished_at": "2026-11-20T14:56:01Z"
+}

@@ -9,7 +9,7 @@
   },
   "R02": {
     "reproduced": false,
-    "detail": "backup refused: BackupError: backup refused: retained originals referenced by the database are missing or altered: cases/case-e60793b43fc6/originals/85451496bc2c1172b0b2ca80da108cb68b344f8eeade4a3796b"
+    "detail": "backup refused: BackupError: backup refused: retained originals referenced by the database are missing or altered: cases/case-b08af4492cf1/originals/85451496bc2c1172b0b2ca80da108cb68b344f8eeade4a3796b"
   },
   "R03": {
     "reproduced": false,
@@ -44,8 +44,8 @@
     ]
   },
   "R06": {
-    "reproduced": true,
-    "detail": "directly_observed allowance derived from any model_interaction/tool_execution record in the unit"
+    "reproduced": false,
+    "detail": "eval_v21.py scores each alert against labelled chains"
   },
   "R07": {
     "reproduced": false,

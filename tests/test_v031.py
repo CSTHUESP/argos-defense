@@ -608,3 +608,26 @@ def test_r09_release_jobs_running_preflight_provide_token():
                 assert env.get("GH_TOKEN") == "${{ github.token }}", name
     text = (ROOT / ".github/workflows/release.yml").read_text()
     assert "x-access-token" not in text and "extraheader" not in text  # no token handling inlined in shell commands
+
+
+def test_r03_legacy_v030_checkpoint_adopted_without_duplicates(env, tmp_path):
+    import hashlib as h
+    from argos.watch import add_source, poll_once
+    d = tmp_path / "legacy-watch"
+    d.mkdir()
+    first = _line(0, "old-0.example")
+    f = d / "feed.jsonl"
+    f.write_text(first + _line(1, "old-1.example"))
+    c = env.case("r03-legacy")
+    src = add_source(env.store, c, d, "*.jsonl", "native_jsonl")
+    poll_once(env.store, env.settings, src)
+    assert _queries(env, c) == ["old-0.example", "old-1.example"]
+    # rewrite the checkpoint as a v0.3.0 row would look after migration (first-line id, legacy=1, no inode)
+    fp = h.sha256(first.encode()).hexdigest()[:32] + f":{len(first.encode())}"
+    with env.store.tx() as cx:
+        cx.execute("UPDATE watch_checkpoints SET file_id=?, dev=NULL, ino=NULL, head_fp=NULL, tail_sha=NULL, legacy=1", (fp,))
+    with open(f, "a") as fh:
+        fh.write(_line(2, "new-2.example"))
+    s = poll_once(env.store, env.settings, src)
+    assert any("legacy v0.3.0 checkpoint adopted" in e for e in s["errors"])
+    assert _queries(env, c) == ["new-2.example", "old-0.example", "old-1.example"]

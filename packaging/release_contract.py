@@ -64,11 +64,13 @@ COMMON_CHECKS = [
     "update: verified pre-migration backup retained",
     "update: legacy run labelled (no invented snapshot)",
     "update: re-analysis after migration",
+    "backup: refuses when referenced evidence is missing",
     "backup: created",
     "backup: verified",
     "restore: into new directory",
     "restore: restored case and alerts readable",
     "restore: refuses non-empty target",
+    "restore: re-analysis of restored evidence",
     "bundle: no files written inside the application bundle",
     "logs: session token never printed",
 ]
