@@ -18,7 +18,7 @@ $VenvPy = Join-Path $Root ".venv\Scripts\python.exe"
 if (-not (Test-Path $VenvPy)) {
   Write-Host "Creating virtual environment in $Root\.venv"
   & $Python @PyArgs -m venv .venv
-  & $VenvPy -m pip install -r requirements.lock
+  & $VenvPy -m pip install --require-hashes -r requirements.lock
   if ($LASTEXITCODE -ne 0) { Write-Error "Dependency install failed (offline?)."; exit 1 }
   & $VenvPy -m pip install --no-deps --no-build-isolation -e .
 }

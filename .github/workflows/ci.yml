@@ -37,9 +37,8 @@ jobs:
           python-version: ${{ matrix.python }}
       - name: Install pinned dependencies
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements.lock -r requirements-dev.lock
-          python -m pip install --no-deps -e .
+          python -m pip install --require-hashes -r requirements-ci.lock
+          python -m pip install --no-deps --no-build-isolation -e .
       - name: Rule validation and doctor
         run: |
           python -m argos rules
@@ -62,12 +61,12 @@ jobs:
           python-version: "3.12"
       - name: Build wheel and sdist
         run: |
-          python -m pip install -r requirements-build.lock
-          python -m build --outdir dist .
+          python -m pip install --require-hashes -r requirements-ci.lock
+          python -m build --no-isolation --outdir dist .
       - name: Install wheel into a fresh venv and run outside the checkout
         run: |
           python -m venv "$RUNNER_TEMP/venv"
-          "$RUNNER_TEMP/venv/bin/pip" install -r requirements.lock
+          "$RUNNER_TEMP/venv/bin/pip" install --require-hashes -r requirements.lock
           "$RUNNER_TEMP/venv/bin/pip" install --no-deps dist/*.whl
           mkdir -p "$RUNNER_TEMP/outside ü" && cd "$RUNNER_TEMP/outside ü"
           "$RUNNER_TEMP/venv/bin/argos-defense" --version
@@ -78,6 +77,6 @@ jobs:
       - name: Install sdist into a fresh venv
         run: |
           python -m venv "$RUNNER_TEMP/venv2"
-          "$RUNNER_TEMP/venv2/bin/pip" install -r requirements.lock
+          "$RUNNER_TEMP/venv2/bin/pip" install --require-hashes -r requirements.lock
           "$RUNNER_TEMP/venv2/bin/pip" install --no-deps dist/*.tar.gz
           cd "$RUNNER_TEMP" && "$RUNNER_TEMP/venv2/bin/argos-defense" --data-dir sd doctor

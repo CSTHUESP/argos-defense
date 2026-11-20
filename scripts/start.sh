@@ -12,7 +12,7 @@ command -v "$PY" >/dev/null || { echo "python3 not found (need >= 3.11)"; exit 1
 if [ ! -x .venv/bin/python ]; then
   echo "Creating virtual environment in $ROOT/.venv"
   "$PY" -m venv .venv
-  if ! .venv/bin/pip install -r requirements.lock; then
+  if ! .venv/bin/pip install --require-hashes -r requirements.lock; then
      echo "Dependency install failed (offline?). Retry with: $PY -m venv --system-site-packages .venv  (uses already-installed packages)"; exit 1
   fi
   .venv/bin/pip install --no-deps --no-build-isolation -e .
