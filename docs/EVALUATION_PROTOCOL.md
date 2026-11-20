@@ -1,6 +1,56 @@
 # Evaluation protocols — synthetic held-out validation
 
-## Current: eval-v2.1 (v0.3.1)
+## Current: eval-v2.2 (v0.3.1 follow-up, FU5)
+**What changed:** the eval-v2.1 scorer matched a ground-truth chain by call string and process GUID plus unit membership. An injected alert pairing a chain's model request with an execution from **another collector and session** that reused the same call string (or the same process GUID on another host) was accepted as correct, and it marked the real chain as detected. `tests/test_eval_v22.py::test_v21_scorer_accepted_the_mismatch_regression_evidence` records this.
+
+eval-v2.2 (`scripts/eval_v22.py`):
+- Every ground-truth chain has a stable `chain_id` and names its exact source records: the model request and the execution records, as `<fixture file>:<1-based line>`. They are resolved when the data is frozen.
+- At evaluation time each stored event is mapped back to its record through the input's original file name and `record_no`. The run aborts if any labelled record is missing.
+- An alert may claim `directly_observed` only if its evidence contains that chain's model record **and** one of that chain's execution records. Call strings, process GUIDs, sessions and unit tags are never used for this.
+- A chain counts as detected only through such an alert. A mismatched alert gets no credit, even when a correct alert exists for the same chain.
+- The scorer still does not use the production correlator.
+
+**New scenario N6:** a valid chain in collector A (session A). In `collector_b.jsonl` (session B, another host) there is an unrelated tool execution with the **same call string**, plus a process start with the **same process GUID** string.
+
+**Injection tests** (`tests/test_eval_v22.py`):
+- Same call string, different collector/session → 1 overclaim, chain not detected.
+- Reused process GUID on another host → 1 overclaim, chain not detected.
+- A bad alert and a good alert together → only the bad one is an overclaim, and the chain is detected once.
+- A frozen-label check that every chain record points at the right kind of record.
+
+**Data:**
+- Location: `fixtures/eval_v2_2/{dev,reserved}` with the manifest `fixtures/eval_v2_2/MANIFEST.json`.
+- Development set: seed 303, 12 per scenario, 4,184 events, 321 units.
+- Reserved set: seed 8853, 20 per scenario, 7,413 events, 535 units.
+- Newly generated with new seeds. The same author wrote the rules and the generator, so this is **synthetic held-out validation only**.
+- The eval-v2.1 and eval-v2.0 sets (`fixtures/eval_v2_1`, `fixtures/eval_v2`) were inspected during earlier passes and are now **reused development data**.
+
+**Process record:**
+1. Implemented FU1–FU5. No rule or rule configuration was changed (rules hash `a0dba54b8a5fcef5`, unchanged since eval-v2.1).
+2. Ran the dev set: 0 overclaims in 433 alerts; 59 of 59 chains (`reports/eval_v22_dev.json`).
+3. Froze the generator, labels, data and evaluator in local commit `844b3cf`.
+4. Ran the reserved set **once**: 2026-11-20T17:29:03Z, commit `844b3cf`, rules and evaluator clean (`docs/eval_v2_2_inspection_log.jsonl`). Results are in `reports/eval_v22_reserved.json`. Nothing was changed afterwards.
+
+### Reserved-set results (eval-v2.2, first inspection)
+Threat side:
+- Benign units with a low-or-higher alert: **110 of 320**: B2 20, B7 20, B8 20, N5 20, N6 20, B4 9, B3 1. (N5 and N6 are legitimate agent chains, correctly reported at low severity as observed model-driven tool use.)
+- Benign units with any alert: 190 of 320. Benign alerts per benign unit-day: 0.219.
+- Detection by scenario: M1, M2, M3, M4, M6, M7, M8 and M10 each 20/20; M9 18/20; H 15/15; **M5 0/20** (known gap).
+- Hidden-origin triplets with identical conclusions: 5/5.
+
+Attribution side, exact-record scoring:
+- Alerts scored: 714.
+- **LLM overclaims: 0**, including the N1, N3, N4, N5 and N6 negatives.
+- Framework errors: 0. Identity errors: 0.
+- Labelled chains directly observed: **96 of 96**.
+
+Burden: 133.5 alerts per 100 units; median 1 and maximum 13 per unit; 3.1 % at low confidence; 0 abstentions. B8 produced 188 alerts for 20 units.
+
+These figures describe this synthetic corpus only. They are not real-world false-positive or detection rates.
+
+---
+
+## Historical: eval-v2.1 (v0.3.1 candidate `13686bb`) — now reused development data
 **What changed (R06):** the eval-v2.0 scorer allowed `directly_observed` for a whole unit whenever the unit contained any `model_interaction` or `tool_execution` record. That could not count a wrong attribution as an error. eval-v2.1 (`scripts/eval_v21.py`) scores **each alert**:
 - Labels list each unit's ground-truth model→execution **chains** (tool call id + executed process GUID).
 - An alert may claim `directly_observed` only if its own evidence contains a model record **and** an execution record of the same labelled chain.
@@ -33,7 +83,7 @@ All other scenarios are unchanged from eval-v2.0.
 3. Froze the generator, labels, rules and evaluator in local commit `8060244`.
 4. Ran the reserved set **once**: 2026-11-20T14:53:43Z, rules hash `a0dba54b8a5fcef5`, no files modified (`docs/eval_v2_1_inspection_log.jsonl`). Nothing was changed afterwards.
 
-### Reserved-set results (eval-v2.1, first inspection)
+### Reserved-set results (eval-v2.1, first inspection; scorer later found defective, see eval-v2.2)
 Threat side — units are identity/host/application sequences:
 - Benign units with a low-or-higher alert: **90 of 300**. Benign units with any alert: 170 of 300. Benign alerts per benign unit-day: 0.200.
 - New N-scenario units: N1, N3 and N4 alert at informational severity only (automation evidence); N2 does not alert; N5 alerts at low severity for its valid chain (20 of 20).

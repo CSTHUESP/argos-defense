@@ -1,3 +1,14 @@
+# BUILD_STATE — latest checkpoint (2026-11-20 ~18:40 CET): v0.3.1 follow-up FU1–FU5
+
+- Branch `v0.3.1-local` (local only). FU code + frozen eval-v2.2: `844b3cf`; docs/packaging commits follow (final SHA in the handover report and `dist-v031/HANDOVER.txt`).
+- Remote: repository still **public** (intended **private**) → no push, tag, CI dispatch or release in this pass. `origin/main` = `7673889`; only `v0.3.0` published (unchanged).
+- FU1–FU5 fixed; before-evidence: 9/12 FU tests fail on `13686bb` (V031_REMEDIATION.md, follow-up section).
+- Full suite: 254 passed, 1 skipped (Windows ACL test on Linux).
+- eval-v2.2 reserved run once at 2026-11-20T17:29:03Z on `844b3cf`: 0 overclaims / 714 alerts, 96/96 chains, 110/320 benign low+, M5 0/20.
+- Handover: self-contained full-history bundle + regenerated wheel/sdist + SHA256SUMS in `dist-v031/` (verified by cloning into a fresh directory).
+
+---
+
 # BUILD_STATE (checkpoint, final for this session — 2026-11-20 ~11:10 CET)
 
 Project root: /home/claude/argos-defense · ARTEX: reference/ARTEX tag v0.6.0, commit a13c68cb7078d43b66fb398db3d610e513b6d77a

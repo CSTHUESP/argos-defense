@@ -15,9 +15,15 @@ Corrective pass for review findings R01–R09 (docs/V031_REMEDIATION.md). Experi
 - **R06** New evaluation protocol eval-v2.1 with independent, alert-level attribution scoring and attribution-negative scenarios; injected errors are proven to be counted.
 - **R07** The explainer redaction test now uses the real interface and fails if the provider is not called or redaction is bypassed.
 - **R08** FIFO global job admission (default 1 running, 8 queued; HTTP 429 when full) and an OS-level lock enforcing one server per data directory. 300,000 events measured with a stress profile.
+- **FU1** Error responses (import, failed analysis jobs, compare, explainer, rules) are redacted.
+- **FU2** Processing/interrupted imports never satisfy completion; retries resume the same input exactly once; a failed reprocess keeps the previous revision.
+- **FU3** Watcher delivery identity (source, generation, byte range) is separate from content identity; occurrence counts are independent of chunk size; repeated polls/restarts are reported as `redelivered`.
+- **FU4** One cleanup invariant for every job terminal path; a failed job can no longer block the FIFO.
+- **FU5** Evaluation protocol eval-v2.2 scores LLM attribution against exact source records; eval-v2.1 metrics are superseded.
 - **R09** The release preflight authenticates Git remote reads with GH_TOKEN through environment-scoped Git configuration (needed for private repositories); the token never appears in argv or URLs.
 
 ### Changed / migration
+- Watcher results: `duplicates`/`duplicate_segments` are replaced by `redelivered`/`redelivered_segments`; identical lines at different offsets or in different files are kept as distinct occurrences.
 - Database schema v4 (from v3: watcher identity columns; v0.3.0 checkpoints marked legacy). Migration is transactional after a verified `argos.v3-backup.sqlite3`.
 - A coverage declaration without event kinds covers only the event kinds present in that input. Declare `--coverage-kinds` to cover other families.
 - Session/tool-call chains across separately imported files require the same `--collector-id`.
