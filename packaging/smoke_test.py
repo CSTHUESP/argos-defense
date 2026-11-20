@@ -279,12 +279,15 @@ def launcher_checks(top: Path, base: Path, work: Path):
         ok = info is not None
         srv_tok = (data / ".session_token").read_text().strip() if (data / ".session_token").exists() else ""
         SECRETS.append(srv_tok)
-        if ok:
-            try:
-                st, _ = http(f"http://127.0.0.1:{info['port']}/api/cases", token=srv_tok)
-                ok = st == 200
-            except Exception:  # noqa: BLE001
-                ok = False
+        if ok:  # server.json is written before the socket accepts connections: poll like Server.start
+            ok = False
+            for _ in range(300):
+                try:
+                    st, _ = http(f"http://127.0.0.1:{info['port']}/api/cases", token=srv_tok)
+                    ok = st == 200
+                    break
+                except Exception:  # noqa: BLE001
+                    time.sleep(0.1)
         record(f"launcher: {launcher.name} starts the native app ({mode}, ARGOS_HOME non-ASCII)", ok, info and info.get("port"))
         if mode == "browser":
             url = ""
