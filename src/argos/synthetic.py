@@ -222,7 +222,10 @@ def generate_demo(out_dir: Path, seed: int = 20261120) -> dict:
     _jsonl(out_dir / "zeek_dns.jsonl", dns)
     manifest = [
         {"file": "proxy_export.csv", "format": "splunk_csv", "options": {"profile": "proxy"}},
-        {"file": "identity_native.jsonl", "format": "native_jsonl", "options": {}},
+        {"file": "identity_native.jsonl", "format": "native_jsonl", "options": {},
+         # analyst-declared collection coverage for the SYNTHETIC identity export (demonstrates F04 semantics)
+         "coverage": {"start": ts(-86400), "end": ts(2 * 86400), "scope": "all",
+                      "note": "SYNTHETIC demo: identity export declared complete for this window"}},
         {"file": "endpoint_sysmon.xml", "format": "sysmon_xml", "options": {}},
         {"file": "endpoint_native.jsonl", "format": "native_jsonl", "options": {}},
         {"file": "agent_audit.jsonl", "format": "native_jsonl", "options": {}},

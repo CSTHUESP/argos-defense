@@ -123,6 +123,9 @@ def test_16_full_workflow_browser_and_api(env):
         manifest = json.loads((DEMO / "import_manifest.json").read_text())
         for f in manifest:
             fields = {"csrf": csrf, "case": cid, "format": f["format"], **f["options"]}
+            if f.get("coverage"):
+                fields.update(coverage_start=f["coverage"]["start"], coverage_end=f["coverage"]["end"],
+                              coverage_scope=f["coverage"]["scope"], coverage_note=f["coverage"]["note"])
             st, _, page = cl.multipart("/import", fields, "file", f["file"], (DEMO / f["file"]).read_bytes())
             assert st == 200 and ("<b>imported</b>" in page), page[:500]
         # hostile filename and XXE rejected with actual error text

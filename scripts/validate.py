@@ -42,7 +42,8 @@ SCENARIOS = {
                                                    lambda al, asm: {"ARG-SP-001", "ARG-COLL-002"} <= {a["rule_id"] for a in al}),
     "web01_webshell": (lambda a: "web-01" in g(a, "host"),
                        lambda al, asm: {"ARG-EP-001", "ARG-EP-002", "ARG-PERS-001"} <= {a["rule_id"] for a in al}),
-    "dev-ws-07_artex_agent": (lambda a: "dev-ws-07" in g(a, "host") or g(a, "session_id") == "exp12-worker-i3" or g(a, "domain") == "api.deepseek.com",
+    "dev-ws-07_artex_agent": (lambda a: "dev-ws-07" in g(a, "host") or g(a, "session_id") == "exp12-worker-i3"
+                              or "|exp12-worker-i3|" in g(a, "call_key") or g(a, "domain") == "api.deepseek.com",
                               lambda al, asm: asm["framework"]["level"] == "corroborated_presence"
                               and any(a["llm"]["level"] == "directly_observed" for a in al)
                               and asm["automation"]["level"] == "mixed"),
@@ -68,7 +69,7 @@ def main():
     gt = json.loads((ROOT / "fixtures" / "ground_truth" / "demo.json").read_text())
     case = st.create_case("validation-demo", True)
     for f in json.loads((ROOT / "fixtures" / "demo" / "import_manifest.json").read_text()):
-        ingest_file(st, s, case, ROOT / "fixtures" / "demo" / f["file"], f["format"], f["options"])
+        ingest_file(st, s, case, ROOT / "fixtures" / "demo" / f["file"], f["format"], f["options"], coverage=f.get("coverage"))
     run_analysis(st, s, case["case_id"])
     alerts = st.list_alerts(case["case_id"])
     asm = st.latest_assessment(case["case_id"])

@@ -9,7 +9,13 @@
   {
     "file": "identity_native.jsonl",
     "format": "native_jsonl",
-    "options": {}
+    "options": {},
+    "coverage": {
+      "start": "2026-11-02T08:00:00.000000Z",
+      "end": "2026-11-05T08:00:00.000000Z",
+      "scope": "all",
+      "note": "SYNTHETIC demo: identity export declared complete for this window"
+    }
   },
   {
     "file": "endpoint_sysmon.xml",

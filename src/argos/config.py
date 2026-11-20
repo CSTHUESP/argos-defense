@@ -40,10 +40,20 @@ def _windows_private_acl(path: Path) -> bool:
     principal = f"{dom}\\{user}" if dom else user
     cmd = ["icacls", str(path), "/inheritance:r", "/grant:r", f"{principal}:(OI)(CI)F", "*S-1-5-18:(OI)(CI)F", "*S-1-5-32-544:(OI)(CI)F"]
     try:
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=30)
+        r = subprocess.run(cmd, capture_output=True, timeout=30)  # bytes: icacls prints in the OEM code page
         return r.returncode == 0
     except (OSError, subprocess.SubprocessError):
         return False
+
+
+def _decode_console(b: bytes) -> str:
+    """Decode output of Windows console tools (OEM code page); never raises."""
+    for enc in ("oem", "utf-8"):
+        try:
+            return b.decode(enc)
+        except (LookupError, UnicodeDecodeError):
+            continue
+    return b.decode("latin-1", "replace")
 
 
 def make_private_dir(d: Path) -> bool:
@@ -75,8 +85,9 @@ def permission_findings(home: Path) -> list[str]:
     elif sys.platform.startswith("win"):
         import subprocess
         try:
-            r = subprocess.run(["icacls", str(home)], capture_output=True, text=True, timeout=30)
-            broad = [ln.strip() for ln in r.stdout.splitlines() if any(x in ln for x in ("Everyone:", "BUILTIN\\Users:", "Authenticated Users:"))]
+            r = subprocess.run(["icacls", str(home)], capture_output=True, timeout=30)
+            text = _decode_console(r.stdout or b"")
+            broad = [ln.strip() for ln in text.splitlines() if any(x in ln for x in ("Everyone:", "BUILTIN\\Users:", "Authenticated Users:"))]
             if broad:
                 out.append(f"{home} grants access to broad groups ({'; '.join(broad)[:200]}); remediation: "
                            f"icacls \"{home}\" /inheritance:r /grant:r \"%USERDOMAIN%\\%USERNAME%:(OI)(CI)F\" *S-1-5-18:(OI)(CI)F *S-1-5-32-544:(OI)(CI)F")
